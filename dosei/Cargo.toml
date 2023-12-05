@@ -3,11 +3,14 @@ name = "dosei_server"
 version = { workspace = true }
 edition = { workspace = true }
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+path = "src/main.rs"
+name = "dosei"
 
 [dependencies]
 dosei_proto = { workspace = true }
 
+clap = { workspace = true, features = ["derive"] }
 tokio = { workspace = true, features = ["full"] }
 serde_json = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
