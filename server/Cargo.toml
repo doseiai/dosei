@@ -1,11 +1,13 @@
 [package]
-name = "doseiclient"
-version = "0.1.0"
-edition = "2021"
+name = "dosei_server"
+version = { workspace = true }
+edition = { workspace = true }
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+dosei_proto = { workspace = true }
+
 tokio = { workspace = true, features = ["full"] }
 serde_json = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

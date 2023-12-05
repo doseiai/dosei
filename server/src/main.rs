@@ -1,16 +1,8 @@
 use tokio::net::TcpListener;
 use tokio::net::TcpStream;
 use tokio::io::{AsyncReadExt};
-use serde::{Serialize, Deserialize};
 use std::io;
-
-#[derive(Serialize, Deserialize, Debug)]
-struct CronJob {
-    id: String,
-    schedule: String,
-    entrypoint: String,
-    deployment_id: String,
-}
+use dosei_proto::CronJob;
 
 async fn process_socket(mut socket: TcpStream) -> io::Result<()> {
     let mut buf = vec![0; 1024]; // buffer for reading data

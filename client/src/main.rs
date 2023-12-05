@@ -1,15 +1,7 @@
 use tokio::net::TcpStream;
 use tokio::io::{AsyncWriteExt};
-use serde::{Serialize, Deserialize};
 use std::error::Error;
-
-#[derive(Serialize, Deserialize)]
-struct CronJob {
-    id: String,
-    schedule: String,
-    entrypoint: String,
-    deployment_id: String,
-}
+use dosei_proto::CronJob;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {

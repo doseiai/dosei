@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package dosei.cron_job;
+
+message CronJob {
+    string id = 1;
+    string schedule = 2;
+    string entrypoint = 3;
+    string deployment_id = 4;
+}
