@@ -181,23 +181,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "acbf1af155f9b9ef647e42cdc158db4b64a1b61f743629225fde6f3e0be2a7c7"
 
 [[package]]
-name = "dosei_proto"
+name = "dosei"
 version = "0.1.0"
 dependencies = [
- "bytes",
- "prost",
- "prost-build",
+ "clap",
+ "dosei_proto",
  "serde",
  "serde_json",
  "tokio",
 ]
 
 [[package]]
-name = "dosei_server"
+name = "dosei_proto"
 version = "0.1.0"
 dependencies = [
- "clap",
- "dosei_proto",
+ "bytes",
+ "prost",
+ "prost-build",
  "serde",
  "serde_json",
  "tokio",

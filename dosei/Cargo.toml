@@ -1,5 +1,5 @@
 [package]
-name = "dosei_server"
+name = "dosei"
 version = { workspace = true }
 edition = { workspace = true }
 
