@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package dosei.cluster_node;
+
+enum NodeType {
+  PRIMARY = 0;
+  REPLICA = 1;
+}
+
+message ClusterNode {
+  string id = 1;
+  NodeType enum = 2;
+  repeated string peers = 3;
+}
