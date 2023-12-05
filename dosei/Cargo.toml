@@ -14,3 +14,4 @@ clap = { workspace = true, features = ["derive"] }
 tokio = { workspace = true, features = ["full"] }
 serde_json = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
+prost = { workspace = true }
