@@ -4,8 +4,8 @@ version = { workspace = true }
 edition = { workspace = true }
 
 [[bin]]
-path = "src/main.rs"
 name = "dosei"
+path = "src/main.rs"
 
 [dependencies]
 dosei_proto = { workspace = true }
@@ -15,3 +15,11 @@ tokio = { workspace = true, features = ["full"] }
 serde_json = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 prost = { workspace = true }
+
+
+axum = "0.6.20"
+env_logger = "0.10.1"
+log = "0.4.20"
+cron = "0.12.0"
+chrono = "0.4.31"
+bollard = "0.15.0"

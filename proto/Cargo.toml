@@ -7,12 +7,7 @@ edition = { workspace = true }
 path = "src/lib.rs"
 
 [dependencies]
-tokio = { workspace = true, features = ["full"] }
-serde_json = { workspace = true }
-serde = { workspace = true, features = ["derive"] }
-bytes = { workspace = true }
 prost = { workspace = true }
-prost-build = { workspace = true }
 
 [build-dependencies]
 prost-build = { workspace = true }

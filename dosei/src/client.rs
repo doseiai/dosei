@@ -1,6 +1,6 @@
 use tokio::net::TcpStream;
 use std::error::Error;
-use dosei_proto::dosei::cron_job;
+use dosei_proto::cron_job;
 use tokio::io::AsyncWriteExt;
 use prost::Message;
 
