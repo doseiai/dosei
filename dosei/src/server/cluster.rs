@@ -18,9 +18,9 @@ pub fn start_node(config: &Config) {
   tokio::spawn(async move {
     let listener = TcpListener::bind((address.host, address.port)).await.expect("port not available");
     loop {
-      let (mut socket, addr) = listener.accept().await.expect("Failed to accept connection");
+      let (mut socket, _) = listener.accept().await.expect("Failed to accept connection");
 
-      info!("New connection from {}", addr); // Log new instance connection
+
 
       let mut buf = Vec::new(); // buffer for reading data
 
@@ -32,7 +32,6 @@ pub fn start_node(config: &Config) {
       if n == 0 {
         return;
       }
-      info!("Bytes read: {}", n);
 
       let proto_type = identify_proto_type(&buf); // Function to identify the type
       let buf_slice = &buf[1..];
