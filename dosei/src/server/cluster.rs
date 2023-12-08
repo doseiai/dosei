@@ -1,33 +1,22 @@
 use tokio::net::TcpListener;
 use tokio::io::{AsyncReadExt};
 use log::{info, error};
-use dosei_proto::cron_job;
-use dosei_proto::cluster_node;
+use dosei_proto::{cron_job, node_info};
 use prost::Message;
-use crate::config::{Config, Address};
+use crate::config::{Config};
 
 #[derive(Debug)]
 enum ProtoType {
   Ping,
   Pong,
   CronJob,
-  ClusterNode,
+  NodeInfo,
 }
 
-async fn bind_to_next_available_port(address: Address) -> TcpListener {
-  let mut port = address.port + 10000;
-  loop {
-    match TcpListener::bind((address.host.clone(), port)).await {
-      Ok(listener) => return listener,
-      Err(_) => port += 1,
-    }
-  }
-}
-
-pub fn start_main_node(config: &Config) {
-  let address = config.address.clone();
+pub fn start_node(config: &Config) {
+  let address = config.node_info.address.clone();
   tokio::spawn(async move {
-    let listener = bind_to_next_available_port(address).await;
+    let listener = TcpListener::bind((address.host, address.port)).await.expect("port not available");
     loop {
       let (mut socket, addr) = listener.accept().await.expect("Failed to accept connection");
 
@@ -60,8 +49,8 @@ pub fn start_main_node(config: &Config) {
           };
           info!("Received CronJob: {:?}", received_data); // Log the received data
         },
-        ProtoType::ClusterNode => {
-          let received_data = match cluster_node::ClusterNode::decode(buf_slice) {
+        ProtoType::NodeInfo => {
+          let received_data = match node_info::NodeInfo::decode(buf_slice) {
             Ok(data) => data,
             Err(e) => {
               error!("Failed to decode ClusterNode: {}", e);
@@ -75,7 +64,6 @@ pub fn start_main_node(config: &Config) {
       }
     }
   });
-  info!("Dosei Node main initialized");
 }
 
 fn identify_proto_type(buf: &[u8]) -> ProtoType {
@@ -83,7 +71,7 @@ fn identify_proto_type(buf: &[u8]) -> ProtoType {
     Some(&0x01) => ProtoType::Ping,
     Some(&0x02) => ProtoType::Pong,
     Some(&0x03) => ProtoType::CronJob,
-    Some(&0x04) => ProtoType::ClusterNode,
+    Some(&0x04) => ProtoType::NodeInfo,
     // Add more cases as needed
     _ => panic!("Unknown protocol type"),
   }

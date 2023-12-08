@@ -12,16 +12,17 @@ struct Args {
   connect: Option<String>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum NodeType {
   PRIMARY,
   REPLICA,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct NodeInfo {
   pub uuid: Uuid,
-  pub node_type: NodeType
+  pub node_type: NodeType,
+  pub address: Address
 }
 
 #[derive(Debug, Clone)]
@@ -36,18 +37,44 @@ impl Address {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Config {
   pub address: Address,
-  pub node_info: NodeInfo
+  pub node_info: NodeInfo,
+  pub primary_address: Option<String>
 }
 
+
 impl Config {
+  #[allow(dead_code)]
   pub fn is_primary(&self) -> bool {
     self.node_info.node_type == NodeType::PRIMARY
   }
   pub fn is_replica(&self) -> bool {
     self.node_info.node_type == NodeType::REPLICA
+  }
+  pub fn get_primary_node_address(&self) -> Address {
+    if let Some(primary_addr) = self.get_primary_address() {
+      return Address {
+        host: primary_addr.host,
+        port: primary_addr.port + 10000,
+      };
+    } else {
+      self.node_info.address.clone()
+    }
+  }
+
+  fn get_primary_address(&self) -> Option<Address> {
+    self.primary_address.as_ref().and_then(|addr| {
+      let parts: Vec<&str> = addr.split(':').collect();
+      if parts.len() == 2 {
+        let host = parts[0].to_string();
+        if let Ok(port) = parts[1].parse::<u16>() {
+          return Some(Address { host, port });
+        }
+      }
+      None
+    })
   }
 }
 
@@ -56,6 +83,17 @@ pub fn init() -> Config {
   let node_info: NodeInfo = NodeInfo {
     uuid: Uuid::new_v4(),
     node_type: if args.connect.is_some() { NodeType::REPLICA } else { NodeType::PRIMARY },
+    address: Address {
+      host: args.host.clone(),
+      port: args.port.clone() + 10000
+    },
   };
-  Config { address: Address { host: args.host, port: args.port }, node_info }
+  Config {
+    address: Address {
+      host: args.host,
+      port: args.port
+    },
+    node_info,
+    primary_address: args.connect,
+  }
 }
