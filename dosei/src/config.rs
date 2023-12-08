@@ -42,4 +42,3 @@ pub fn init() -> Config {
   };
   Config { node_info }
 }
-

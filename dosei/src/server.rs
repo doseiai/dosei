@@ -10,7 +10,7 @@ pub async fn start_server(config: Config) {
   cluster::start_main_node();
   cron::start_job_manager();
   let mut address = format!("{}:{}", "0.0.0.0", "8844");
-  if config.is_primary() {
+  if config.is_replica() {
     address = format!("{}:{}", "0.0.0.0", "8845");
   }
   let app = Router::new().route("/", get(|| async { "Hello, World!" }));
