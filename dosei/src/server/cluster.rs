@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use tokio::net::TcpListener;
 use tokio::io::{AsyncReadExt};
 use log::{info, error};
@@ -14,6 +15,7 @@ enum ProtoType {
 }
 
 pub fn start_node(config: &Config) {
+  let cluster_info = Arc::clone(&config.cluster_info);
   let address = config.node_info.address.clone();
   tokio::spawn(async move {
     let listener = TcpListener::bind((address.host, address.port)).await.unwrap();
@@ -56,7 +58,9 @@ pub fn start_node(config: &Config) {
               continue;
             },
           };
-          info!("Received ClusterNode: {:?}", received_data); // Log the received data
+          let mut cluster_info = cluster_info.lock().await;
+          cluster_info.add_or_update_replica(received_data.clone());
+          println!("{:?}", cluster_info);
         },
         ProtoType::Ping | ProtoType::Pong => todo!(),
         // Add more cases as needed

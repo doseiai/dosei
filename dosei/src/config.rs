@@ -3,6 +3,7 @@ use uuid::Uuid;
 use dosei_proto::node_info;
 use tokio::sync::Mutex;
 use std::sync::Arc;
+use log::info;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None, disable_help_flag = true)]
@@ -47,7 +48,6 @@ pub struct ClusterInfo {
 
 impl ClusterInfo {
   pub fn add_or_update_replica(&mut self, replica: node_info::NodeInfo) {
-    print!("{:?}", replica);
     match self.replicas.iter_mut().find(|r| r.uuid == replica.uuid) {
       Some(existing_replica) => {
         *existing_replica = replica;
@@ -103,22 +103,20 @@ impl Config {
 
 pub fn init() -> Config {
   let args = Args::parse();
-  let node_info: NodeInfo = NodeInfo {
-    uuid: Uuid::new_v4(),
-    node_type: if args.connect.is_some() { NodeType::REPLICA } else { NodeType::PRIMARY },
-    address: Address {
-      host: args.host.clone(),
-      port: args.port + 10000
-    },
-  };
-  let cluster_info = Arc::new(Mutex::new(ClusterInfo { replicas: vec![] }));
   Config {
     address: Address {
-      host: args.host,
+      host: args.host.clone(),
       port: args.port
     },
-    cluster_info,
-    node_info,
+    cluster_info: Arc::new(Mutex::new(ClusterInfo { replicas: Vec::new() })),
+    node_info: NodeInfo {
+      uuid: Uuid::new_v4(),
+      node_type: if args.connect.is_some() { NodeType::REPLICA } else { NodeType::PRIMARY },
+      address: Address {
+        host: args.host,
+        port: args.port + 10000
+      },
+    },
     primary_address: args.connect,
   }
 }
