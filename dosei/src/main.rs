@@ -1,5 +1,4 @@
 mod server;
-mod client;
 mod config;
 
 use std::error::Error;
