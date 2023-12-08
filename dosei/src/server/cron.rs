@@ -37,7 +37,7 @@ pub fn start_job_manager(config: &Config) {
       sleep(Duration::from_secs(1)).await;
       let config = config.clone();
       if config.is_replica() {
-        update_status(config).await.expect("TODO: panic message");
+        update_status(config).await.unwrap();
       }
       // read_minute_jobs().await;
     }

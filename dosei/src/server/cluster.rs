@@ -16,9 +16,9 @@ enum ProtoType {
 pub fn start_node(config: &Config) {
   let address = config.node_info.address.clone();
   tokio::spawn(async move {
-    let listener = TcpListener::bind((address.host, address.port)).await.expect("port not available");
+    let listener = TcpListener::bind((address.host, address.port)).await.unwrap();
     loop {
-      let (mut socket, _) = listener.accept().await.expect("Failed to accept connection");
+      let (mut socket, _) = listener.accept().await.unwrap();
 
 
 
