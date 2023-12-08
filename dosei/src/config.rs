@@ -1,5 +1,6 @@
 use clap::Parser;
 use uuid::Uuid;
+use dosei_proto::node_info;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None, disable_help_flag = true)]
@@ -38,8 +39,28 @@ impl Address {
 }
 
 #[derive(Debug, Clone)]
+pub struct ClusterInfo {
+  pub replicas: Vec<node_info::NodeInfo>
+}
+
+impl ClusterInfo {
+  pub fn add_or_update_replica(&mut self, replica: node_info::NodeInfo) {
+    print!("{:?}", replica);
+    match self.replicas.iter_mut().find(|r| r.uuid == replica.uuid) {
+      Some(existing_replica) => {
+        *existing_replica = replica;
+      }
+      None => {
+        self.replicas.push(replica);
+      }
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
 pub struct Config {
   pub address: Address,
+  pub cluster_info: ClusterInfo,
   pub node_info: NodeInfo,
   pub primary_address: Option<String>
 }
