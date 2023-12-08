@@ -4,14 +4,13 @@ mod cron;
 
 use axum::{routing::get, Router};
 use log::{info};
-use crate::config::{Config, NodeType};
+use crate::config::{Config };
 
 pub async fn start_server(config: Config) {
-  println!("{:?}", config);
   cluster::start_main_node();
   cron::start_job_manager();
   let mut address = format!("{}:{}", "0.0.0.0", "8844");
-  if config.node_info.node_type == NodeType::REPLICA {
+  if config.is_primary() {
     address = format!("{}:{}", "0.0.0.0", "8845");
   }
   let app = Router::new().route("/", get(|| async { "Hello, World!" }));

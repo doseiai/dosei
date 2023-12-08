@@ -25,6 +25,15 @@ pub struct Config {
   pub node_info: NodeInfo
 }
 
+impl Config {
+  pub fn is_primary(&self) -> bool {
+    self.node_info.node_type == NodeType::PRIMARY
+  }
+  pub fn is_replica(&self) -> bool {
+    self.node_info.node_type == NodeType::REPLICA
+  }
+}
+
 pub fn init() -> Config {
   let args = Args::parse();
   let node_info: NodeInfo = NodeInfo {
@@ -33,3 +42,4 @@ pub fn init() -> Config {
   };
   Config { node_info }
 }
+
