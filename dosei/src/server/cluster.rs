@@ -14,9 +14,9 @@ enum ProtoType {
   ClusterNode,
 }
 
-async fn bind_to_next_available_port(mut port: u16) -> TcpListener {
+async fn bind_to_next_available_port(host: String, mut port: u16) -> TcpListener {
   loop {
-    match TcpListener::bind(("0.0.0.0", port)).await {
+    match TcpListener::bind((host.clone(), port)).await {
       Ok(listener) => return listener,
       Err(_) => port += 1,
     }
@@ -24,9 +24,10 @@ async fn bind_to_next_available_port(mut port: u16) -> TcpListener {
 }
 
 pub fn start_main_node(config: &Config) {
+  let host = config.host.clone();
   let port = config.port.clone() + 10000;
   tokio::spawn(async move {
-    let listener = bind_to_next_available_port(port).await;
+    let listener = bind_to_next_available_port(host, port).await;
     loop {
       let (mut socket, addr) = listener.accept().await.expect("Failed to accept connection");
 
