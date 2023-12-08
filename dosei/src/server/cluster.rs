@@ -4,6 +4,7 @@ use log::{info, error};
 use dosei_proto::cron_job;
 use dosei_proto::cluster_node;
 use prost::Message;
+use crate::config::{Config};
 
 #[derive(Debug)]
 enum ProtoType {
@@ -22,9 +23,10 @@ async fn bind_to_next_available_port(mut port: u16) -> TcpListener {
   }
 }
 
-pub fn start_main_node() {
-  tokio::spawn(async {
-    let listener = bind_to_next_available_port(18844).await;
+pub fn start_main_node(config: &Config) {
+  let port = config.port.clone() + 10000;
+  tokio::spawn(async move {
+    let listener = bind_to_next_available_port(port).await;
     loop {
       let (mut socket, addr) = listener.accept().await.expect("Failed to accept connection");
 

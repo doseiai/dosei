@@ -4,6 +4,8 @@ use uuid::Uuid;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
+  #[arg(short, long, default_value = "8844")]
+  port: u16,
   #[arg(short, long)]
   connect: Option<String>,
 }
@@ -22,6 +24,7 @@ pub struct NodeInfo {
 
 #[derive(Debug)]
 pub struct Config {
+  pub port: u16,
   pub node_info: NodeInfo
 }
 
@@ -40,5 +43,5 @@ pub fn init() -> Config {
     uuid: Uuid::new_v4(),
     node_type: if args.connect.is_some() { NodeType::REPLICA } else { NodeType::PRIMARY },
   };
-  Config { node_info }
+  Config { port: args.port, node_info }
 }

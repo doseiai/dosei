@@ -9,6 +9,6 @@ use config::Config;
 async fn main() -> Result<(), Box<dyn Error>> {
   env_logger::init();
   let config: Config = config::init();
-  server::start_server(config).await;
+  server::start_server(&config).await;
   Ok(())
 }
