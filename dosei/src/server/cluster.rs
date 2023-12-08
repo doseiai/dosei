@@ -5,7 +5,6 @@ use dosei_proto::cron_job;
 use dosei_proto::cluster_node;
 use prost::Message;
 
-
 #[derive(Debug)]
 enum ProtoType {
   Ping,
@@ -14,10 +13,18 @@ enum ProtoType {
   ClusterNode,
 }
 
+async fn bind_to_next_available_port(mut port: u16) -> TcpListener {
+  loop {
+    match TcpListener::bind(("0.0.0.0", port)).await {
+      Ok(listener) => return listener,
+      Err(_) => port += 1,
+    }
+  }
+}
+
 pub fn start_main_node() {
   tokio::spawn(async {
-    let main_address = format!("{}:{}", "0.0.0.0", "8844".parse::<i32>().unwrap() + 10000);
-    let listener = TcpListener::bind(&main_address).await.expect("Failed to bind to address");
+    let listener = bind_to_next_available_port(18844).await;
     loop {
       let (mut socket, addr) = listener.accept().await.expect("Failed to accept connection");
 

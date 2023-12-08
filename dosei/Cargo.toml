@@ -11,6 +11,7 @@ path = "src/main.rs"
 dosei_proto = { workspace = true }
 
 clap = { workspace = true, features = ["derive"] }
+uuid = { workspace = true, features = ["v4"] }
 tokio = { workspace = true, features = ["full"] }
 serde_json = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
