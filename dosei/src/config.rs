@@ -24,10 +24,21 @@ pub struct NodeInfo {
   pub node_type: NodeType
 }
 
-#[derive(Debug)]
-pub struct Config {
+#[derive(Debug, Clone)]
+pub struct Address {
   pub host: String,
   pub port: u16,
+}
+
+impl Address {
+  pub fn to_string(&self) -> String {
+    format!("{}:{}", self.host, self.port)
+  }
+}
+
+#[derive(Debug)]
+pub struct Config {
+  pub address: Address,
   pub node_info: NodeInfo
 }
 
@@ -46,5 +57,5 @@ pub fn init() -> Config {
     uuid: Uuid::new_v4(),
     node_type: if args.connect.is_some() { NodeType::REPLICA } else { NodeType::PRIMARY },
   };
-  Config { host: args.host, port: args.port, node_info }
+  Config { address: Address { host: args.host, port: args.port }, node_info }
 }
