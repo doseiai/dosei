@@ -1,6 +1,8 @@
 use clap::Parser;
 use uuid::Uuid;
 use dosei_proto::node_info;
+use tokio::sync::Mutex;
+use std::sync::Arc;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None, disable_help_flag = true)]
@@ -60,7 +62,7 @@ impl ClusterInfo {
 #[derive(Debug, Clone)]
 pub struct Config {
   pub address: Address,
-  pub cluster_info: ClusterInfo,
+  pub cluster_info:  Arc<Mutex<ClusterInfo>>,
   pub node_info: NodeInfo,
   pub primary_address: Option<String>
 }
@@ -109,11 +111,13 @@ pub fn init() -> Config {
       port: args.port + 10000
     },
   };
+  let cluster_info = Arc::new(Mutex::new(ClusterInfo { replicas: vec![] }));
   Config {
     address: Address {
       host: args.host,
       port: args.port
     },
+    cluster_info,
     node_info,
     primary_address: args.connect,
   }
