@@ -85,7 +85,7 @@ pub fn init() -> Config {
     node_type: if args.connect.is_some() { NodeType::REPLICA } else { NodeType::PRIMARY },
     address: Address {
       host: args.host.clone(),
-      port: args.port.clone() + 10000
+      port: args.port + 10000
     },
   };
   Config {
