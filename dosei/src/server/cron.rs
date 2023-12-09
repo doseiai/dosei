@@ -1,6 +1,6 @@
 use tokio::time::sleep;
 use std::time::Duration;
-use dosei_proto::node_info;
+use dosei_proto::{node_info, ProtoChannel};
 use crate::config;
 use crate::config::{Config};
 use prost::Message;
@@ -17,7 +17,7 @@ async fn update_status(config: Config) -> Result<(), Box<dyn Error>> {
   };
 
   let mut buf = Vec::with_capacity(node_info.encoded_len() + 1);
-  buf.push(0x04);
+  buf.push(node_info::NodeInfo::PROTO_ID);
 
   // Serialize the CronJob instance to a buffer
   node_info.encode(&mut buf)?;

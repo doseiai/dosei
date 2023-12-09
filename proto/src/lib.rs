@@ -7,7 +7,7 @@ pub mod node_info {
 }
 
 impl ProtoChannel for node_info::NodeInfo {
-    const PROTO_ID: u8 = 0x04;
+    const PROTO_ID: u8 = 0x00;
 }
 
 pub mod cron_job {
@@ -15,5 +15,5 @@ pub mod cron_job {
 }
 
 impl ProtoChannel for cron_job::CronJob {
-    const PROTO_ID: u8 = 0x03;
+    const PROTO_ID: u8 = 0x01;
 }
