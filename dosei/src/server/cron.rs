@@ -11,7 +11,7 @@ use std::error::Error;
 async fn update_status(config: Config) -> Result<(), Box<dyn Error>> {
   let node_info = node_info::NodeInfo {
     uuid: config.node_info.uuid.to_string(),
-    r#enum: i32::from(node_info::NodeType::Replica),
+    r#enum: i32::from(config.node_info.node_type),
     address: config.address.to_string(),
     version: config::version()
   };

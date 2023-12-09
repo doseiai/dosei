@@ -4,6 +4,7 @@ use dosei_proto::node_info;
 use tokio::sync::Mutex;
 use std::sync::Arc;
 use std::env;
+use dosei_proto::node_info::NodeType;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None, disable_help_flag = true)]
@@ -14,12 +15,6 @@ struct Args {
   port: u16,
   #[arg(short, long)]
   connect: Option<String>,
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub enum NodeType {
-  PRIMARY,
-  REPLICA,
 }
 
 #[derive(Debug, Clone)]
@@ -71,10 +66,10 @@ pub struct Config {
 impl Config {
   #[allow(dead_code)]
   pub fn is_primary(&self) -> bool {
-    self.node_info.node_type == NodeType::PRIMARY
+    self.node_info.node_type == NodeType::Primary
   }
   pub fn is_replica(&self) -> bool {
-    self.node_info.node_type == NodeType::REPLICA
+    self.node_info.node_type == NodeType::Replica
   }
   pub fn get_primary_node_address(&self) -> Address {
     if let Some(primary_addr) = self.get_primary_address() {
@@ -123,7 +118,7 @@ pub fn init() -> Config {
     cluster_info: Arc::new(Mutex::new(ClusterInfo { replicas: Vec::new() })),
     node_info: NodeInfo {
       uuid: Uuid::new_v4(),
-      node_type: if args.connect.is_some() { NodeType::REPLICA } else { NodeType::PRIMARY },
+      node_type: if args.connect.is_some() { NodeType::Replica } else { NodeType::Primary },
       address: Address {
         host: args.host,
         port: args.port + 10000
