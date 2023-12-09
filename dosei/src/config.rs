@@ -100,6 +100,11 @@ impl Config {
   }
 }
 
+pub fn version() -> String {
+  let version = env!("CARGO_PKG_VERSION");
+  return version.parse().unwrap();
+}
+
 pub fn init() -> Config {
   let args = Args::parse();
   Config {

@@ -11,4 +11,5 @@ message NodeInfo {
   string uuid = 1;
   NodeType enum = 2;
   string address = 3;
+  string version = 4;
 }

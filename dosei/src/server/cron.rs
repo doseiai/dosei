@@ -1,7 +1,8 @@
 use tokio::time::sleep;
 use std::time::Duration;
 use dosei_proto::node_info;
-use crate::config::Config;
+use crate::config;
+use crate::config::{Config};
 use prost::Message;
 use tokio::net::TcpStream;
 use tokio::io::AsyncWriteExt;
@@ -12,6 +13,7 @@ async fn update_status(config: Config) -> Result<(), Box<dyn Error>> {
     uuid: config.node_info.uuid.to_string(),
     r#enum: i32::from(node_info::NodeType::Replica),
     address: config.address.to_string(),
+    version: config::version()
   };
 
   let mut buf = Vec::with_capacity(node_info.encoded_len() + 1);
