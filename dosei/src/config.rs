@@ -3,6 +3,7 @@ use uuid::Uuid;
 use dosei_proto::node_info;
 use tokio::sync::Mutex;
 use std::sync::Arc;
+use std::env;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None, disable_help_flag = true)]
@@ -103,6 +104,13 @@ impl Config {
 pub fn version() -> String {
   let version = env!("CARGO_PKG_VERSION");
   return version.parse().unwrap();
+}
+
+pub fn postgres_url() -> String {
+  let address = env::var("POSTGRES_ADDRESS").unwrap();
+  let password = env::var("POSTGRES_PASSWORD").unwrap();
+  let database = env::var("POSTGRES_DATABASE").unwrap();
+  format!("postgres://postgres:{}@{}/{}", password, address, database)
 }
 
 pub fn init() -> Config {
