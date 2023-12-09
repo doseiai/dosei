@@ -1,3 +1,7 @@
+#!/bin/sh
+
+set -e
+
 dosei_install="${DOSEI_INSTALL:-$HOME/.dosei}"
 bin_dir="$dosei_install/bin"
 exe="$bin_dir/dosei"
