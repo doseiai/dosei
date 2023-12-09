@@ -24,7 +24,6 @@ async fn update_status(config: Config) -> Result<(), Box<dyn Error>> {
 
   // Connect to a peer
   let primary_node_address = config.get_primary_node_address().to_string();
-  print!("{}", primary_node_address);
   let mut stream = TcpStream::connect(primary_node_address).await?;
 
   // Write the serialized data
