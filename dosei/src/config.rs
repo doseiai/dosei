@@ -3,7 +3,6 @@ use uuid::Uuid;
 use dosei_proto::node_info;
 use tokio::sync::Mutex;
 use std::sync::Arc;
-use log::info;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None, disable_help_flag = true)]

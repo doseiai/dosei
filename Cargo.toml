@@ -20,3 +20,4 @@ uuid = { version = "1.6.1", features = ["v4"] }
 prost = { version = "0.12.3" }
 prost-build = { version = "0.12.3" }
 bytes = { version = "1.5.0" }
+dotenv = { version = "0.15.0" }

@@ -16,7 +16,7 @@ tokio = { workspace = true, features = ["full"] }
 serde_json = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 prost = { workspace = true }
-
+dotenv = { workspace = true }
 
 axum = "0.6.20"
 env_logger = "0.10.1"
