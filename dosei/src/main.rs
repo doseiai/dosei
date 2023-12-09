@@ -1,5 +1,6 @@
 mod server;
 mod config;
+mod schema;
 
 use std::error::Error;
 use dotenv::dotenv;

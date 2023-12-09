@@ -101,13 +101,6 @@ pub fn version() -> String {
   return version.parse().unwrap();
 }
 
-pub fn postgres_url() -> String {
-  let address = env::var("POSTGRES_ADDRESS").unwrap();
-  let password = env::var("POSTGRES_PASSWORD").unwrap();
-  let database = env::var("POSTGRES_DATABASE").unwrap();
-  format!("postgres://postgres:{}@{}/{}", password, address, database)
-}
-
 pub fn init() -> Config {
   let args = Args::parse();
   Config {
