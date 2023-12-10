@@ -7,8 +7,14 @@ use prost::Message;
 use tokio::net::TcpStream;
 use tokio::io::AsyncWriteExt;
 use std::error::Error;
+use std::str::FromStr;
+use axum::Json;
 use bollard::container::CreateContainerOptions;
 use bollard::Docker;
+use chrono::Utc;
+use cron::Schedule;
+use log::info;
+use sqlx::{Pool, Postgres};
 use crate::schema::CronJob;
 
 async fn update_status(config: Config) -> Result<(), Box<dyn Error>> {
@@ -34,6 +40,12 @@ async fn update_status(config: Config) -> Result<(), Box<dyn Error>> {
   Ok(())
 }
 
+pub async fn get_cron_jobs(pool: Pool<Postgres>) -> Json<Vec<CronJob>> {
+  let recs = sqlx::query_as!(CronJob, "SELECT * from cron_jobs")
+    .fetch_all(&pool).await.unwrap();
+  Json(recs)
+}
+
 async fn run_job(cron_job: CronJob) {
   let docker = Docker::connect_with_socket_defaults().unwrap();
 
@@ -54,13 +66,26 @@ async fn run_job(cron_job: CronJob) {
   docker.start_container::<&str>(&container.id, None).await.unwrap();
 }
 
-async fn run_jobs() {
-  loop {
-    sleep(Duration::from_secs(60)).await;
+async fn run_jobs(pool: Pool<Postgres>) {
+  let cron_jobs = get_cron_jobs(pool).await;
+  let now = Utc::now();
+  for job in cron_jobs.0 {
+    let job_schedule = format!("0 {} *", &job.schedule);
+    let schedule = Schedule::from_str(&job_schedule).unwrap();
+    // Get the next scheduled time for the job
+    if let Some(next) = schedule.upcoming(Utc).next() {
+      let time_difference = next.timestamp() - now.timestamp();
+
+      // Check if the next scheduled time is within the next 60 seconds and in the future
+      if time_difference >= 0 && time_difference < 60 {
+        info!("Job: {} to run {}; {}", &job.uuid, &job.schedule, &job.entrypoint);
+        run_job(job).await;
+      }
+    }
   }
 }
 
-pub fn start_job_manager(config: &Config) {
+pub fn start_job_manager(config: &Config, pool: Pool<Postgres>) {
   let config = config.clone();
   tokio::spawn(async move {
     loop {
@@ -71,5 +96,8 @@ pub fn start_job_manager(config: &Config) {
       }
     }
   });
-  tokio::spawn(run_jobs());
+  tokio::spawn(async move {
+    run_jobs(pool).await;
+    sleep(Duration::from_secs(60)).await;
+  });
 }
