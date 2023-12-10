@@ -7,6 +7,9 @@ use prost::Message;
 use tokio::net::TcpStream;
 use tokio::io::AsyncWriteExt;
 use std::error::Error;
+use bollard::container::CreateContainerOptions;
+use bollard::Docker;
+use crate::schema::CronJob;
 
 async fn update_status(config: Config) -> Result<(), Box<dyn Error>> {
   let node_info = node_info::NodeInfo {
@@ -31,6 +34,32 @@ async fn update_status(config: Config) -> Result<(), Box<dyn Error>> {
   Ok(())
 }
 
+async fn run_job(cron_job: CronJob) {
+  let docker = Docker::connect_with_socket_defaults().unwrap();
+
+  let options = Some(CreateContainerOptions{
+    name: "",
+    platform: None,
+  });
+
+  let image_name = "us-docker.pkg.dev/serious-sublime-394315/builds/alw3ys/dosei-bot";
+  let x = format!("{}:{}", &image_name, &cron_job.deployment_id);
+  let config = bollard::container::Config {
+    image: Some(x.as_str()),
+    cmd: Some(vec!["dosei", "run", &cron_job.entrypoint]),
+    ..Default::default()
+  };
+
+  let container = docker.create_container(options, config).await.unwrap();
+  docker.start_container::<&str>(&container.id, None).await.unwrap();
+}
+
+async fn run_jobs() {
+  loop {
+    sleep(Duration::from_secs(60)).await;
+  }
+}
+
 pub fn start_job_manager(config: &Config) {
   let config = config.clone();
   tokio::spawn(async move {
@@ -40,7 +69,7 @@ pub fn start_job_manager(config: &Config) {
       if config.is_replica() {
         update_status(config).await.unwrap();
       }
-      // read_minute_jobs().await;
     }
   });
+  tokio::spawn(run_jobs());
 }
