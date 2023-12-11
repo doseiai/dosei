@@ -87,7 +87,7 @@ async fn run_jobs(pool: Pool<Postgres>) {
           "Job: {} to run {}; {}",
           &job.uuid, &job.schedule, &job.entrypoint
         );
-        run_job(job).await;
+        // run_job(job).await;
       }
     }
   }
