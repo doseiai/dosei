@@ -1,15 +1,14 @@
-mod server;
 mod config;
+mod server;
 
-use std::error::Error;
-use dotenv::dotenv;
 use config::Config;
+use dotenv::dotenv;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
-  dotenv().ok();
-  env_logger::init();
-  let config: Config = config::init();
-  server::start_server(&config).await;
-  Ok(())
+async fn main() -> anyhow::Result<()> {
+    dotenv().ok();
+    env_logger::init();
+    let config: Config = config::init();
+    server::start_server(&config).await;
+    Ok(())
 }
