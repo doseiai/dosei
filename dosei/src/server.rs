@@ -1,17 +1,19 @@
 mod cluster;
 mod cron;
 
-use std::env;
-use sqlx::Pool;
 use sqlx::postgres::Postgres;
+use sqlx::Pool;
+use std::env;
 
+use crate::config::Config;
+use crate::schema;
 use axum::{routing, Router};
-use log::{info};
-use crate::{schema};
-use crate::config::{Config};
+use log::info;
 
 pub async fn start_server(config: &Config) {
-  let pool = Pool::<Postgres>::connect(&env::var("DATABASE_URL").unwrap()).await.unwrap();
+  let pool = Pool::<Postgres>::connect(&env::var("DATABASE_URL").unwrap())
+    .await
+    .unwrap();
   cluster::start_node(config);
   cron::start_job_manager(config, pool.clone());
   let cron_job = schema::cron_job_mock();
@@ -33,5 +35,8 @@ pub async fn start_server(config: &Config) {
   let app = Router::new().route("/", routing::get(move || cron::get_cron_jobs(pool.clone())));
   let address = config.address.to_string();
   info!("Dosei running on http://{} (Press CTRL+C to quit", address);
-  axum::Server::bind(&address.parse().unwrap()).serve(app.into_make_service()).await.unwrap();
+  axum::Server::bind(&address.parse().unwrap())
+    .serve(app.into_make_service())
+    .await
+    .unwrap();
 }

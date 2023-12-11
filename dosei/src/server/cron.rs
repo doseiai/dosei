@@ -1,28 +1,28 @@
-use tokio::time::sleep;
-use std::time::Duration;
-use dosei_proto::{node_info, ProtoChannel};
 use crate::config;
-use crate::config::{Config};
-use prost::Message;
-use tokio::net::TcpStream;
-use tokio::io::AsyncWriteExt;
-use std::error::Error;
-use std::str::FromStr;
+use crate::config::Config;
+use crate::schema::CronJob;
 use axum::Json;
 use bollard::container::CreateContainerOptions;
 use bollard::Docker;
 use chrono::Utc;
 use cron::Schedule;
+use dosei_proto::{node_info, ProtoChannel};
 use log::info;
+use prost::Message;
 use sqlx::{Pool, Postgres};
-use crate::schema::CronJob;
+use std::error::Error;
+use std::str::FromStr;
+use std::time::Duration;
+use tokio::io::AsyncWriteExt;
+use tokio::net::TcpStream;
+use tokio::time::sleep;
 
 async fn update_status(config: Config) -> Result<(), Box<dyn Error>> {
   let node_info = node_info::NodeInfo {
     uuid: config.node_info.uuid.to_string(),
     r#enum: i32::from(config.node_info.node_type),
     address: config.address.to_string(),
-    version: config::version()
+    version: config::version(),
   };
 
   let mut buf = Vec::with_capacity(node_info.encoded_len() + 1);
@@ -42,14 +42,16 @@ async fn update_status(config: Config) -> Result<(), Box<dyn Error>> {
 
 pub async fn get_cron_jobs(pool: Pool<Postgres>) -> Json<Vec<CronJob>> {
   let recs = sqlx::query_as!(CronJob, "SELECT * from cron_jobs")
-    .fetch_all(&pool).await.unwrap();
+    .fetch_all(&pool)
+    .await
+    .unwrap();
   Json(recs)
 }
 
 async fn run_job(cron_job: CronJob) {
   let docker = Docker::connect_with_socket_defaults().unwrap();
 
-  let options = Some(CreateContainerOptions{
+  let options = Some(CreateContainerOptions {
     name: "",
     platform: None,
   });
@@ -63,7 +65,10 @@ async fn run_job(cron_job: CronJob) {
   };
 
   let container = docker.create_container(options, config).await.unwrap();
-  docker.start_container::<&str>(&container.id, None).await.unwrap();
+  docker
+    .start_container::<&str>(&container.id, None)
+    .await
+    .unwrap();
 }
 
 async fn run_jobs(pool: Pool<Postgres>) {
@@ -78,7 +83,10 @@ async fn run_jobs(pool: Pool<Postgres>) {
 
       // Check if the next scheduled time is within the next 60 seconds and in the future
       if time_difference >= 0 && time_difference < 60 {
-        info!("Job: {} to run {}; {}", &job.uuid, &job.schedule, &job.entrypoint);
+        info!(
+          "Job: {} to run {}; {}",
+          &job.uuid, &job.schedule, &job.entrypoint
+        );
         run_job(job).await;
       }
     }

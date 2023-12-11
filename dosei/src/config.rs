@@ -1,10 +1,10 @@
 use clap::Parser;
-use uuid::Uuid;
 use dosei_proto::node_info;
-use tokio::sync::Mutex;
-use std::sync::Arc;
-use std::env;
 use dosei_proto::node_info::NodeType;
+use std::env;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use uuid::Uuid;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None, disable_help_flag = true)]
@@ -21,7 +21,7 @@ struct Args {
 pub struct NodeInfo {
   pub uuid: Uuid,
   pub node_type: NodeType,
-  pub address: Address
+  pub address: Address,
 }
 
 #[derive(Debug, Clone)]
@@ -38,7 +38,7 @@ impl Address {
 
 #[derive(Debug, Clone)]
 pub struct ClusterInfo {
-  pub replicas: Vec<node_info::NodeInfo>
+  pub replicas: Vec<node_info::NodeInfo>,
 }
 
 impl ClusterInfo {
@@ -57,11 +57,10 @@ impl ClusterInfo {
 #[derive(Debug, Clone)]
 pub struct Config {
   pub address: Address,
-  pub cluster_info:  Arc<Mutex<ClusterInfo>>,
+  pub cluster_info: Arc<Mutex<ClusterInfo>>,
   pub node_info: NodeInfo,
-  pub primary_address: Option<String>
+  pub primary_address: Option<String>,
 }
-
 
 impl Config {
   #[allow(dead_code)]
@@ -106,15 +105,21 @@ pub fn init() -> Config {
   Config {
     address: Address {
       host: args.host.clone(),
-      port: args.port
+      port: args.port,
     },
-    cluster_info: Arc::new(Mutex::new(ClusterInfo { replicas: Vec::new() })),
+    cluster_info: Arc::new(Mutex::new(ClusterInfo {
+      replicas: Vec::new(),
+    })),
     node_info: NodeInfo {
       uuid: Uuid::new_v4(),
-      node_type: if args.connect.is_some() { NodeType::Replica } else { NodeType::Primary },
+      node_type: if args.connect.is_some() {
+        NodeType::Replica
+      } else {
+        NodeType::Primary
+      },
       address: Address {
         host: args.host,
-        port: args.port + 10000
+        port: args.port + 10000,
       },
     },
     primary_address: args.connect,

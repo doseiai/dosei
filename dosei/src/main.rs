@@ -1,6 +1,6 @@
 mod config;
-mod server;
 mod schema;
+mod server;
 
 use config::Config;
 use dotenv::dotenv;

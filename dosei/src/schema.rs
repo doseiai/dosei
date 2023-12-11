@@ -10,7 +10,7 @@ pub struct CronJob {
   pub owner_id: Uuid,
   pub deployment_id: Uuid,
   pub updated_at: DateTime<Utc>,
-  pub created_at: DateTime<Utc>
+  pub created_at: DateTime<Utc>,
 }
 
 pub fn cron_job_mock() -> CronJob {
