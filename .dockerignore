@@ -1,0 +1,4 @@
+data/
+target/
+.env
+.env.example
