@@ -106,7 +106,10 @@ pub fn start_job_manager(config: &Config, pool: &Pool<Postgres>) {
   });
   let pool = pool.clone();
   tokio::spawn(async move {
-    run_jobs(pool).await;
-    sleep(Duration::from_secs(60)).await;
+    loop {
+      let pool = pool.clone();
+      run_jobs(pool).await;
+      sleep(Duration::from_secs(60)).await;
+    }
   });
 }
