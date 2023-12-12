@@ -15,7 +15,7 @@ pub async fn start_server(config: &Config) {
     .await
     .unwrap();
   cluster::start_node(config);
-  cron::start_job_manager(config, pool.clone());
+  cron::start_job_manager(config, &pool);
   let cron_job = schema::cron_job_mock();
   sqlx::query!(
     r#"
