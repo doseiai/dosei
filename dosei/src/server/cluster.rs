@@ -1,14 +1,38 @@
-use crate::config::Config;
+use crate::config::{Config};
 use dosei_proto::ProtoChannel;
 use dosei_proto::{cron_job, node_info};
 use log::{error, info};
 use prost::Message;
 use std::sync::Arc;
+use once_cell::sync::Lazy;
 use tokio::io::AsyncReadExt;
 use tokio::net::TcpListener;
+use tokio::sync::Mutex;
+
+static CLUSTER_INFO: Lazy<Arc<Mutex<ClusterInfo>>> = Lazy::new(|| {
+  Arc::new(Mutex::new(ClusterInfo { replicas: Vec::new() }))
+});
+
+#[derive(Debug, Clone)]
+pub struct ClusterInfo {
+  pub replicas: Vec<node_info::NodeInfo>,
+}
+
+impl ClusterInfo {
+  pub fn add_or_update_replica(&mut self, replica: node_info::NodeInfo) {
+    match self.replicas.iter_mut().find(|r| r.uuid == replica.uuid) {
+      Some(existing_replica) => {
+        *existing_replica = replica;
+      }
+      None => {
+        self.replicas.push(replica);
+      }
+    }
+  }
+}
 
 pub fn start_node(config: &Config) {
-  let cluster_info = Arc::clone(&config.cluster_info);
+  let cluster_info = Arc::clone(&CLUSTER_INFO);
   let address = config.node_info.address.clone();
   tokio::spawn(async move {
     let listener = TcpListener::bind((address.host, address.port))

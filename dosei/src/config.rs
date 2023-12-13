@@ -1,9 +1,6 @@
 use clap::Parser;
-use dosei_proto::node_info;
 use dosei_proto::node_info::NodeType;
 use std::env;
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use uuid::Uuid;
 
 #[derive(Parser, Debug)]
@@ -37,27 +34,8 @@ impl Address {
 }
 
 #[derive(Debug, Clone)]
-pub struct ClusterInfo {
-  pub replicas: Vec<node_info::NodeInfo>,
-}
-
-impl ClusterInfo {
-  pub fn add_or_update_replica(&mut self, replica: node_info::NodeInfo) {
-    match self.replicas.iter_mut().find(|r| r.uuid == replica.uuid) {
-      Some(existing_replica) => {
-        *existing_replica = replica;
-      }
-      None => {
-        self.replicas.push(replica);
-      }
-    }
-  }
-}
-
-#[derive(Debug, Clone)]
 pub struct Config {
   pub address: Address,
-  pub cluster_info: Arc<Mutex<ClusterInfo>>,
   pub node_info: NodeInfo,
   pub primary_address: Option<String>,
 }
@@ -107,9 +85,6 @@ pub fn init() -> Config {
       host: args.host.clone(),
       port: args.port,
     },
-    cluster_info: Arc::new(Mutex::new(ClusterInfo {
-      replicas: Vec::new(),
-    })),
     node_info: NodeInfo {
       uuid: Uuid::new_v4(),
       node_type: if args.connect.is_some() {
