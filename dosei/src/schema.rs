@@ -12,15 +12,3 @@ pub struct CronJob {
   pub updated_at: DateTime<Utc>,
   pub created_at: DateTime<Utc>,
 }
-
-pub fn cron_job_mock() -> CronJob {
-  CronJob {
-    uuid: Uuid::new_v4(),
-    schedule: "*/1 * * * *".to_string(),
-    entrypoint: "bot.main:tweet".to_string(),
-    owner_id: Uuid::new_v4(),
-    deployment_id: Uuid::new_v4(),
-    updated_at: Default::default(),
-    created_at: Default::default(),
-  }
-}
