@@ -1,0 +1,24 @@
+name: ci
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  ci:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: dsherret/rust-toolchain-file@v1
+
+      - name: Check formatting
+        run: cargo fmt -- --check
+
+      - name: Check linting
+        run: cargo clippy --release --all-targets --all-features -- -D clippy::all
