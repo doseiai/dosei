@@ -6,3 +6,8 @@ repos:
         entry: cargo fmt --check
         language: system
         types: [ rust ]
+      - id: cargo-sqlx-prepare-check
+        name: Cargo SQLx prepare check
+        entry: cargo sqlx prepare --check --workspace
+        language: system
+        types: [rust]
