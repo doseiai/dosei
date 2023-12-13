@@ -98,7 +98,7 @@ pub fn start_job_manager(config: &'static Config, pool: &Pool<Postgres>) {
     loop {
       sleep(Duration::from_secs(1)).await;
       if config.is_replica() {
-        update_status(&config).await.unwrap();
+        update_status(config).await.unwrap();
       }
     }
   });

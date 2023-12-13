@@ -53,10 +53,10 @@ impl Config {
   }
   pub fn get_primary_node_address(&self) -> Address {
     if let Some(primary_addr) = self.get_primary_address() {
-      return Address {
+      Address {
         host: primary_addr.host,
         port: primary_addr.port + 10000,
-      };
+      }
     } else {
       self.node_info.address.clone()
     }
