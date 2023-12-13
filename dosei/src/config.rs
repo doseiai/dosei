@@ -1,7 +1,7 @@
 use clap::Parser;
 use dosei_proto::node_info::NodeType;
-use std::env;
 use dotenv::dotenv;
+use std::env;
 use uuid::Uuid;
 
 #[derive(Parser, Debug)]

@@ -1,16 +1,18 @@
-use crate::config::{Config};
+use crate::config::Config;
 use dosei_proto::ProtoChannel;
 use dosei_proto::{cron_job, node_info};
 use log::{error, info};
+use once_cell::sync::Lazy;
 use prost::Message;
 use std::sync::Arc;
-use once_cell::sync::Lazy;
 use tokio::io::AsyncReadExt;
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
 
 static CLUSTER_INFO: Lazy<Arc<Mutex<ClusterInfo>>> = Lazy::new(|| {
-  Arc::new(Mutex::new(ClusterInfo { replicas: Vec::new() }))
+  Arc::new(Mutex::new(ClusterInfo {
+    replicas: Vec::new(),
+  }))
 });
 
 #[derive(Debug, Clone)]

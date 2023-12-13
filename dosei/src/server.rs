@@ -5,10 +5,10 @@ use sqlx::postgres::Postgres;
 use sqlx::Pool;
 use std::env;
 
-use crate::{schema};
+use crate::config::Config;
+use crate::schema;
 use axum::{routing, Router};
 use log::info;
-use crate::config::Config;
 
 pub async fn start_server(config: &'static Config) {
   let pool = Pool::<Postgres>::connect(&env::var("DATABASE_URL").unwrap())
