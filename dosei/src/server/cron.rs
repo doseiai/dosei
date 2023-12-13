@@ -1,7 +1,7 @@
 use crate::config;
 use crate::config::Config;
 use crate::schema::CronJob;
-use axum::Json;
+use axum::{Extension, Json};
 use bollard::container::CreateContainerOptions;
 use bollard::Docker;
 use chrono::Utc;
@@ -9,13 +9,16 @@ use cron::Schedule;
 use dosei_proto::{node_info, ProtoChannel};
 use log::info;
 use prost::Message;
+use serde::Deserialize;
 use sqlx::{Pool, Postgres};
 use std::error::Error;
 use std::str::FromStr;
+use std::sync::Arc;
 use std::time::Duration;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 use tokio::time::sleep;
+use uuid::Uuid;
 
 async fn update_status(config: &'static Config) -> Result<(), Box<dyn Error>> {
   let node_info = node_info::NodeInfo {
@@ -40,9 +43,52 @@ async fn update_status(config: &'static Config) -> Result<(), Box<dyn Error>> {
   Ok(())
 }
 
-pub async fn get_cron_jobs(pool: Pool<Postgres>) -> Json<Vec<CronJob>> {
+#[derive(Deserialize)]
+pub struct CreateJobBody {
+  schedule: String,
+  entrypoint: String,
+  deployment_id: Uuid,
+  owner_id: Uuid,
+}
+
+pub async fn api_create_job(
+  pool: Extension<Arc<Pool<Postgres>>>,
+  Json(body): Json<CreateJobBody>,
+) -> Json<CronJob> {
+  let cron_job = CronJob {
+    uuid: Uuid::new_v4(),
+    schedule: body.schedule,
+    entrypoint: body.entrypoint,
+    owner_id: body.owner_id,
+    deployment_id: body.deployment_id,
+    updated_at: Default::default(),
+    created_at: Default::default(),
+  };
+  let rec = sqlx::query_as!(
+    CronJob,
+    r#"
+    INSERT INTO cron_jobs (uuid, schedule, entrypoint, owner_id, deployment_id, updated_at, created_at)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    RETURNING *
+    "#,
+    cron_job.uuid,
+    cron_job.schedule,
+    cron_job.entrypoint,
+    cron_job.owner_id,
+    cron_job.deployment_id,
+    cron_job.updated_at,
+    cron_job.created_at
+  ).fetch_one(&**pool).await.unwrap();
+  Json(rec)
+}
+
+pub async fn api_get_cron_jobs(pool: Extension<Arc<Pool<Postgres>>>) -> Json<Vec<CronJob>> {
+  get_cron_jobs(pool.0).await
+}
+
+async fn get_cron_jobs(pool: Arc<Pool<Postgres>>) -> Json<Vec<CronJob>> {
   let recs = sqlx::query_as!(CronJob, "SELECT * from cron_jobs")
-    .fetch_all(&pool)
+    .fetch_all(&*pool)
     .await
     .unwrap();
   Json(recs)
@@ -71,7 +117,7 @@ async fn run_job(cron_job: CronJob) {
     .unwrap();
 }
 
-async fn run_jobs(pool: Pool<Postgres>) {
+async fn run_jobs(pool: Arc<Pool<Postgres>>) {
   let cron_jobs = get_cron_jobs(pool).await;
   let now = Utc::now();
   for job in cron_jobs.0 {
@@ -93,7 +139,7 @@ async fn run_jobs(pool: Pool<Postgres>) {
   }
 }
 
-pub fn start_job_manager(config: &'static Config, pool: &Pool<Postgres>) {
+pub fn start_job_manager(config: &'static Config, pool: Arc<Pool<Postgres>>) {
   tokio::spawn(async move {
     loop {
       sleep(Duration::from_secs(1)).await;
@@ -102,11 +148,9 @@ pub fn start_job_manager(config: &'static Config, pool: &Pool<Postgres>) {
       }
     }
   });
-  let pool = pool.clone();
   tokio::spawn(async move {
     loop {
-      let pool = pool.clone();
-      run_jobs(pool).await;
+      run_jobs(Arc::clone(&pool)).await;
       sleep(Duration::from_secs(60)).await;
     }
   });
