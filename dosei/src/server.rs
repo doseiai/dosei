@@ -5,17 +5,17 @@ use sqlx::postgres::Postgres;
 use sqlx::Pool;
 use std::env;
 
-use crate::config::Config;
-use crate::schema;
+use crate::{schema};
 use axum::{routing, Router};
 use log::info;
+use crate::config::Config;
 
-pub async fn start_server(config: &Config) {
+pub async fn start_server(config: &'static Config) {
   let pool = Pool::<Postgres>::connect(&env::var("DATABASE_URL").unwrap())
     .await
     .unwrap();
-  cluster::start_node(config);
-  cron::start_job_manager(config, &pool);
+  cluster::start_node(&config);
+  cron::start_job_manager(&config, &pool);
   let cron_job = schema::cron_job_mock();
   sqlx::query!(
     r#"

@@ -17,7 +17,7 @@ use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 use tokio::time::sleep;
 
-async fn update_status(config: Config) -> Result<(), Box<dyn Error>> {
+async fn update_status(config: &'static Config) -> Result<(), Box<dyn Error>> {
   let node_info = node_info::NodeInfo {
     uuid: config.node_info.uuid.to_string(),
     r#enum: i32::from(config.node_info.node_type),
@@ -93,14 +93,12 @@ async fn run_jobs(pool: Pool<Postgres>) {
   }
 }
 
-pub fn start_job_manager(config: &Config, pool: &Pool<Postgres>) {
-  let config = config.clone();
+pub fn start_job_manager(config: &'static Config, pool: &Pool<Postgres>) {
   tokio::spawn(async move {
     loop {
       sleep(Duration::from_secs(1)).await;
-      let config = config.clone();
       if config.is_replica() {
-        update_status(config).await.unwrap();
+        update_status(&config).await.unwrap();
       }
     }
   });

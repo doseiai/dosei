@@ -1,6 +1,7 @@
 use clap::Parser;
 use dosei_proto::node_info::NodeType;
 use std::env;
+use dotenv::dotenv;
 use uuid::Uuid;
 
 #[derive(Parser, Debug)]
@@ -79,7 +80,12 @@ pub fn version() -> String {
 }
 
 pub fn init() -> Config {
+  dotenv().ok();
   let args = Args::parse();
+  if env::var("RUST_LOG").is_err() {
+    env::set_var("RUST_LOG", "info");
+  }
+  env_logger::init();
   Config {
     address: Address {
       host: args.host.clone(),

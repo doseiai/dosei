@@ -31,7 +31,7 @@ impl ClusterInfo {
   }
 }
 
-pub fn start_node(config: &Config) {
+pub fn start_node(config: &'static Config) {
   let cluster_info = Arc::clone(&CLUSTER_INFO);
   let address = config.node_info.address.clone();
   tokio::spawn(async move {
