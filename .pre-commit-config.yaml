@@ -1,0 +1,8 @@
+repos:
+  - repo: local
+    hooks:
+      - id: cargo-fmt-check
+        name: Cargo fmt check
+        entry: cargo fmt --check
+        language: system
+        types: [ rust ]
