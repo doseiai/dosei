@@ -82,7 +82,7 @@ async fn run_jobs(pool: Pool<Postgres>) {
       let time_difference = next.timestamp() - now.timestamp();
 
       // Check if the next scheduled time is within the next 60 seconds and in the future
-      if time_difference >= 0 && time_difference < 60 {
+      if (0..60).contains(&time_difference) {
         info!(
           "Job: {} to run {}; {}",
           &job.uuid, &job.schedule, &job.entrypoint

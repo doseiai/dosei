@@ -57,7 +57,7 @@ pub fn start_node(config: &'static Config) {
       let buf_slice = &buf[1..];
 
       // Process data based on identified type
-      match buf.get(0) {
+      match buf.first() {
         Some(&node_info::NodeInfo::PROTO_ID) => {
           let received_data = match node_info::NodeInfo::decode(buf_slice) {
             Ok(data) => data,

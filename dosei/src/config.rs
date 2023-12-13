@@ -1,7 +1,8 @@
 use clap::Parser;
 use dosei_proto::node_info::NodeType;
 use dotenv::dotenv;
-use std::env;
+use std::fmt::Formatter;
+use std::{env, fmt};
 use uuid::Uuid;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -30,9 +31,9 @@ pub struct Address {
   pub port: u16,
 }
 
-impl Address {
-  pub fn to_string(&self) -> String {
-    format!("{}:{}", self.host, self.port)
+impl fmt::Display for Address {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    write!(f, "{}:{}", self.host, self.port)
   }
 }
 
