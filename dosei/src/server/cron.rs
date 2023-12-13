@@ -22,7 +22,7 @@ async fn update_status(config: &'static Config) -> Result<(), Box<dyn Error>> {
     uuid: config.node_info.uuid.to_string(),
     r#enum: i32::from(config.node_info.node_type),
     address: config.address.to_string(),
-    version: config::version(),
+    version: config::VERSION.to_string(),
   };
 
   let mut buf = Vec::with_capacity(node_info.encoded_len() + 1);

@@ -4,6 +4,8 @@ use dotenv::dotenv;
 use std::env;
 use uuid::Uuid;
 
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None, disable_help_flag = true)]
 struct Args {
@@ -72,11 +74,6 @@ impl Config {
       None
     })
   }
-}
-
-pub fn version() -> String {
-  let version = env!("CARGO_PKG_VERSION");
-  return version.parse().unwrap();
 }
 
 pub fn init() -> Config {
