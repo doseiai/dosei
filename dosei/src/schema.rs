@@ -8,7 +8,19 @@ pub struct CronJob {
   pub schedule: String,
   pub entrypoint: String,
   pub owner_id: Uuid,
-  pub deployment_id: Uuid,
+  pub deployment_id: String,
+  pub updated_at: DateTime<Utc>,
+  pub created_at: DateTime<Utc>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Job {
+  pub uuid: Uuid,
+  pub cron_job_id: Uuid,
+  pub exit_code: u8,
+  pub logs: Vec<String>,
+  pub entrypoint: String,
+  pub owner_id: Uuid,
   pub updated_at: DateTime<Utc>,
   pub created_at: DateTime<Utc>,
 }
