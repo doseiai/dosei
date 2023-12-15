@@ -1,5 +1,6 @@
 mod cluster;
 mod cron;
+mod secret;
 
 use sqlx::postgres::Postgres;
 use sqlx::Pool;
@@ -10,10 +11,8 @@ use crate::config::Config;
 use axum::{routing, Extension, Router};
 use log::info;
 
-pub async fn start_server(config: &'static Config) {
-  let pool = Pool::<Postgres>::connect(&env::var("DATABASE_URL").unwrap())
-    .await
-    .unwrap();
+pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
+  let pool = Pool::<Postgres>::connect(&env::var("DATABASE_URL")?).await?;
   let shared_pool = Arc::new(pool);
   info!("Successfully connected to Postgres");
   cluster::start_node(config);
@@ -24,8 +23,9 @@ pub async fn start_server(config: &'static Config) {
     .layer(Extension(Arc::clone(&shared_pool)));
   let address = config.address.to_string();
   info!("Dosei running on http://{} (Press CTRL+C to quit", address);
-  axum::Server::bind(&address.parse().unwrap())
+  secret::encrypt_secret().unwrap();
+  axum::Server::bind(&address.parse()?)
     .serve(app.into_make_service())
-    .await
-    .unwrap();
+    .await?;
+  Ok(())
 }
