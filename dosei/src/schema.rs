@@ -17,7 +17,8 @@ pub struct CronJob {
 pub struct Secret {
   pub uuid: Uuid,
   pub name: String,
-  pub value: Vec<u8>,
+  // This should be u8, figute out how postgres does it
+  pub value: Vec<i32>,
   pub owner_id: Uuid,
   pub project_id: Uuid,
   pub updated_at: DateTime<Utc>,

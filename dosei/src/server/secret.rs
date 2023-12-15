@@ -9,6 +9,15 @@ use serde::Deserialize;
 use sqlx::{Pool, Postgres};
 use std::collections::HashMap;
 use std::sync::Arc;
+use crate::schema::{Secret};
+
+pub async fn api_get_envs(pool: Extension<Arc<Pool<Postgres>>>) -> Json<Vec<Secret>> {
+  let recs = sqlx::query_as!(Secret, "SELECT * from envs")
+    .fetch_all(&**pool)
+    .await
+    .unwrap();
+  Json(recs)
+}
 
 pub async fn api_set_envs(
   pool: Extension<Arc<Pool<Postgres>>>,

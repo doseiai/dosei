@@ -19,6 +19,7 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
   cron::start_job_manager(config, Arc::clone(&shared_pool));
   let app = Router::new()
     .route("/envs", routing::post(secret::api_set_envs))
+    .route("/envs", routing::get(secret::api_get_envs))
     .route("/cron-jobs", routing::post(cron::api_create_job))
     .route("/cron-jobs", routing::get(cron::api_get_cron_jobs))
     .layer(Extension(Arc::clone(&shared_pool)));
