@@ -1,3 +1,4 @@
+use crate::schema::Secret;
 use axum::extract::Query;
 use axum::{Extension, Json};
 use ring::aead::{
@@ -9,7 +10,6 @@ use serde::Deserialize;
 use sqlx::{Pool, Postgres};
 use std::collections::HashMap;
 use std::sync::Arc;
-use crate::schema::{Secret};
 
 pub async fn api_get_envs(pool: Extension<Arc<Pool<Postgres>>>) -> Json<Vec<Secret>> {
   let recs = sqlx::query_as!(Secret, "SELECT * from envs")
@@ -25,7 +25,7 @@ pub async fn api_set_envs(
   Json(body): Json<HashMap<String, String>>,
 ) -> Json<HashMap<String, String>> {
   println!("{:?}", body);
-  println!("{}", format!("{query:?}"));
+  println!("{query:?}");
   let rec = HashMap::new();
   Json(rec)
 }
