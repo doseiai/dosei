@@ -1,6 +1,8 @@
-use ring::rand::{SecureRandom, SystemRandom};
-use ring::aead::{Aad, AES_256_GCM, BoundKey, Nonce, NONCE_LEN, NonceSequence, OpeningKey, SealingKey, UnboundKey};
+use ring::aead::{
+  Aad, BoundKey, Nonce, NonceSequence, OpeningKey, SealingKey, UnboundKey, AES_256_GCM, NONCE_LEN,
+};
 use ring::error::Unspecified;
+use ring::rand::{SecureRandom, SystemRandom};
 
 struct CounterNonceSequence(u32);
 
@@ -37,7 +39,6 @@ pub fn encrypt_secret() -> Result<(), Unspecified> {
   // The SealingKey can be used multiple times, each time a new nonce will be used
   let mut sealing_key = SealingKey::new(unbound_key, nonce_sequence);
 
-
   // This data will be authenticated but not encrypted
   //let associated_data = Aad::empty(); // is optional so can be empty
   let associated_data = Aad::from(b"additional public data");
@@ -47,11 +48,11 @@ pub fn encrypt_secret() -> Result<(), Unspecified> {
   println!("data = {}", String::from_utf8(data.to_vec()).unwrap());
 
   // Create a mutable copy of the data that will be encrypted in place
-  let mut in_out = data.clone();
+  let mut in_out = *data;
 
   // Encrypt the data with AEAD using the AES_256_GCM algorithm
   let tag = sealing_key.seal_in_place_separate_tag(associated_data, &mut in_out)?;
-  println!("encrypted_data = {:?} {:?}", in_out, hex::encode(&in_out)); // Print the encrypted data
+  println!("encrypted_data = {:?} {:?}", in_out, hex::encode(in_out)); // Print the encrypted data
 
   // Recreate the previously moved variables
   let unbound_key = UnboundKey::new(&AES_256_GCM, &key_bytes)?;
@@ -64,8 +65,11 @@ pub fn encrypt_secret() -> Result<(), Unspecified> {
 
   // Decrypt the data by passing in the associated data and the cypher text with the authentication tag appended
   let mut cypher_text_with_tag = [&in_out, tag.as_ref()].concat();
-  let decrypted_data = opening_key.open_in_place( associated_data, &mut cypher_text_with_tag)?;
-  println!("decrypted_data = {}", String::from_utf8(decrypted_data.to_vec()).unwrap());
+  let decrypted_data = opening_key.open_in_place(associated_data, &mut cypher_text_with_tag)?;
+  println!(
+    "decrypted_data = {}",
+    String::from_utf8(decrypted_data.to_vec()).unwrap()
+  );
 
   assert_eq!(data, decrypted_data);
   Ok(())
