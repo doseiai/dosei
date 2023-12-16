@@ -25,6 +25,7 @@ pub async fn api_set_envs(
   Json(rec)
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 pub struct SetEnvsQueryParams {
   owner_name: Option<String>,

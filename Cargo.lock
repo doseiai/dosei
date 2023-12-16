@@ -543,7 +543,6 @@ dependencies = [
  "log",
  "once_cell",
  "prost",
- "ring 0.17.7",
  "serde",
  "serde_json",
  "sqlx",
