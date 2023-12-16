@@ -25,7 +25,6 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
     .layer(Extension(Arc::clone(&shared_pool)));
   let address = config.address.to_string();
   info!("Dosei running on http://{} (Press CTRL+C to quit", address);
-  secret::encrypt_secret().unwrap();
   axum::Server::bind(&address.parse()?)
     .serve(app.into_make_service())
     .await?;
