@@ -14,18 +14,6 @@ pub struct CronJob {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Secret {
-  pub id: Uuid,
-  pub name: String,
-  // This should be u8, figute out how postgres does it
-  pub value: Vec<i32>,
-  pub owner_id: Uuid,
-  pub project_id: Uuid,
-  pub updated_at: DateTime<Utc>,
-  pub created_at: DateTime<Utc>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
 pub struct Job {
   pub id: Uuid,
   pub cron_job_id: Uuid,
@@ -33,6 +21,17 @@ pub struct Job {
   pub logs: Vec<String>,
   pub entrypoint: String,
   pub owner_id: Uuid,
+  pub updated_at: DateTime<Utc>,
+  pub created_at: DateTime<Utc>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Secret {
+  pub id: Uuid,
+  pub name: String,
+  pub value: String,
+  pub owner_id: Uuid,
+  pub project_id: Uuid,
   pub updated_at: DateTime<Utc>,
   pub created_at: DateTime<Utc>,
 }
