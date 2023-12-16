@@ -20,7 +20,7 @@ struct Args {
 
 #[derive(Debug, Clone)]
 pub struct NodeInfo {
-  pub uuid: Uuid,
+  pub id: Uuid,
   pub node_type: NodeType,
   pub address: Address,
 }
@@ -90,7 +90,7 @@ pub fn init() -> Config {
       port: args.port,
     },
     node_info: NodeInfo {
-      uuid: Uuid::new_v4(),
+      id: Uuid::new_v4(),
       node_type: if args.connect.is_some() {
         NodeType::Replica
       } else {

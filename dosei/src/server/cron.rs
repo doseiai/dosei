@@ -51,7 +51,7 @@ pub fn start_job_manager(config: &'static Config, pool: Arc<Pool<Postgres>>) {
 
 async fn update_status(config: &'static Config) -> Result<(), Box<dyn Error>> {
   let node_info = node_info::NodeInfo {
-    uuid: config.node_info.uuid.to_string(),
+    id: config.node_info.id.to_string(),
     r#enum: i32::from(config.node_info.node_type),
     address: config.address.to_string(),
     version: config::VERSION.to_string(),
@@ -85,7 +85,7 @@ pub async fn api_create_job(
   Json(body): Json<CreateJobBody>,
 ) -> Json<CronJob> {
   let cron_job = CronJob {
-    uuid: Uuid::new_v4(),
+    id: Uuid::new_v4(),
     schedule: body.schedule,
     entrypoint: body.entrypoint,
     owner_id: body.owner_id,
@@ -96,11 +96,11 @@ pub async fn api_create_job(
   let rec = sqlx::query_as!(
     CronJob,
     r#"
-    INSERT INTO cron_jobs (uuid, schedule, entrypoint, owner_id, deployment_id, updated_at, created_at)
+    INSERT INTO cron_jobs (id, schedule, entrypoint, owner_id, deployment_id, updated_at, created_at)
     VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING *
     "#,
-    cron_job.uuid,
+    cron_job.id,
     cron_job.schedule,
     cron_job.entrypoint,
     cron_job.owner_id,
@@ -176,7 +176,7 @@ async fn new_job_from_event(container_id: &str) -> Job {
   let exit_code = container_state.exit_code.unwrap();
   let logs = container_logs(container_id).await.unwrap();
   Job {
-    uuid: Uuid::new_v4(),
+    id: Uuid::new_v4(),
     cron_job_id: Uuid::new_v4(),
     exit_code: exit_code as u8,
     logs,
@@ -297,7 +297,7 @@ async fn run_jobs(pool: Arc<Pool<Postgres>>) {
       if (0..60).contains(&time_difference) {
         info!(
           "Job: {} to run {}; {}",
-          &job.uuid, &job.schedule, &job.entrypoint
+          &job.id, &job.schedule, &job.entrypoint
         );
         run_job(job).await;
       }

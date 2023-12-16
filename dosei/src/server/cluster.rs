@@ -22,7 +22,7 @@ pub struct ClusterInfo {
 
 impl ClusterInfo {
   pub fn add_or_update_replica(&mut self, replica: node_info::NodeInfo) {
-    match self.replicas.iter_mut().find(|r| r.uuid == replica.uuid) {
+    match self.replicas.iter_mut().find(|r| r.id == replica.id) {
       Some(existing_replica) => {
         *existing_replica = replica;
       }

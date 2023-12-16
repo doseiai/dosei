@@ -1,11 +1,11 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n    INSERT INTO cron_jobs (uuid, schedule, entrypoint, owner_id, deployment_id, updated_at, created_at)\n    VALUES ($1, $2, $3, $4, $5, $6, $7)\n    RETURNING *\n    ",
+  "query": "\n    INSERT INTO cron_jobs (id, schedule, entrypoint, owner_id, deployment_id, updated_at, created_at)\n    VALUES ($1, $2, $3, $4, $5, $6, $7)\n    RETURNING *\n    ",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "uuid",
+        "name": "id",
         "type_info": "Uuid"
       },
       {
@@ -60,5 +60,5 @@
       false
     ]
   },
-  "hash": "bd596dd1d385a9dbc58825c4502edbb125130716917ce03122dd62d252a7b22b"
+  "hash": "79aaa9d16c8bf46b43cc9f89da3ab2b856e41670f99a4b250ed355c55d24011b"
 }

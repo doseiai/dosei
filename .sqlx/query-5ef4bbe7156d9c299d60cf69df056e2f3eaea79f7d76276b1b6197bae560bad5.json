@@ -5,7 +5,7 @@
     "columns": [
       {
         "ordinal": 0,
-        "name": "uuid",
+        "name": "id",
         "type_info": "Uuid"
       },
       {
