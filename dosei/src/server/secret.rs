@@ -10,6 +10,7 @@ use serde::Deserialize;
 use sqlx::{Pool, Postgres};
 use std::collections::HashMap;
 use std::sync::Arc;
+use uuid::Uuid;
 
 pub async fn api_get_envs(pool: Extension<Arc<Pool<Postgres>>>) -> Json<Vec<Secret>> {
   let recs = sqlx::query_as!(Secret, "SELECT * from envs")
@@ -24,6 +25,28 @@ pub async fn api_set_envs(
   Query(query): Query<SetEnvsQueryParams>,
   Json(body): Json<HashMap<String, String>>,
 ) -> Json<HashMap<String, String>> {
+
+  let rand = SystemRandom::new();
+
+  // Generate a new symmetric encryption key
+  let mut key_bytes = vec![0; AES_256_GCM.key_len()];
+  rand.fill(&mut key_bytes).unwrap();
+  let unbound_key = UnboundKey::new(&AES_256_GCM, &key_bytes).unwrap();
+  let nonce_sequence = CounterNonceSequence(1);
+  let mut sealing_key = SealingKey::new(unbound_key, nonce_sequence);
+
+  let mut encrypted_envs = HashMap::new();
+
+  for (key, value) in body.iter() {
+    let encrypted_value = encrypt_value(value, &mut sealing_key).unwrap(); // Replace with proper error handling
+    let encrypted_value_hex = hex::encode(&encrypted_value);
+
+    // Insert encrypted value into the database
+    // sqlx::query!("INSERT INTO envs (key, value) VALUES ($1, $2)", key, &encrypted_value_hex).execute(&**pool).await.unwrap(); // Replace with proper error handling
+
+    encrypted_envs.insert(key.clone(), encrypted_value_hex);
+  }
+
   println!("{:?}", body);
   println!("{query:?}");
   let rec = HashMap::new();
@@ -35,6 +58,45 @@ pub struct SetEnvsQueryParams {
   owner_name: Option<String>,
   project_name: Option<String>,
 }
+
+fn get_key() -> anyhow::Result<String> {
+  let rand = SystemRandom::new();
+  let mut key_bytes = vec![0; AES_256_GCM.key_len()];
+  rand.fill(&mut key_bytes)?;
+
+  let unbound_key = UnboundKey::new(&AES_256_GCM, &key_bytes)?;
+
+  // Create a new NonceSequence type which generates nonces
+  let nonce_sequence = CounterNonceSequence(1);
+
+  // Create a new AEAD key for encrypting and signing ("sealing"), bound to a nonce sequence
+  // The SealingKey can be used multiple times, each time a new nonce will be used
+  let mut sealing_key = SealingKey::new(unbound_key, nonce_sequence);
+
+  Ok()
+}
+
+fn encrypt_value(
+  uuid: Uuid,
+  value: &str,
+  sealing_key: &mut SealingKey<CounterNonceSequence>
+) -> Result<Vec<u8>, Unspecified> {
+  let mut in_out = value.as_bytes().to_vec();
+  sealing_key.seal_in_place_append_tag(Aad::from(uuid.as_bytes()), &mut in_out)?;
+  Ok(in_out)
+}
+
+fn decrypt_value(
+  uuid: Uuid,
+  encrypted_value: &[u8],
+  opening_key: &mut OpeningKey<CounterNonceSequence>
+) -> Result<String, Unspecified> {
+  let associated_data = Aad::from(Aad::from(uuid.as_bytes()));
+  let mut in_out = encrypted_value.to_vec();
+  let decrypted_data = opening_key.open_in_place(associated_data, &mut in_out)?;
+  String::from_utf8(decrypted_data.to_vec()).map_err(|_| Unspecified)
+}
+
 
 struct CounterNonceSequence(u32);
 
@@ -66,9 +128,6 @@ pub fn encrypt_secret() -> Result<(), Unspecified> {
 
   // Create a new NonceSequence type which generates nonces
   let nonce_sequence = CounterNonceSequence(1);
-
-  // Create a new AEAD key for encrypting and signing ("sealing"), bound to a nonce sequence
-  // The SealingKey can be used multiple times, each time a new nonce will be used
   let mut sealing_key = SealingKey::new(unbound_key, nonce_sequence);
 
   // This data will be authenticated but not encrypted
