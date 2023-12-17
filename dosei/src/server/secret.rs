@@ -22,11 +22,11 @@ pub async fn api_set_envs(
 ) -> Json<Vec<Secret>> {
   println!("{:?}", body);
   println!("{query:?}");
-  for (key, value) in body.into_iter() {
+  for (name, value) in body.into_iter() {
     let secret = Secret {
       id: Uuid::new_v4(),
-      name: key,
-      value: value,
+      name,
+      value,
       owner_id: query.owner_name,
       project_id: query.project_name,
       updated_at: Default::default(),
