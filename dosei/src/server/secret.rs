@@ -20,8 +20,6 @@ pub async fn api_set_envs(
   Query(query): Query<SetEnvsQueryParams>,
   Json(body): Json<HashMap<String, String>>,
 ) -> Json<Vec<Secret>> {
-  println!("{:?}", body);
-  println!("{query:?}");
   for (name, value) in body.into_iter() {
     let secret = Secret {
       id: Uuid::new_v4(),
