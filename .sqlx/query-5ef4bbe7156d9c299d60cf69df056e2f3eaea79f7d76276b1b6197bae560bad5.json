@@ -25,7 +25,7 @@
       },
       {
         "ordinal": 4,
-        "name": "owner_id",
+        "name": "user_id",
         "type_info": "Uuid"
       },
       {
@@ -46,7 +46,7 @@
       false,
       false,
       false,
-      false,
+      true,
       false,
       false,
       false

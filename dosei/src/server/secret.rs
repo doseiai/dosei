@@ -27,21 +27,21 @@ pub async fn api_set_envs(
       id: Uuid::new_v4(),
       name,
       value,
-      owner_id: query.owner_name,
-      project_id: query.project_name,
+      user_id: query.user_id,
+      project_id: query.project_id,
       updated_at: Default::default(),
       created_at: Default::default(),
     });
   }
 
   let mut query_builder = QueryBuilder::new(
-    "INSERT INTO envs (id, name, value, owner_id, project_id, updated_at, created_at) ",
+    "INSERT INTO envs (id, name, value, user_id, project_id, updated_at, created_at) ",
   );
   query_builder.push_values(secrets, |mut b, new_secret| {
     b.push_bind(new_secret.id)
       .push_bind(new_secret.name)
       .push_bind(new_secret.value)
-      .push_bind(new_secret.owner_id)
+      .push_bind(new_secret.user_id)
       .push_bind(new_secret.project_id)
       .push_bind(new_secret.updated_at)
       .push_bind(new_secret.created_at);
@@ -50,6 +50,7 @@ pub async fn api_set_envs(
   let query = query_builder.build();
   query.execute(&**pool).await.unwrap();
 
+  // todo use the WHERE clause to narrow down the
   let recs = sqlx::query_as!(Secret, "SELECT * from envs")
     .fetch_all(&**pool)
     .await
@@ -61,6 +62,6 @@ pub async fn api_set_envs(
 #[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 pub struct SetEnvsQueryParams {
-  owner_name: Uuid,
-  project_name: Uuid,
+  user_id: Uuid,
+  project_id: Option<Uuid>,
 }
