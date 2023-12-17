@@ -2,40 +2,29 @@ use crate::schema::Secret;
 use axum::extract::Path;
 use axum::http::StatusCode;
 use axum::{Extension, Json};
+use chrono::Utc;
 use log::error;
 use serde::Deserialize;
 use sqlx::{Pool, Postgres};
 use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
-use chrono::Utc;
 
+// TODO: Return owner envs when project_id provided as well.
+// if conflicting owner env name and project override with project level one.
 pub async fn api_get_envs(
   pool: Extension<Arc<Pool<Postgres>>>,
   Path(params): Path<EnvsPathParams>,
 ) -> Result<Json<Vec<Secret>>, StatusCode> {
-  let result = match params.project_id {
-    Some(project_id) => {
-      sqlx::query_as!(
-        Secret,
-        "SELECT * FROM envs WHERE project_id = $1::uuid and owner_id = $2::uuid",
-        project_id,
-        params.owner_id
-      )
-      .fetch_all(&**pool)
-      .await
-    }
-    None => {
-      sqlx::query_as!(
-        Secret,
-        "SELECT * FROM envs WHERE owner_id = $1::uuid",
-        params.owner_id
-      )
-      .fetch_all(&**pool)
-      .await
-    }
-  };
-  match result {
+  match sqlx::query_as!(
+    Secret,
+    "SELECT * FROM envs WHERE project_id = $1::uuid and owner_id = $2::uuid",
+    params.get_project_id(),
+    params.owner_id
+  )
+  .fetch_all(&**pool)
+  .await
+  {
     Ok(recs) => Ok(Json(recs)),
     Err(err) => {
       error!("Error in retrieving secret: {:?}", err);
@@ -58,11 +47,11 @@ pub async fn api_set_envs(
        ON CONFLICT (owner_id, project_id, name) DO UPDATE
        SET value = EXCLUDED.value, updated_at = EXCLUDED.updated_at
        RETURNING *",
-      Uuid::new_v4(),
+      Uuid::default(),
       name,
       value,
       params.owner_id,
-      params.project_id,
+      params.get_project_id(),
       Utc::now(),
       Utc::now()
     );
@@ -82,4 +71,10 @@ pub async fn api_set_envs(
 pub struct EnvsPathParams {
   owner_id: Uuid,
   project_id: Option<Uuid>,
+}
+
+impl EnvsPathParams {
+  pub fn get_project_id(&self) -> Uuid {
+    self.project_id.unwrap_or_else(Uuid::default)
+  }
 }
