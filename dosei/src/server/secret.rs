@@ -20,6 +20,7 @@ pub async fn api_set_envs(
   Query(query): Query<SetEnvsQueryParams>,
   Json(body): Json<HashMap<String, String>>,
 ) -> Json<Vec<Secret>> {
+  let mut secrets: Vec<Secret> = vec![];
   for (name, value) in body.into_iter() {
     let secret = Secret {
       id: Uuid::new_v4(),
@@ -30,7 +31,7 @@ pub async fn api_set_envs(
       updated_at: Default::default(),
       created_at: Default::default(),
     };
-    let _rec = sqlx::query_as!(
+    let rec = sqlx::query_as!(
       Secret,
       r#"
       INSERT INTO envs (id, name, value, owner_id, project_id, updated_at, created_at)
@@ -48,12 +49,10 @@ pub async fn api_set_envs(
     .fetch_one(&**pool)
     .await
     .unwrap();
+
+    secrets.push(rec);
   }
-  let recs = sqlx::query_as!(Secret, "SELECT * from envs")
-    .fetch_all(&**pool)
-    .await
-    .unwrap();
-  Json(recs)
+  Json(secrets)
 }
 
 #[allow(dead_code)]
