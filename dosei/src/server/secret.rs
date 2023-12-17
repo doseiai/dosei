@@ -47,7 +47,7 @@ pub async fn api_set_envs(
        ON CONFLICT (owner_id, project_id, name) DO UPDATE
        SET value = EXCLUDED.value, updated_at = EXCLUDED.updated_at
        RETURNING *",
-      Uuid::default(),
+      Uuid::new_v4(),
       name,
       value,
       params.owner_id,
