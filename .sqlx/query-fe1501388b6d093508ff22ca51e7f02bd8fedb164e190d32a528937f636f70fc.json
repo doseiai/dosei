@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM envs WHERE project_id IS NULL and owner_id = $1::uuid",
+  "query": "SELECT * FROM envs WHERE owner_id = $1::uuid and name = $2::text and value = $3::text",
   "describe": {
     "columns": [
       {
@@ -41,7 +41,9 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "Uuid",
+        "Text",
+        "Text"
       ]
     },
     "nullable": [
@@ -54,5 +56,5 @@
       false
     ]
   },
-  "hash": "838858ed45073df8f96a9d5502d594af131dffd8810db30f61cb7c90d23dce29"
+  "hash": "fe1501388b6d093508ff22ca51e7f02bd8fedb164e190d32a528937f636f70fc"
 }
