@@ -1,5 +1,5 @@
 use crate::schema::Secret;
-use axum::extract::Query;
+use axum::extract::{Path, Query};
 use axum::{Extension, Json};
 use serde::Deserialize;
 use sqlx::{Pool, Postgres, QueryBuilder};
@@ -8,19 +8,18 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 #[derive(Deserialize, Debug)]
-pub struct SetEnvsQueryParams {
-  owner_id: Uuid,
+pub struct GetEnvsQueryParams {
   project_id: Option<Uuid>,
 }
 
 #[derive(Deserialize, Debug)]
-pub struct GetEnvsQueryParams {
+pub struct GetEnvsPathParams {
   owner_id: Uuid,
-  project_id: Option<Uuid>,
 }
 
 pub async fn api_get_envs(
   pool: Extension<Arc<Pool<Postgres>>>,
+  Path(params): Path<GetEnvsPathParams>,
   Query(query): Query<GetEnvsQueryParams>,
 ) -> Json<Vec<Secret>> {
   match query.project_id {
@@ -29,7 +28,7 @@ pub async fn api_get_envs(
         Secret,
         r#"SELECT * FROM envs WHERE project_id = $1::uuid and owner_id = $2::uuid"#,
         query.project_id,
-        query.owner_id
+        params.owner_id
       )
       .fetch_all(&**pool)
       .await
@@ -40,7 +39,7 @@ pub async fn api_get_envs(
       let recs = sqlx::query_as!(
         Secret,
         r#"SELECT * FROM envs WHERE project_id IS NULL and owner_id = $1::uuid"#,
-        query.owner_id
+        params.owner_id
       )
       .fetch_all(&**pool)
       .await
@@ -50,8 +49,19 @@ pub async fn api_get_envs(
   }
 }
 
+#[derive(Deserialize, Debug)]
+pub struct SetEnvsQueryParams {
+  project_id: Option<Uuid>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct SetEnvsPathParams {
+  owner_id: Uuid,
+}
+
 pub async fn api_set_envs(
   pool: Extension<Arc<Pool<Postgres>>>,
+  Path(params): Path<SetEnvsPathParams>,
   Query(query): Query<SetEnvsQueryParams>,
   Json(body): Json<HashMap<String, String>>,
 ) -> Json<Vec<Secret>> {
@@ -62,7 +72,7 @@ pub async fn api_set_envs(
       id: Uuid::new_v4(),
       name,
       value,
-      owner_id: query.owner_id,
+      owner_id: params.owner_id,
       project_id: query.project_id,
       updated_at: Default::default(),
       created_at: Default::default(),
@@ -87,7 +97,7 @@ pub async fn api_set_envs(
   let recs = sqlx::query_as!(
     Secret,
     r#"SELECT * FROM envs WHERE owner_id = $1::uuid"#,
-    query.owner_id
+    params.owner_id
   )
   .fetch_all(&**pool)
   .await
