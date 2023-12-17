@@ -25,7 +25,7 @@
       },
       {
         "ordinal": 4,
-        "name": "user_id",
+        "name": "owner_id",
         "type_info": "Uuid"
       },
       {
