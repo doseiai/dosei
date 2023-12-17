@@ -15,9 +15,9 @@ pub async fn api_get_envs(
     Some(_) => {
       let recs = sqlx::query_as!(
         Secret,
-        r#"SELECT * FROM envs WHERE project_id = $1::uuid and user_id = $2::uuid"#,
+        r#"SELECT * FROM envs WHERE project_id = $1::uuid and owner_id = $2::uuid"#,
         query.project_id,
-        query.user_id
+        query.owner_id
       )
       .fetch_all(&**pool)
       .await
@@ -27,8 +27,8 @@ pub async fn api_get_envs(
     None => {
       let recs = sqlx::query_as!(
         Secret,
-        r#"SELECT * FROM envs WHERE project_id IS NULL and user_id = $1::uuid"#,
-        query.user_id
+        r#"SELECT * FROM envs WHERE project_id IS NULL and owner_id = $1::uuid"#,
+        query.owner_id
       )
       .fetch_all(&**pool)
       .await
@@ -50,7 +50,7 @@ pub async fn api_set_envs(
       id: Uuid::new_v4(),
       name,
       value,
-      user_id: query.user_id,
+      owner_id: query.owner_id,
       project_id: query.project_id,
       updated_at: Default::default(),
       created_at: Default::default(),
@@ -58,13 +58,13 @@ pub async fn api_set_envs(
   }
 
   let mut query_builder = QueryBuilder::new(
-    "INSERT INTO envs (id, name, value, user_id, project_id, updated_at, created_at) ",
+    "INSERT INTO envs (id, name, value, owner_id, project_id, updated_at, created_at) ",
   );
   query_builder.push_values(secrets, |mut b, new_secret| {
     b.push_bind(new_secret.id)
       .push_bind(new_secret.name)
       .push_bind(new_secret.value)
-      .push_bind(new_secret.user_id)
+      .push_bind(new_secret.owner_id)
       .push_bind(new_secret.project_id)
       .push_bind(new_secret.updated_at)
       .push_bind(new_secret.created_at);
@@ -85,6 +85,6 @@ pub async fn api_set_envs(
 #[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 pub struct SetEnvsQueryParams {
-  user_id: Uuid,
+  owner_id: Uuid,
   project_id: Option<Uuid>,
 }

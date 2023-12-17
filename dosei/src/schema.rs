@@ -30,7 +30,7 @@ pub struct Secret {
   pub id: Uuid,
   pub name: String,
   pub value: String,
-  pub user_id: Uuid,
+  pub owner_id: Uuid,
   pub project_id: Option<Uuid>,
   pub updated_at: DateTime<Utc>,
   pub created_at: DateTime<Utc>,

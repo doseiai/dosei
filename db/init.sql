@@ -16,9 +16,9 @@ CREATE TABLE envs (
    value TEXT NOT NULL,
    -- project id can be nullable
    project_id UUID,
-   user_id UUID NOT NULL,
+   owner_id UUID NOT NULL,
    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
    PRIMARY KEY (id),
-   UNIQUE (name, project_id, user_id)
+   UNIQUE (name, project_id, owner_id)
 );
