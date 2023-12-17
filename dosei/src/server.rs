@@ -15,6 +15,10 @@ use tokio::net::TcpListener;
 
 pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
   let pool = Pool::<Postgres>::connect(&env::var("DATABASE_URL")?).await?;
+
+  // migrate db
+  sqlx::migrate!("./../migrations").run(&pool).await?;
+
   let shared_pool = Arc::new(pool);
   info!("Successfully connected to Postgres");
   cluster::start_cluster(config)?;
