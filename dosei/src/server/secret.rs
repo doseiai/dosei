@@ -75,6 +75,6 @@ pub struct EnvsPathParams {
 
 impl EnvsPathParams {
   pub fn get_project_id(&self) -> Uuid {
-    self.project_id.unwrap_or_else(Uuid::default)
+    self.project_id.unwrap_or_default()
   }
 }
