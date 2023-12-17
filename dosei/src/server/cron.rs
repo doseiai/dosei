@@ -40,7 +40,7 @@ pub fn start_job_manager(config: &'static Config, pool: Arc<Pool<Postgres>>) {
   });
   tokio::spawn(async move {
     loop {
-      run_jobs(Arc::clone(&pool)).await;
+      run_jobs(config, Arc::clone(&pool)).await;
       sleep(Duration::from_secs(60)).await;
     }
   });
@@ -219,11 +219,14 @@ async fn container_logs(container_id: &str) -> Result<Vec<String>, bollard::erro
   Ok(log_lines)
 }
 
-async fn run_job(cron_job: CronJob) {
+async fn run_job(config: &'static Config, cron_job: CronJob) {
   let docker = Docker::connect_with_socket_defaults().unwrap();
 
-  let image_name = "us-docker.pkg.dev/serious-sublime-394315/builds/alw3ys/dosei-bot";
-  let image_tag = format!("{}:{}", &image_name, &cron_job.deployment_id);
+  let image_name = "alw3ys/dosei-bot";
+  let image_tag = format!(
+    "{}/{}:{}",
+    &config.container_registry_url, &image_name, &cron_job.deployment_id
+  );
 
   // Check if image exists locally
   let mut filters = HashMap::new();
@@ -283,7 +286,7 @@ async fn run_job(cron_job: CronJob) {
   }
 }
 
-async fn run_jobs(pool: Arc<Pool<Postgres>>) {
+async fn run_jobs(config: &'static Config, pool: Arc<Pool<Postgres>>) {
   let cron_jobs = get_cron_jobs(pool).await;
   let now = Utc::now();
   for job in cron_jobs.0 {
@@ -299,7 +302,7 @@ async fn run_jobs(pool: Arc<Pool<Postgres>>) {
           "Job: {} to run {}; {}",
           &job.id, &job.schedule, &job.entrypoint
         );
-        run_job(job).await;
+        run_job(config, job).await;
       }
     }
   }

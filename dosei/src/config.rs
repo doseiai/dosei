@@ -1,3 +1,4 @@
+use anyhow::Context;
 use clap::Parser;
 use dosei_proto::node_info::NodeType;
 use dotenv::dotenv;
@@ -42,6 +43,7 @@ pub struct Config {
   pub address: Address,
   pub node_info: NodeInfo,
   pub primary_address: Option<String>,
+  pub container_registry_url: String,
 }
 
 impl Config {
@@ -77,14 +79,16 @@ impl Config {
   }
 }
 
-pub fn init() -> Config {
+pub fn init() -> anyhow::Result<Config> {
   dotenv().ok();
   let args = Args::parse();
   if env::var("RUST_LOG").is_err() {
     env::set_var("RUST_LOG", "info");
   }
+  let container_registry_url =
+    env::var("CONTAINER_REGISTRY_URL").context("CONTAINER_REGISTRY_URL is required.")?;
   env_logger::init();
-  Config {
+  Ok(Config {
     address: Address {
       host: args.host.clone(),
       port: args.port,
@@ -102,5 +106,6 @@ pub fn init() -> Config {
       },
     },
     primary_address: args.connect,
-  }
+    container_registry_url,
+  })
 }
