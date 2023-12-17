@@ -1,68 +1,51 @@
 use crate::schema::Secret;
-use axum::extract::{Path, Query};
+use axum::extract::Path;
+use axum::http::StatusCode;
 use axum::{Extension, Json};
+use log::error;
 use serde::Deserialize;
 use sqlx::{Pool, Postgres, QueryBuilder};
 use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
 
-#[derive(Deserialize, Debug)]
-pub struct GetEnvsQueryParams {
-  project_id: Option<Uuid>,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct GetEnvsPathParams {
-  owner_id: Uuid,
-}
-
 pub async fn api_get_envs(
   pool: Extension<Arc<Pool<Postgres>>>,
-  Path(params): Path<GetEnvsPathParams>,
-  Query(query): Query<GetEnvsQueryParams>,
-) -> Json<Vec<Secret>> {
-  match query.project_id {
-    Some(_) => {
-      let recs = sqlx::query_as!(
+  Path(params): Path<EnvsPathParams>,
+) -> Result<Json<Vec<Secret>>, StatusCode> {
+  let result = match params.project_id {
+    Some(project_id) => {
+      sqlx::query_as!(
         Secret,
-        r#"SELECT * FROM envs WHERE project_id = $1::uuid and owner_id = $2::uuid"#,
-        query.project_id,
+        "SELECT * FROM envs WHERE project_id = $1::uuid and owner_id = $2::uuid",
+        project_id,
         params.owner_id
       )
       .fetch_all(&**pool)
       .await
-      .unwrap();
-      Json(recs)
     }
     None => {
-      let recs = sqlx::query_as!(
+      sqlx::query_as!(
         Secret,
-        r#"SELECT * FROM envs WHERE owner_id = $1::uuid"#,
+        "SELECT * FROM envs WHERE owner_id = $1::uuid",
         params.owner_id
       )
       .fetch_all(&**pool)
       .await
-      .unwrap();
-      Json(recs)
+    }
+  };
+  match result {
+    Ok(recs) => Ok(Json(recs)),
+    Err(err) => {
+      error!("{:?}", err);
+      Err(StatusCode::INTERNAL_SERVER_ERROR)
     }
   }
 }
 
-#[derive(Deserialize, Debug)]
-pub struct SetEnvsQueryParams {
-  project_id: Option<Uuid>,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct SetEnvsPathParams {
-  owner_id: Uuid,
-}
-
 pub async fn api_set_envs(
   pool: Extension<Arc<Pool<Postgres>>>,
-  Path(params): Path<SetEnvsPathParams>,
-  Query(query): Query<SetEnvsQueryParams>,
+  Path(params): Path<EnvsPathParams>,
   Json(body): Json<HashMap<String, String>>,
 ) -> Json<Vec<Secret>> {
   let mut secrets: Vec<Secret> = vec![];
@@ -87,7 +70,7 @@ pub async fn api_set_envs(
         name,
         value,
         owner_id: params.owner_id,
-        project_id: query.project_id,
+        project_id: params.project_id,
         updated_at: Default::default(),
         created_at: Default::default(),
       });
@@ -111,12 +94,12 @@ pub async fn api_set_envs(
 
   // todo
   // ideally should get just the list of env vars updated via the call
-  match query.project_id {
+  match params.project_id {
     Some(_) => {
       let recs = sqlx::query_as!(
         Secret,
         r#"SELECT * FROM envs WHERE project_id = $1::uuid and owner_id = $2::uuid"#,
-        query.project_id,
+        params.project_id,
         params.owner_id
       )
       .fetch_all(&**pool)
@@ -136,4 +119,10 @@ pub async fn api_set_envs(
       Json(recs)
     }
   }
+}
+
+#[derive(Deserialize, Debug)]
+pub struct EnvsPathParams {
+  owner_id: Uuid,
+  project_id: Option<Uuid>,
 }
