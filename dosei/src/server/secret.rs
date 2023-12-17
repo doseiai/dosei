@@ -7,12 +7,35 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
 
-pub async fn api_get_envs(pool: Extension<Arc<Pool<Postgres>>>) -> Json<Vec<Secret>> {
-  let recs = sqlx::query_as!(Secret, "SELECT * from envs")
-    .fetch_all(&**pool)
-    .await
-    .unwrap();
-  Json(recs)
+pub async fn api_get_envs(
+  pool: Extension<Arc<Pool<Postgres>>>,
+  Query(query): Query<SetEnvsQueryParams>,
+) -> Json<Vec<Secret>> {
+  match query.project_id {
+    Some(_) => {
+      let recs = sqlx::query_as!(
+        Secret,
+        r#"SELECT * FROM envs WHERE project_id = $1::uuid and user_id = $2::uuid"#,
+        query.project_id,
+        query.user_id
+      )
+      .fetch_all(&**pool)
+      .await
+      .unwrap();
+      Json(recs)
+    }
+    None => {
+      let recs = sqlx::query_as!(
+        Secret,
+        r#"SELECT * FROM envs WHERE project_id IS NULL and user_id = $1::uuid"#,
+        query.user_id
+      )
+      .fetch_all(&**pool)
+      .await
+      .unwrap();
+      Json(recs)
+    }
+  }
 }
 
 pub async fn api_set_envs(
