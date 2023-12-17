@@ -38,7 +38,7 @@ pub async fn api_get_envs(
     None => {
       let recs = sqlx::query_as!(
         Secret,
-        r#"SELECT * FROM envs WHERE project_id IS NULL and owner_id = $1::uuid"#,
+        r#"SELECT * FROM envs WHERE owner_id = $1::uuid"#,
         params.owner_id
       )
       .fetch_all(&**pool)
@@ -68,15 +68,30 @@ pub async fn api_set_envs(
   let mut secrets: Vec<Secret> = vec![];
 
   for (name, value) in body.into_iter() {
-    secrets.push(Secret {
-      id: Uuid::new_v4(),
+    // check db for this name and see if it exists
+    let recs = sqlx::query_as!(
+      Secret,
+      r#"SELECT * FROM envs WHERE owner_id = $1::uuid and name = $2::text and value = $3::text"#,
+      params.owner_id,
       name,
-      value,
-      owner_id: params.owner_id,
-      project_id: query.project_id,
-      updated_at: Default::default(),
-      created_at: Default::default(),
-    });
+      value
+    )
+    .fetch_all(&**pool)
+    .await
+    .unwrap();
+
+    // if nothing, set for update
+    if recs.is_empty() {
+      secrets.push(Secret {
+        id: Uuid::new_v4(),
+        name,
+        value,
+        owner_id: params.owner_id,
+        project_id: query.project_id,
+        updated_at: Default::default(),
+        created_at: Default::default(),
+      });
+    }
   }
 
   let mut query_builder = QueryBuilder::new(
@@ -94,14 +109,31 @@ pub async fn api_set_envs(
 
   query_builder.build().execute(&**pool).await.unwrap();
 
-  let recs = sqlx::query_as!(
-    Secret,
-    r#"SELECT * FROM envs WHERE owner_id = $1::uuid"#,
-    params.owner_id
-  )
-  .fetch_all(&**pool)
-  .await
-  .unwrap();
-
-  Json(recs)
+  // todo
+  // ideally should get just the list of env vars updated via the call
+  match query.project_id {
+    Some(_) => {
+      let recs = sqlx::query_as!(
+        Secret,
+        r#"SELECT * FROM envs WHERE project_id = $1::uuid and owner_id = $2::uuid"#,
+        query.project_id,
+        params.owner_id
+      )
+      .fetch_all(&**pool)
+      .await
+      .unwrap();
+      Json(recs)
+    }
+    None => {
+      let recs = sqlx::query_as!(
+        Secret,
+        r#"SELECT * FROM envs WHERE owner_id = $1::uuid"#,
+        params.owner_id
+      )
+      .fetch_all(&**pool)
+      .await
+      .unwrap();
+      Json(recs)
+    }
+  }
 }
