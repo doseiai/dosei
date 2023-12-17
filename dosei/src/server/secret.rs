@@ -7,9 +7,21 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
 
+#[derive(Deserialize, Debug)]
+pub struct SetEnvsQueryParams {
+  owner_id: Uuid,
+  project_id: Option<Uuid>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct GetEnvsQueryParams {
+  owner_id: Uuid,
+  project_id: Option<Uuid>,
+}
+
 pub async fn api_get_envs(
   pool: Extension<Arc<Pool<Postgres>>>,
-  Query(query): Query<SetEnvsQueryParams>,
+  Query(query): Query<GetEnvsQueryParams>,
 ) -> Json<Vec<Secret>> {
   match query.project_id {
     Some(_) => {
@@ -60,31 +72,26 @@ pub async fn api_set_envs(
   let mut query_builder = QueryBuilder::new(
     "INSERT INTO envs (id, name, value, owner_id, project_id, updated_at, created_at) ",
   );
-  query_builder.push_values(secrets, |mut b, new_secret| {
-    b.push_bind(new_secret.id)
-      .push_bind(new_secret.name)
-      .push_bind(new_secret.value)
-      .push_bind(new_secret.owner_id)
-      .push_bind(new_secret.project_id)
-      .push_bind(new_secret.updated_at)
-      .push_bind(new_secret.created_at);
+  query_builder.push_values(secrets, |mut qb, scr| {
+    qb.push_bind(scr.id)
+      .push_bind(scr.name)
+      .push_bind(scr.value)
+      .push_bind(scr.owner_id)
+      .push_bind(scr.project_id)
+      .push_bind(scr.updated_at)
+      .push_bind(scr.created_at);
   });
 
-  let query = query_builder.build();
-  query.execute(&**pool).await.unwrap();
+  query_builder.build().execute(&**pool).await.unwrap();
 
-  // todo use the WHERE clause to narrow down the
-  let recs = sqlx::query_as!(Secret, "SELECT * from envs")
-    .fetch_all(&**pool)
-    .await
-    .unwrap();
+  let recs = sqlx::query_as!(
+    Secret,
+    r#"SELECT * FROM envs WHERE owner_id = $1::uuid"#,
+    query.owner_id
+  )
+  .fetch_all(&**pool)
+  .await
+  .unwrap();
 
   Json(recs)
-}
-
-#[allow(dead_code)]
-#[derive(Deserialize, Debug)]
-pub struct SetEnvsQueryParams {
-  owner_id: Uuid,
-  project_id: Option<Uuid>,
 }

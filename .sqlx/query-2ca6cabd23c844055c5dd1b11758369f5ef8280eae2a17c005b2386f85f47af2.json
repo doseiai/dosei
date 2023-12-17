@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * from envs",
+  "query": "SELECT * FROM envs WHERE owner_id = $1::uuid",
   "describe": {
     "columns": [
       {
@@ -40,7 +40,9 @@
       }
     ],
     "parameters": {
-      "Left": []
+      "Left": [
+        "Uuid"
+      ]
     },
     "nullable": [
       false,
@@ -52,5 +54,5 @@
       false
     ]
   },
-  "hash": "5ef4bbe7156d9c299d60cf69df056e2f3eaea79f7d76276b1b6197bae560bad5"
+  "hash": "2ca6cabd23c844055c5dd1b11758369f5ef8280eae2a17c005b2386f85f47af2"
 }
