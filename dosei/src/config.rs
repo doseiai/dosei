@@ -1,6 +1,6 @@
 use anyhow::Context;
 use clap::Parser;
-use dosei_proto::node_info::NodeType;
+use dosei_proto::ping::NodeType;
 use dotenv::dotenv;
 use std::fmt::Formatter;
 use std::{env, fmt};

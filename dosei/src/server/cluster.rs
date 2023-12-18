@@ -1,6 +1,6 @@
 use crate::config::Config;
 use dosei_proto::ProtoChannel;
-use dosei_proto::{cron_job, node_info};
+use dosei_proto::{cron_job, ping};
 use log::{error, info};
 use once_cell::sync::Lazy;
 use prost::Message;
@@ -17,11 +17,11 @@ static CLUSTER_INFO: Lazy<Arc<Mutex<ClusterInfo>>> = Lazy::new(|| {
 
 #[derive(Debug, Clone)]
 pub struct ClusterInfo {
-  pub replicas: Vec<node_info::NodeInfo>,
+  pub replicas: Vec<ping::Ping>,
 }
 
 impl ClusterInfo {
-  pub fn add_or_update_replica(&mut self, replica: node_info::NodeInfo) {
+  pub fn add_or_update_replica(&mut self, replica: ping::Ping) {
     match self.replicas.iter_mut().find(|r| r.id == replica.id) {
       Some(existing_replica) => {
         *existing_replica = replica;
@@ -58,8 +58,8 @@ pub fn start_node(config: &'static Config) {
 
       // Process data based on identified type
       match buf.first() {
-        Some(&node_info::NodeInfo::PROTO_ID) => {
-          let received_data = match node_info::NodeInfo::decode(buf_slice) {
+        Some(&ping::Ping::PROTO_ID) => {
+          let received_data = match ping::Ping::decode(buf_slice) {
             Ok(data) => data,
             Err(e) => {
               error!("Failed to decode ClusterNode: {}", e);

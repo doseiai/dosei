@@ -7,9 +7,9 @@ enum NodeType {
   REPLICA = 1;
 }
 
-message NodeInfo {
+message Ping {
   string id = 1;
-  NodeType enum = 2;
+  NodeType node_type = 2;
   string address = 3;
   string version = 4;
 }

@@ -2,14 +2,15 @@ pub trait ProtoChannel {
   const PROTO_ID: u8;
 }
 
-pub mod node_info {
+pub mod ping {
   include!(concat!(env!("OUT_DIR"), "/dosei.cluster.rs"));
 }
 
-impl ProtoChannel for node_info::NodeInfo {
+impl ProtoChannel for ping::Ping {
   // PING
   const PROTO_ID: u8 = 0x00;
-  // 0x02 reserved for PONG
+  // Reserve for PONG
+  //const RESPONSE_PROTO_ID: u8 = 0x01;
 }
 
 pub mod cron_job {

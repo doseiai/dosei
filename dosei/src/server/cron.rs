@@ -12,7 +12,7 @@ use bollard::system::EventsOptions;
 use bollard::Docker;
 use chrono::Utc;
 use cron::Schedule;
-use dosei_proto::{node_info, ProtoChannel};
+use dosei_proto::{ping, ProtoChannel};
 use futures_util::stream::StreamExt;
 use gcp_auth::AuthenticationManager;
 use log::{error, info};
@@ -50,15 +50,15 @@ pub fn start_job_manager(config: &'static Config, pool: Arc<Pool<Postgres>>) {
 }
 
 async fn update_status(config: &'static Config) -> Result<(), Box<dyn Error>> {
-  let node_info = node_info::NodeInfo {
+  let node_info = ping::Ping {
     id: config.node_info.id.to_string(),
-    r#enum: i32::from(config.node_info.node_type),
+    node_type: i32::from(config.node_info.node_type),
     address: config.address.to_string(),
     version: config::VERSION.to_string(),
   };
 
   let mut buf = Vec::with_capacity(node_info.encoded_len() + 1);
-  buf.push(node_info::NodeInfo::PROTO_ID);
+  buf.push(ping::Ping::PROTO_ID);
 
   // Serialize the CronJob instance to a buffer
   node_info.encode(&mut buf)?;
