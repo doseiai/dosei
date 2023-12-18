@@ -2,6 +2,7 @@ mod cluster;
 mod cron;
 mod secret;
 
+use anyhow::Context;
 use sqlx::postgres::Postgres;
 use sqlx::Pool;
 use std::env;
@@ -33,7 +34,9 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
     .route("/cron-jobs", routing::get(cron::api_get_cron_jobs))
     .layer(Extension(Arc::clone(&shared_pool)));
   let address = config.address.to_string();
-  let listener = TcpListener::bind(&address).await?;
+  let listener = TcpListener::bind(&address)
+    .await
+    .context("Failed to start server")?;
   info!("Dosei running on http://{} (Press CTRL+C to quit", address);
   axum::serve(listener, app).await?;
   Ok(())
