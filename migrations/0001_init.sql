@@ -1,4 +1,4 @@
-CREATE TABLE cron_jobs (
+CREATE TABLE IF NOT EXISTS cron_jobs (
    id UUID NOT NULL,
    schedule TEXT NOT NULL,
    entrypoint TEXT NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE cron_jobs (
    PRIMARY KEY (id)
 );
 
-CREATE TABLE envs (
+CREATE TABLE IF NOT EXISTS envs (
    id UUID NOT NULL,
    name TEXT NOT NULL,
    value TEXT NOT NULL,
