@@ -1,19 +1,32 @@
+use clap::Parser;
 use dotenv::dotenv;
 use std::fmt::Formatter;
 use std::{env, fmt};
 
 pub fn init() -> anyhow::Result<Config> {
   dotenv().ok();
+  let args = Args::parse();
   if env::var("RUST_LOG").is_err() {
     env::set_var("RUST_LOG", "info");
   }
   env_logger::init();
   Ok(Config {
     address: Address {
-      host: "127.0.0.1".to_string(),
-      port: 8081,
+      host: args.host.clone(),
+      port: args.port,
     },
   })
+}
+
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None, disable_help_flag = true)]
+struct Args {
+  #[arg(short, long, default_value = "127.0.0.1")]
+  host: String,
+  #[arg(short, long, default_value = "8080")]
+  port: u16,
+  #[arg(short, long)]
+  connect: Option<String>,
 }
 
 #[derive(Debug, Clone)]

@@ -1942,6 +1942,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
+ "clap",
  "dotenv",
  "env_logger",
  "hyper 1.0.1",
