@@ -35,4 +35,5 @@ jobs:
         run: cargo install sqlx-cli --no-default-features --features native-tls,postgres
 
       - name: Check SQLx
-        run: cargo sqlx prepare --check --workspace
+        working-directory: dosei
+        run: cargo sqlx prepare --check
