@@ -1,5 +1,5 @@
 > :warning: Unstable Release!
-> This a work in progress of te migration of our internal proxy to Rust.
+> This is a work in progress for the migration of our internal proxy to Rust.
 > Expect breaking changes. Use at your own risk.
 
 # Dosei Proxy
