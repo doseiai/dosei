@@ -18,7 +18,7 @@ serde = { workspace = true, features = ["derive"] }
 prost = { workspace = true }
 dotenv = { workspace = true }
 
-axum = "0.6.20"
+axum = "0.7.2"
 env_logger = "0.10.1"
 log = "0.4.20"
 cron = "0.12.0"

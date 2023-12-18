@@ -10,6 +10,7 @@ use std::sync::Arc;
 use crate::config::Config;
 use axum::{routing, Extension, Router};
 use log::info;
+use tokio::net::TcpListener;
 
 pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
   let pool = Pool::<Postgres>::connect(&env::var("DATABASE_URL")?).await?;
@@ -32,9 +33,8 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
     .route("/cron-jobs", routing::get(cron::api_get_cron_jobs))
     .layer(Extension(Arc::clone(&shared_pool)));
   let address = config.address.to_string();
+  let listener = TcpListener::bind(&address).await?;
   info!("Dosei running on http://{} (Press CTRL+C to quit", address);
-  axum::Server::bind(&address.parse()?)
-    .serve(app.into_make_service())
-    .await?;
+  axum::serve(listener, app).await?;
   Ok(())
 }
