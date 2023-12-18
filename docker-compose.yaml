@@ -14,3 +14,12 @@ services:
     command: >
       -c log_connections=on
       -c log_disconnections=on
+  redis:
+    container_name: redis
+    restart: always
+    image: redis:7.2.3
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - ./data/redis:/data
+    ports:
+      - '6379:6379'
