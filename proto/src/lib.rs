@@ -7,10 +7,15 @@ pub mod ping {
 }
 
 impl ProtoChannel for ping::Ping {
-  // PING
   const PROTO_ID: u8 = 0x00;
-  // Reserve for PONG
-  //const RESPONSE_PROTO_ID: u8 = 0x01;
+}
+
+pub mod pong {
+  include!(concat!(env!("OUT_DIR"), "/dosei.cluster.rs"));
+}
+
+impl ProtoChannel for pong::Ping {
+  const PROTO_ID: u8 = 0x01;
 }
 
 pub mod cron_job {

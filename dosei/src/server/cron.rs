@@ -25,20 +25,20 @@ use std::error::Error;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::time::sleep;
 use uuid::Uuid;
 
 pub fn start_job_manager(config: &'static Config, pool: Arc<Pool<Postgres>>) {
-  tokio::spawn(async move {
-    loop {
-      sleep(Duration::from_secs(1)).await;
-      if config.is_replica() {
+  if config.is_replica() {
+    tokio::spawn(async move {
+      loop {
+        sleep(Duration::from_secs(1)).await;
         update_status(config).await.unwrap();
       }
-    }
-  });
+    });
+  }
   tokio::spawn(async move {
     loop {
       run_jobs(config, Arc::clone(&pool)).await;
@@ -178,7 +178,7 @@ async fn listen_docker_events() {
           _ => {}
         }
       }
-      Err(e) => error!("{:?}", e),
+      Err(e) => error!("Docker streaming failed: {:?}", e),
     }
   }
 }
