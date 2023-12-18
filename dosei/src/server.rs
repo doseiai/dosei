@@ -17,7 +17,7 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
   let pool = Pool::<Postgres>::connect(&env::var("DATABASE_URL")?).await?;
   let shared_pool = Arc::new(pool);
   info!("Successfully connected to Postgres");
-  cluster::start_node(config);
+  cluster::start_cluster(config)?;
   cron::start_job_manager(config, Arc::clone(&shared_pool));
   let app = Router::new()
     .route("/envs/:owner_id", routing::post(secret::api_set_envs))

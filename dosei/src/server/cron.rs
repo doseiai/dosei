@@ -1,4 +1,3 @@
-use crate::config;
 use crate::config::Config;
 use crate::schema::{CronJob, Job};
 use axum::http::StatusCode;
@@ -13,32 +12,19 @@ use bollard::system::EventsOptions;
 use bollard::Docker;
 use chrono::Utc;
 use cron::Schedule;
-use dosei_proto::{ping, ProtoChannel};
 use futures_util::stream::StreamExt;
 use gcp_auth::AuthenticationManager;
 use log::{error, info};
-use prost::Message;
 use serde::Deserialize;
 use sqlx::{Pool, Postgres};
 use std::collections::HashMap;
-use std::error::Error;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::TcpStream;
 use tokio::time::sleep;
 use uuid::Uuid;
 
 pub fn start_job_manager(config: &'static Config, pool: Arc<Pool<Postgres>>) {
-  if config.is_replica() {
-    tokio::spawn(async move {
-      loop {
-        sleep(Duration::from_secs(1)).await;
-        update_status(config).await.unwrap();
-      }
-    });
-  }
   tokio::spawn(async move {
     loop {
       run_jobs(config, Arc::clone(&pool)).await;
@@ -48,29 +34,6 @@ pub fn start_job_manager(config: &'static Config, pool: Arc<Pool<Postgres>>) {
   tokio::spawn(async move {
     listen_docker_events().await;
   });
-}
-
-async fn update_status(config: &'static Config) -> Result<(), Box<dyn Error>> {
-  let node_info = ping::Ping {
-    id: config.node_info.id.to_string(),
-    node_type: i32::from(config.node_info.node_type),
-    address: config.address.to_string(),
-    version: config::VERSION.to_string(),
-  };
-
-  let mut buf = Vec::with_capacity(node_info.encoded_len() + 1);
-  buf.push(ping::Ping::PROTO_ID);
-
-  // Serialize the CronJob instance to a buffer
-  node_info.encode(&mut buf)?;
-
-  // Connect to a peer
-  let primary_node_address = config.get_primary_node_address().to_string();
-  let mut stream = TcpStream::connect(primary_node_address).await?;
-
-  // Write the serialized data
-  stream.write_all(&buf).await?;
-  Ok(())
 }
 
 #[derive(Deserialize)]
