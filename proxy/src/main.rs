@@ -1,3 +1,4 @@
+use anyhow::Context;
 use axum::{
   body::Body,
   extract::{Request, State},
@@ -6,13 +7,22 @@ use axum::{
   routing::any,
   Router,
 };
+use dotenv::dotenv;
 use hyper::StatusCode;
 use hyper_util::{client::legacy::connect::HttpConnector, rt::TokioExecutor};
+use log::info;
+use std::env;
+use tokio::net::TcpListener;
 
 type Client = hyper_util::client::legacy::Client<HttpConnector, Body>;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()> {
+  dotenv().ok();
+  if env::var("RUST_LOG").is_err() {
+    env::set_var("RUST_LOG", "info");
+  }
+  env_logger::init();
   let client: Client = hyper_util::client::legacy::Client::<(), ()>::builder(TokioExecutor::new())
     .build(HttpConnector::new());
 
@@ -21,11 +31,16 @@ async fn main() {
     .route("/*path", any(handler))
     .with_state(client);
 
-  let listener = tokio::net::TcpListener::bind("127.0.0.1:8081")
+  let address = "127.0.0.1:8081";
+  let listener = TcpListener::bind(&address)
     .await
-    .unwrap();
-  println!("listening on {}", listener.local_addr().unwrap());
-  axum::serve(listener, app).await.unwrap();
+    .context("Failed to start server")?;
+  info!(
+    "Dosei Proxy running on http://{} (Press CTRL+C to quit",
+    address
+  );
+  axum::serve(listener, app).await?;
+  Ok(())
 }
 
 async fn handler(State(client): State<Client>, mut req: Request) -> Result<Response, StatusCode> {

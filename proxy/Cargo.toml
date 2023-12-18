@@ -4,7 +4,13 @@ version = { workspace = true }
 edition = { workspace = true }
 
 [dependencies]
+dotenv = { workspace = true }
+
+mongodb = "2.8.0"
 axum = "0.7.2"
 hyper = { version = "1.0.0", features = ["full"] }
 hyper-util = { version = "0.1.1", features = ["client-legacy"] }
 tokio = { version = "1", features = ["full"] }
+anyhow = "1.0.75"
+env_logger = "0.10.1"
+log = "0.4.20"
