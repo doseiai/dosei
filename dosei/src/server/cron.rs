@@ -1,6 +1,7 @@
 use crate::config;
 use crate::config::Config;
 use crate::schema::{CronJob, Job};
+use axum::http::StatusCode;
 use axum::{Extension, Json};
 use bollard::auth::DockerCredentials;
 use bollard::container::{
@@ -83,7 +84,7 @@ pub struct CreateJobBody {
 pub async fn api_create_job(
   pool: Extension<Arc<Pool<Postgres>>>,
   Json(body): Json<CreateJobBody>,
-) -> Json<CronJob> {
+) -> Result<Json<CronJob>, StatusCode> {
   let cron_job = CronJob {
     id: Uuid::new_v4(),
     schedule: body.schedule,
@@ -93,13 +94,13 @@ pub async fn api_create_job(
     updated_at: Default::default(),
     created_at: Default::default(),
   };
-  let rec = sqlx::query_as!(
+  match sqlx::query_as!(
     CronJob,
-    r#"
+    "
     INSERT INTO cron_jobs (id, schedule, entrypoint, owner_id, deployment_id, updated_at, created_at)
     VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING *
-    "#,
+    ",
     cron_job.id,
     cron_job.schedule,
     cron_job.entrypoint,
@@ -107,20 +108,36 @@ pub async fn api_create_job(
     cron_job.deployment_id,
     cron_job.updated_at,
     cron_job.created_at
-  ).fetch_one(&**pool).await.unwrap();
-  Json(rec)
+  ).fetch_one(&**pool).await
+  {
+    Ok(recs) => Ok(Json(recs)),
+    Err(err) => {
+      error!("Error in creating job: {:?}", err);
+      Err(StatusCode::INTERNAL_SERVER_ERROR)
+    }
+  }
 }
 
-pub async fn api_get_cron_jobs(pool: Extension<Arc<Pool<Postgres>>>) -> Json<Vec<CronJob>> {
-  get_cron_jobs(pool.0).await
+pub async fn api_get_cron_jobs(
+  pool: Extension<Arc<Pool<Postgres>>>,
+) -> Result<Json<Vec<CronJob>>, StatusCode> {
+  match get_cron_jobs(pool.0).await {
+    Ok(result) => Ok(result),
+    Err(err) => {
+      error!("Error in reading job: {:?}", err);
+      Err(StatusCode::INTERNAL_SERVER_ERROR)
+    }
+  }
 }
 
-async fn get_cron_jobs(pool: Arc<Pool<Postgres>>) -> Json<Vec<CronJob>> {
-  let recs = sqlx::query_as!(CronJob, "SELECT * from cron_jobs")
+async fn get_cron_jobs(pool: Arc<Pool<Postgres>>) -> Result<Json<Vec<CronJob>>, sqlx::Error> {
+  match sqlx::query_as!(CronJob, "SELECT * from cron_jobs")
     .fetch_all(&*pool)
     .await
-    .unwrap();
-  Json(recs)
+  {
+    Ok(recs) => Ok(Json(recs)),
+    Err(err) => Err(err),
+  }
 }
 
 async fn listen_docker_events() {
@@ -287,7 +304,7 @@ async fn run_job(config: &'static Config, cron_job: CronJob) {
 }
 
 async fn run_jobs(config: &'static Config, pool: Arc<Pool<Postgres>>) {
-  let cron_jobs = get_cron_jobs(pool).await;
+  let cron_jobs = get_cron_jobs(pool).await.unwrap();
   let now = Utc::now();
   for job in cron_jobs.0 {
     let job_schedule = format!("0 {} *", &job.schedule);
