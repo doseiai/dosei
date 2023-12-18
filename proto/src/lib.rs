@@ -7,7 +7,9 @@ pub mod node_info {
 }
 
 impl ProtoChannel for node_info::NodeInfo {
+  // PING
   const PROTO_ID: u8 = 0x00;
+  // 0x02 reserved for PONG
 }
 
 pub mod cron_job {
@@ -15,5 +17,5 @@ pub mod cron_job {
 }
 
 impl ProtoChannel for cron_job::CronJob {
-  const PROTO_ID: u8 = 0x01;
+  const PROTO_ID: u8 = 0x02;
 }
