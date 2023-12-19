@@ -10,7 +10,7 @@
 //! - Implement Redis for Caching
 //! - Migrate to Postgres
 //! - Run on Dosei Engine
-//! - Move /healthz to only check for internal traffic
+//! - Move /health to only check for internal traffic
 //! - Implement events: onProxyPassEvent
 
 mod config;
@@ -52,7 +52,7 @@ async fn main() -> anyhow::Result<()> {
     .build(HttpConnector::new());
 
   let app = Router::new()
-    .route("/healthz", get(healthz))
+    .route("/health", get(health))
     .route("/", any(handler))
     .route("/*path", any(handler))
     .with_state(client)
@@ -70,7 +70,7 @@ async fn main() -> anyhow::Result<()> {
   Ok(())
 }
 
-async fn healthz(mongo_client: Extension<Arc<mongodb::Client>>) -> Result<Response, StatusCode> {
+async fn health(mongo_client: Extension<Arc<mongodb::Client>>) -> Result<Response, StatusCode> {
   let db: Database = mongo_client.database("admin");
   match db.run_command(doc! {"ping": 1}, None).await {
     Ok(document) => {
