@@ -13,7 +13,7 @@ use axum::{
 };
 use hyper::StatusCode;
 use hyper_util::{client::legacy::connect::HttpConnector, rt::TokioExecutor};
-use log::{info};
+use log::info;
 use mongodb::bson::{doc, Bson, Document};
 use mongodb::Database;
 use std::env;
@@ -74,12 +74,12 @@ async fn handler(
         if service_id == &Bson::Null {
           return Ok(Redirect::temporary("https://dosei.ai").into_response());
         } else {
-          // Handle the case where service_id is not null
-          info!("Service ID: {:?}", service_id);
-          let uri = format!("http://127.0.0.1:8000{}", path_query);
-
+          let uri = format!(
+            "http://{}.default.svc.cluster.local/{}",
+            service_id, path_query
+          );
           *req.uri_mut() = Uri::try_from(uri).unwrap();
-
+          // TODO: Trigger proxy pass event
           Ok(
             client
               .request(req)
