@@ -1,3 +1,18 @@
+//! WARNING! Unstable Release!
+//! This is a work in progress for the migration of our internal proxy to Rust.
+//! Expect breaking changes. Use at your own risk.
+//!
+//! Dosei Proxy
+//!
+//! Built to run on Dosei K8S Cluster with MongoDB.
+//! Currently WIP.
+//! TODO:
+//! - Implement Redis for Caching
+//! - Migrate to Postgres
+//! - Run on Dosei Engine
+//! - Move /healthz to only check for internal traffic
+//! - Implement events: onProxyPassEvent
+
 mod config;
 
 use crate::config::Config;
@@ -84,7 +99,6 @@ async fn handler(
             service_id, path_query
           );
           *req.uri_mut() = Uri::try_from(uri).unwrap();
-          // TODO: Trigger proxy pass event
           Ok(
             client
               .request(req)
