@@ -102,7 +102,7 @@ async fn handler(
     .path_and_query()
     .map(|v| v.as_str())
     .unwrap_or(path);
-  let db: Database = mongo_client.database("fastapi");
+  let db: Database = mongo_client.database("fast");
   let collection = db.collection::<Document>("domains");
   match collection.find_one(doc! {"name": host }, None).await {
     Ok(Some(document)) => match document.get("service_id") {
