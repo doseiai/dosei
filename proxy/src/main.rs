@@ -42,6 +42,11 @@ async fn main() -> anyhow::Result<()> {
   let config: &'static Config = Box::leak(Box::new(config::init()?));
   let client_options = mongodb::options::ClientOptions::parse(&config.mongo_uri).await?;
   let client = mongodb::Client::with_options(client_options)?;
+  client
+    .database("admin")
+    .run_command(doc! {"ping": 1}, None)
+    .await?;
+  info!("Successfully connected to MongoDB");
   let db: Database = client.database("fast");
   let shared_db = Arc::new(db);
   let client: Client = hyper_util::client::legacy::Client::<(), ()>::builder(TokioExecutor::new())
@@ -87,8 +92,7 @@ async fn handler(
     .map(|v| v.as_str())
     .unwrap_or(path);
   let collection = db.collection::<Document>("domains");
-  let filter = doc! {"name": host };
-  match collection.find_one(filter, None).await {
+  match collection.find_one(doc! {"name": host }, None).await {
     Ok(Some(document)) => {
       if let Some(service_id) = document.get("service_id") {
         if service_id == &Bson::Null {
