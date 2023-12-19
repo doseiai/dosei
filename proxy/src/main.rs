@@ -80,7 +80,6 @@ async fn handler(
     Some(host_header) => host_header.to_str().unwrap_or_default(),
     None => return Ok(Redirect::temporary("https://dosei.ai").into_response()),
   };
-  info!("{}", host);
   let path = req.uri().path();
   let path_query = req
     .uri()
