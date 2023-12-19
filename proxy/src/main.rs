@@ -99,6 +99,7 @@ async fn handler(
             service_id.as_str().unwrap(),
             path_query
           );
+          info!("Forwarding: {} -> {}", host, uri);
           *req.uri_mut() = Uri::try_from(uri).unwrap();
           Ok(
             client
