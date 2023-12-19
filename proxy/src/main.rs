@@ -15,7 +15,7 @@ use hyper::StatusCode;
 use hyper_util::{client::legacy::connect::HttpConnector, rt::TokioExecutor};
 use log::{error, info};
 use mongodb::bson::{doc, Bson, Document};
-use mongodb::{Database};
+use mongodb::Database;
 use std::env;
 use std::sync::Arc;
 use tokio::net::TcpListener;
@@ -76,24 +76,23 @@ async fn handler(
         } else {
           // Handle the case where service_id is not null
           info!("Service ID: {:?}", service_id);
+          let uri = format!("http://127.0.0.1:8000{}", path_query);
+
+          *req.uri_mut() = Uri::try_from(uri).unwrap();
+
+          Ok(
+            client
+              .request(req)
+              .await
+              .map_err(|_| StatusCode::BAD_REQUEST)?
+              .into_response(),
+          )
         }
       } else {
-        // Handle the case where 'service_id' field is not present in the document
-        error!("'service_id' field not found in the document");
+        return Ok(Redirect::temporary("https://dosei.ai").into_response());
       }
     }
     Ok(None) => return Ok(Redirect::temporary("https://dosei.ai").into_response()),
     Err(_) => return Ok(Redirect::temporary("https://dosei.ai").into_response()),
-  };
-  let uri = format!("http://127.0.0.1:8000{}", path_query);
-
-  *req.uri_mut() = Uri::try_from(uri).unwrap();
-
-  Ok(
-    client
-      .request(req)
-      .await
-      .map_err(|_| StatusCode::BAD_REQUEST)?
-      .into_response(),
-  )
+  }
 }
