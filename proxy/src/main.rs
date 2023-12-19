@@ -73,7 +73,14 @@ async fn main() -> anyhow::Result<()> {
 async fn healthz(mongo_client: Extension<Arc<mongodb::Client>>) -> Result<Response, StatusCode> {
   let db: Database = mongo_client.database("admin");
   match db.run_command(doc! {"ping": 1}, None).await {
-    Ok(_) => Ok((StatusCode::OK, "OK").into_response()),
+    Ok(document) => {
+      if let Ok(ok_value) = document.get_f64("ok") {
+        if (ok_value - 1.0).abs() < f64::EPSILON {
+          return Ok((StatusCode::OK, "OK").into_response());
+        }
+      }
+      Err(StatusCode::INTERNAL_SERVER_ERROR)
+    }
     Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
   }
 }
