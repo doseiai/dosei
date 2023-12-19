@@ -72,7 +72,7 @@ async fn handler(
     Ok(Some(document)) => {
       if let Some(service_id) = document.get("service_id") {
         if service_id == &Bson::Null {
-          return Ok(Redirect::temporary("https://dosei.ai").into_response());
+          Ok(Redirect::temporary("https://dosei.ai").into_response())
         } else {
           let uri = format!(
             "http://{}.default.svc.cluster.local/{}",
@@ -89,10 +89,10 @@ async fn handler(
           )
         }
       } else {
-        return Ok(Redirect::temporary("https://dosei.ai").into_response());
+        Ok(Redirect::temporary("https://dosei.ai").into_response())
       }
     }
-    Ok(None) => return Ok(Redirect::temporary("https://dosei.ai").into_response()),
-    Err(_) => return Ok(Redirect::temporary("https://dosei.ai").into_response()),
+    Ok(None) => Ok(Redirect::temporary("https://dosei.ai").into_response()),
+    Err(_) => Ok(Redirect::temporary("https://dosei.ai").into_response()),
   }
 }
