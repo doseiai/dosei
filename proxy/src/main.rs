@@ -13,7 +13,7 @@ use axum::{
 };
 use hyper::StatusCode;
 use hyper_util::{client::legacy::connect::HttpConnector, rt::TokioExecutor};
-use log::{error, info};
+use log::{info};
 use mongodb::bson::{doc, Bson, Document};
 use mongodb::Database;
 use std::env;
