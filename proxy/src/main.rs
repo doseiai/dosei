@@ -106,14 +106,11 @@ async fn handler(
   let collection = db.collection::<Document>("domains");
   match collection.find_one(doc! {"name": host }, None).await {
     Ok(Some(document)) => {
-      if let Some(service_id) = document.get("service_id") {
-        if service_id == &Bson::Null {
-          Ok(Redirect::temporary("https://dosei.ai").into_response())
-        } else {
+      match document.get("service_id") {
+        Some(Bson::String(service_id)) => {
           let uri = format!(
             "http://{}.default.svc.cluster.local{}",
-            service_id.as_str().unwrap(),
-            path_query
+            service_id, path_query
           );
           info!("Forwarding: {} -> {}", host, uri);
           *req.uri_mut() = Uri::try_from(uri).unwrap();
@@ -125,11 +122,9 @@ async fn handler(
               .into_response(),
           )
         }
-      } else {
-        Ok(Redirect::temporary("https://dosei.ai").into_response())
+        _ => Ok(Redirect::temporary("https://dosei.ai").into_response())
       }
     }
-    Ok(None) => Ok(Redirect::temporary("https://dosei.ai").into_response()),
-    Err(_) => Ok(Redirect::temporary("https://dosei.ai").into_response()),
+    _ => Ok(Redirect::temporary("https://dosei.ai").into_response()),
   }
 }
