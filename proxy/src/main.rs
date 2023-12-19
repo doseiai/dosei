@@ -17,6 +17,7 @@ use log::info;
 use mongodb::bson::{doc, Bson, Document};
 use mongodb::Database;
 use std::sync::Arc;
+use axum::routing::get;
 use tokio::net::TcpListener;
 
 type Client = hyper_util::client::legacy::Client<HttpConnector, Body>;
@@ -32,6 +33,7 @@ async fn main() -> anyhow::Result<()> {
     .build(HttpConnector::new());
 
   let app = Router::new()
+    .route("/healthz", get(healthz))
     .route("/", any(handler))
     .route("/*path", any(handler))
     .with_state(client)
@@ -47,6 +49,10 @@ async fn main() -> anyhow::Result<()> {
   );
   axum::serve(listener, app).await?;
   Ok(())
+}
+
+async fn healthz() -> Response {
+  (StatusCode::OK, "OK").into_response()
 }
 
 async fn handler(
