@@ -47,8 +47,7 @@ async fn main() -> anyhow::Result<()> {
     .run_command(doc! {"ping": 1}, None)
     .await?;
   info!("Successfully connected to MongoDB");
-  let db: Database = client.database("fast");
-  let shared_db = Arc::new(db);
+  let shared_mongo_client = Arc::new(client);
   let client: Client = hyper_util::client::legacy::Client::<(), ()>::builder(TokioExecutor::new())
     .build(HttpConnector::new());
 
@@ -57,7 +56,7 @@ async fn main() -> anyhow::Result<()> {
     .route("/", any(handler))
     .route("/*path", any(handler))
     .with_state(client)
-    .layer(Extension(Arc::clone(&shared_db)));
+    .layer(Extension(Arc::clone(&shared_mongo_client)));
 
   let address = config.address.to_string();
   let listener = TcpListener::bind(&address)
@@ -71,12 +70,16 @@ async fn main() -> anyhow::Result<()> {
   Ok(())
 }
 
-async fn healthz() -> Response {
-  (StatusCode::OK, "OK").into_response()
+async fn healthz(mongo_client: Extension<Arc<mongodb::Client>>) -> Result<Response, StatusCode> {
+  let db: Database = mongo_client.database("admin");
+  match db.run_command(doc! {"ping": 1}, None).await {
+    Ok(_) => Ok((StatusCode::OK, "OK").into_response()),
+    Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+  }
 }
 
 async fn handler(
-  db: Extension<Arc<Database>>,
+  mongo_client: Extension<Arc<mongodb::Client>>,
   State(client): State<Client>,
   mut req: Request,
 ) -> Result<Response, StatusCode> {
@@ -91,6 +94,7 @@ async fn handler(
     .path_and_query()
     .map(|v| v.as_str())
     .unwrap_or(path);
+  let db: Database = mongo_client.database("fastapi");
   let collection = db.collection::<Document>("domains");
   match collection.find_one(doc! {"name": host }, None).await {
     Ok(Some(document)) => {
