@@ -16,7 +16,6 @@ use hyper_util::{client::legacy::connect::HttpConnector, rt::TokioExecutor};
 use log::info;
 use mongodb::bson::{doc, Bson, Document};
 use mongodb::Database;
-use std::env;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 
@@ -25,8 +24,8 @@ type Client = hyper_util::client::legacy::Client<HttpConnector, Body>;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   let config: &'static Config = Box::leak(Box::new(config::init()?));
-  let client_options = mongodb::options::ClientOptions::parse(env::var("MONGODB_URL")?).await?;
-  let client = mongodb::Client::with_options(client_options).unwrap();
+  let client_options = mongodb::options::ClientOptions::parse(&config.mongo_uri).await?;
+  let client = mongodb::Client::with_options(client_options)?;
   let db: Database = client.database("fast");
   let shared_db = Arc::new(db);
   let client: Client = hyper_util::client::legacy::Client::<(), ()>::builder(TokioExecutor::new())

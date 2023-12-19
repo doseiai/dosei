@@ -1,3 +1,4 @@
+use anyhow::Context;
 use clap::Parser;
 use dotenv::dotenv;
 use std::fmt::Formatter;
@@ -15,6 +16,7 @@ pub fn init() -> anyhow::Result<Config> {
       host: args.host.clone(),
       port: args.port,
     },
+    mongo_uri: env::var("MONGODB_URL").context("MONGODB_URL is required.")?,
   })
 }
 
@@ -32,6 +34,7 @@ struct Args {
 #[derive(Debug, Clone)]
 pub struct Config {
   pub address: Address,
+  pub mongo_uri: String,
 }
 
 #[derive(Debug, Clone)]
