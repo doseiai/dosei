@@ -105,26 +105,24 @@ async fn handler(
   let db: Database = mongo_client.database("fastapi");
   let collection = db.collection::<Document>("domains");
   match collection.find_one(doc! {"name": host }, None).await {
-    Ok(Some(document)) => {
-      match document.get("service_id") {
-        Some(Bson::String(service_id)) => {
-          let uri = format!(
-            "http://{}.default.svc.cluster.local{}",
-            service_id, path_query
-          );
-          info!("Forwarding: {} -> {}", host, uri);
-          *req.uri_mut() = Uri::try_from(uri).unwrap();
-          Ok(
-            client
-              .request(req)
-              .await
-              .map_err(|_| StatusCode::BAD_REQUEST)?
-              .into_response(),
-          )
-        }
-        _ => Ok(Redirect::temporary("https://dosei.ai").into_response())
+    Ok(Some(document)) => match document.get("service_id") {
+      Some(Bson::String(service_id)) => {
+        let uri = format!(
+          "http://{}.default.svc.cluster.local{}",
+          service_id, path_query
+        );
+        info!("Forwarding: {} -> {}", host, uri);
+        *req.uri_mut() = Uri::try_from(uri).unwrap();
+        Ok(
+          client
+            .request(req)
+            .await
+            .map_err(|_| StatusCode::BAD_REQUEST)?
+            .into_response(),
+        )
       }
-    }
+      _ => Ok(Redirect::temporary("https://dosei.ai").into_response()),
+    },
     _ => Ok(Redirect::temporary("https://dosei.ai").into_response()),
   }
 }
