@@ -18,4 +18,6 @@ RUN chmod +x ${DOSEI_INSTALL}
 RUN mv target/release/proxy ${DOSEI_PROXY_INSTALL}
 RUN chmod +x ${DOSEI_PROXY_INSTALL}
 
+RUN rm -rf target
+
 CMD ["/bin/dosei"]
