@@ -3,6 +3,7 @@ mod config;
 use crate::config::Config;
 use anyhow::Context;
 use axum::response::Redirect;
+use axum::routing::get;
 use axum::{
   body::Body,
   extract::{Request, State},
@@ -17,7 +18,6 @@ use log::info;
 use mongodb::bson::{doc, Bson, Document};
 use mongodb::Database;
 use std::sync::Arc;
-use axum::routing::get;
 use tokio::net::TcpListener;
 
 type Client = hyper_util::client::legacy::Client<HttpConnector, Body>;
