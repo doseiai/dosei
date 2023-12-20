@@ -4,6 +4,7 @@ use dosei_proto::ping::NodeType;
 use dotenv::dotenv;
 use std::fmt::Formatter;
 use std::{env, fmt};
+use log::info;
 use uuid::Uuid;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -46,6 +47,7 @@ pub struct Config {
   pub node_info: NodeInfo,
   pub primary_address: Option<String>,
   pub container_registry_url: String,
+  pub telemetry_disabled: bool,
 }
 
 impl Config {
@@ -87,6 +89,10 @@ pub fn init() -> anyhow::Result<Config> {
   if env::var("RUST_LOG").is_err() {
     env::set_var("RUST_LOG", "info");
   }
+  let telemetry_disabled = match env::var("DOSEID_TELEMETRY_DISABLED") {
+    Ok(value) => value == "true",
+    Err(_) => false
+  };
   let container_registry_url =
     env::var("CONTAINER_REGISTRY_URL").context("CONTAINER_REGISTRY_URL is required.")?;
   env_logger::init();
@@ -109,5 +115,6 @@ pub fn init() -> anyhow::Result<Config> {
     },
     primary_address: args.connect,
     container_registry_url,
+    telemetry_disabled,
   })
 }
