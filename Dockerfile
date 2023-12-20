@@ -8,8 +8,12 @@ WORKDIR /usr/src/doseid
 
 RUN apt-get update && apt-get install protobuf-compiler --yes
 
-COPY . .
+COPY Cargo.toml Cargo.lock ./
+# Dummy source to cache dependencies
+RUN mkdir src && echo "fn main() {}" > src/main.rs
+RUN cargo build --release
 
+COPY . .
 RUN cargo build --release
 
 RUN mv target/release/doseid ${DOSEID_INSTALL}
