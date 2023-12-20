@@ -2,9 +2,9 @@ use anyhow::Context;
 use clap::Parser;
 use dosei_proto::ping::NodeType;
 use dotenv::dotenv;
+use log::info;
 use std::fmt::Formatter;
 use std::{env, fmt};
-use log::info;
 use uuid::Uuid;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -91,7 +91,7 @@ pub fn init() -> anyhow::Result<Config> {
   }
   let telemetry_disabled = match env::var("DOSEID_TELEMETRY_DISABLED") {
     Ok(value) => value == "true",
-    Err(_) => false
+    Err(_) => false,
   };
   let container_registry_url =
     env::var("CONTAINER_REGISTRY_URL").context("CONTAINER_REGISTRY_URL is required.")?;
