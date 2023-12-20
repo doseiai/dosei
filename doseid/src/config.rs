@@ -17,7 +17,7 @@ struct Args {
     short,
     long,
     default_value = "8844",
-    help = "The port number to to use."
+    help = "The port number to use."
   )]
   port: u16,
   #[arg(short, long, help = "Primary cluster node's address to connect to.")]
