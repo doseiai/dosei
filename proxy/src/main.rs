@@ -27,20 +27,24 @@ use axum::{
   routing::any,
   Extension, Router,
 };
+use cached::{Cached, TimedCache};
 use hyper::StatusCode;
 use hyper_util::{client::legacy::connect::HttpConnector, rt::TokioExecutor};
 use log::info;
 use mongodb::bson::{doc, Bson, Document};
 use mongodb::Database;
+use once_cell::sync::Lazy;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::net::TcpListener;
+use tokio::sync::Mutex;
 
 type Client = hyper_util::client::legacy::Client<HttpConnector, Body>;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   let config: &'static Config = Box::leak(Box::new(config::init()?));
-  let client_options = mongodb::options::ClientOptions::parse(&config.mongo_uri).await?;
+  let client_options = mongodb::options::ClientOptions::parse(&config.mongo_url).await?;
   let client = mongodb::Client::with_options(client_options)?;
   client
     .database("admin")
@@ -104,27 +108,55 @@ async fn handler(
     .path_and_query()
     .map(|v| v.as_str())
     .unwrap_or(path);
+  match get_domain(mongo_client, host.to_string()).await {
+    None => Ok(Redirect::temporary("https://dosei.ai").into_response()),
+    Some(service_id) => {
+      let uri = format!(
+        "http://{}.default.svc.cluster.local{}",
+        service_id, path_query
+      );
+      info!("Forwarding: {} -> {}", host, uri);
+      *req.uri_mut() = Uri::try_from(uri).unwrap();
+      Ok(
+        client
+          .request(req)
+          .await
+          .map_err(|_| StatusCode::BAD_REQUEST)?
+          .into_response(),
+      )
+    }
+  }
+}
+
+static DOMAINS_CACHE: Lazy<Arc<Mutex<TimedCache<String, String>>>> = Lazy::new(|| {
+  let cache = TimedCache::with_lifespan(120);
+  Arc::new(Mutex::new(cache))
+});
+
+async fn get_domain(mongo_client: Extension<Arc<mongodb::Client>>, host: String) -> Option<String> {
+  let domains_cache = Arc::clone(&DOMAINS_CACHE);
+  {
+    let mut cache = domains_cache.lock().await;
+    if let Some(value) = cache.cache_get(&host) {
+      let service_id = value.clone();
+      return cache.cache_set(host, service_id);
+    }
+  }
+
   let db: Database = mongo_client.database("fast");
   let collection = db.collection::<Document>("domains");
-  match collection.find_one(doc! {"name": host }, None).await {
+
+  match collection.find_one(doc! {"name": &host }, None).await {
     Ok(Some(document)) => match document.get("service_id") {
       Some(Bson::String(service_id)) => {
-        let uri = format!(
-          "http://{}.default.svc.cluster.local{}",
-          service_id, path_query
-        );
-        info!("Forwarding: {} -> {}", host, uri);
-        *req.uri_mut() = Uri::try_from(uri).unwrap();
-        Ok(
-          client
-            .request(req)
-            .await
-            .map_err(|_| StatusCode::BAD_REQUEST)?
-            .into_response(),
-        )
+        {
+          let mut cache = domains_cache.lock().await;
+          cache.cache_set(host, service_id.clone());
+        }
+        Some(service_id.clone())
       }
-      _ => Ok(Redirect::temporary("https://dosei.ai").into_response()),
+      _ => None,
     },
-    _ => Ok(Redirect::temporary("https://dosei.ai").into_response()),
+    _ => None,
   }
 }
