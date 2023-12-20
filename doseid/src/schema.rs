@@ -8,6 +8,7 @@ pub struct CronJob {
   pub schedule: String,
   pub entrypoint: String,
   pub owner_id: Uuid,
+  pub project_id: Uuid,
   pub deployment_id: String,
   pub updated_at: DateTime<Utc>,
   pub created_at: DateTime<Utc>,

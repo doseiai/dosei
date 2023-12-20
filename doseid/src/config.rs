@@ -18,7 +18,7 @@ struct Args {
   #[arg(short, long, help = "Primary cluster node's address to connect to.")]
   connect: Option<String>,
   #[arg(long, action = clap::ArgAction::Help, help = "Print help")]
-  help: bool,
+  help: Option<bool>,
 }
 
 #[derive(Debug, Clone)]

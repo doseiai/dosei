@@ -40,8 +40,9 @@ pub fn start_job_manager(config: &'static Config, pool: Arc<Pool<Postgres>>) {
 pub struct CreateJobBody {
   schedule: String,
   entrypoint: String,
-  deployment_id: String,
   owner_id: Uuid,
+  project_id: Uuid,
+  deployment_id: String,
 }
 
 pub async fn api_create_job(
@@ -53,6 +54,7 @@ pub async fn api_create_job(
     schedule: body.schedule,
     entrypoint: body.entrypoint,
     owner_id: body.owner_id,
+    project_id: body.project_id,
     deployment_id: body.deployment_id,
     updated_at: Default::default(),
     created_at: Default::default(),
@@ -60,14 +62,15 @@ pub async fn api_create_job(
   match sqlx::query_as!(
     CronJob,
     "
-    INSERT INTO cron_jobs (id, schedule, entrypoint, owner_id, deployment_id, updated_at, created_at)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    INSERT INTO cron_jobs (id, schedule, entrypoint, owner_id, project_id, deployment_id, updated_at, created_at)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     RETURNING *
     ",
     cron_job.id,
     cron_job.schedule,
     cron_job.entrypoint,
     cron_job.owner_id,
+    cron_job.project_id,
     cron_job.deployment_id,
     cron_job.updated_at,
     cron_job.created_at
@@ -202,10 +205,12 @@ async fn container_logs(container_id: &str) -> Result<Vec<String>, bollard::erro
 async fn run_job(config: &'static Config, cron_job: CronJob) {
   let docker = Docker::connect_with_socket_defaults().unwrap();
 
-  let image_name = "alw3ys/doseid-bot";
+  let owner_id = cron_job.owner_id;
+  let project_id = cron_job.project_id;
+  let image_name = format!("{}/{}", &owner_id, &project_id);
   let image_tag = format!(
     "{}/{}:{}",
-    &config.container_registry_url, &image_name, &cron_job.deployment_id
+    &config.container_registry_url, image_name, &cron_job.deployment_id
   );
 
   // Check if image exists locally
@@ -222,7 +227,7 @@ async fn run_job(config: &'static Config, cron_job: CronJob) {
     Ok(images) => {
       if images.is_empty() {
         let options = Some(CreateImageOptions {
-          from_image: image_name,
+          from_image: image_name.as_str(),
           tag: &cron_job.deployment_id,
           ..Default::default()
         });

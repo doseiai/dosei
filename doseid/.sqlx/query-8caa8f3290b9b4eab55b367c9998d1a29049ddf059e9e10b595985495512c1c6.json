@@ -25,16 +25,21 @@
       },
       {
         "ordinal": 4,
+        "name": "project_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 5,
         "name": "deployment_id",
         "type_info": "Text"
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "updated_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "created_at",
         "type_info": "Timestamptz"
       }
@@ -43,6 +48,7 @@
       "Left": []
     },
     "nullable": [
+      false,
       false,
       false,
       false,
