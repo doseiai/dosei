@@ -9,8 +9,19 @@ WORKDIR /usr/src/doseid
 RUN apt-get update && apt-get install protobuf-compiler --yes
 
 COPY Cargo.toml Cargo.lock ./
-# Dummy source to cache dependencies
-RUN mkdir src && echo "fn main() {}" > src/main.rs
+
+# Mock proto
+RUN cargo new proto --lib ./
+COPY proto/Cargo.toml /proto
+
+# Mock doseid
+RUN cargo new proto --bin ./
+COPY doseid/Cargo.toml /doseid
+
+# Mock proxy
+RUN cargo new proxy --bin ./
+COPY proxy/Cargo.toml /proxy
+
 RUN cargo build --release
 
 COPY . .
