@@ -1,6 +1,6 @@
 # Dosei
 
-[Dosei](https://dosei.ai), is...
+[Dosei](https://dosei.ai) is the developer-first and AI-native platform.
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/doseiai/dosei.svg)](https://hub.docker.com/r/doseiai/dosei)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-white)](https://www.apache.org/licenses/LICENSE-2.0)
