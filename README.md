@@ -7,6 +7,10 @@
 [![Twitter](https://img.shields.io/twitter/url/https/x.com/dosei.svg?style=social&label=Follow%20%40dosei)](https://x.com/dosei)
 [![](https://dcbadge.vercel.app/api/server/BP5aUkhcAh?compact=true&style=flat)](https://discord.com/invite/BP5aUkhcAh)
 
+### Dosei Engine
+The Dosei Engine is the system running under the Dosei Dashboard, enabling management and scheduling of application workloads across multiple hosts.
+> As you start reading the source code, you'll notice it doesn't include all functionality from the [Dosei Platform](https://dosei.ai/). This is because our closed-source platform is built on top of cloud-native services, and our vision is to make our platform engine fully deployable on-premise with the source code available. Instead of waiting until the migration is complete, we decided to open source what we have so far to make the transition more collaborative. So, you can help us prioritize and design the target solution. If you're excited about Dosei and want to contribute or have any questions, join our [Discord Server](https://discord.com/invite/BP5aUkhcAh).
+
 ## Installation
 
 Shell (Mac, Linux):
