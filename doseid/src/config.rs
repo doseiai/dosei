@@ -2,7 +2,6 @@ use anyhow::Context;
 use clap::Parser;
 use dosei_proto::ping::NodeType;
 use dotenv::dotenv;
-use log::info;
 use std::fmt::Formatter;
 use std::{env, fmt};
 use uuid::Uuid;
@@ -18,6 +17,8 @@ struct Args {
   port: u16,
   #[arg(short, long, help = "Primary cluster node's address to connect to.")]
   connect: Option<String>,
+  #[arg(long, hide = true, action = clap::ArgAction::SetTrue)]
+  disable_telemetry: Option<bool>,
   #[arg(long, action = clap::ArgAction::Help, help = "Print help")]
   help: Option<bool>,
 }
@@ -89,12 +90,6 @@ pub fn init() -> anyhow::Result<Config> {
   if env::var("RUST_LOG").is_err() {
     env::set_var("RUST_LOG", "info");
   }
-  let telemetry_disabled = match env::var("DOSEID_TELEMETRY_DISABLED") {
-    Ok(value) => value == "true",
-    Err(_) => false,
-  };
-  let container_registry_url =
-    env::var("CONTAINER_REGISTRY_URL").context("CONTAINER_REGISTRY_URL is required.")?;
   env_logger::init();
   Ok(Config {
     address: Address {
@@ -114,7 +109,11 @@ pub fn init() -> anyhow::Result<Config> {
       },
     },
     primary_address: args.connect,
-    container_registry_url,
-    telemetry_disabled,
+    container_registry_url: env::var("CONTAINER_REGISTRY_URL")
+      .context("CONTAINER_REGISTRY_URL is required.")?,
+    telemetry_disabled: args.disable_telemetry.unwrap_or(false)
+      || env::var("DOSEID_TELEMETRY_DISABLED")
+        .map(|v| v == "true")
+        .unwrap_or(false),
   })
 }
