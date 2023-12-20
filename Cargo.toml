@@ -5,8 +5,8 @@ resolver = "2"
 [workspace.package]
 version = "0.0.1"
 license = "Apache-2.0"
-repository = "https://github.com/Alw3ys/dosei"
-authors = ["Alvaro Molina <am@dosei.ai>"]
+repository = "https://github.com/doseiai/engine"
+authors = ["Alvaro Molina <am@dosei.ai>", "Rahul Lakhanpal"]
 edition = "2021"
 
 [workspace.dependencies]
