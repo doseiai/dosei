@@ -876,7 +876,7 @@ dependencies = [
 
 [[package]]
 name = "dosei_proto"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "prost",
  "prost-build",
@@ -884,7 +884,7 @@ dependencies = [
 
 [[package]]
 name = "doseid"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "anyhow",
  "axum",
@@ -2318,7 +2318,7 @@ dependencies = [
 
 [[package]]
 name = "proxy"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "anyhow",
  "axum",
