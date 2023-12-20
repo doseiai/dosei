@@ -1,6 +1,6 @@
 # Dosei
 
-Dosei, is...
+[Dosei](https://dosei.ai), is...
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/doseiai/dosei.svg)](https://hub.docker.com/r/doseiai/dosei)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-white)](https://www.apache.org/licenses/LICENSE-2.0)
@@ -13,3 +13,12 @@ Shell (Mac, Linux):
 ```sh
 curl -fsSL https://dosei.ai/install.sh | sh
 ```
+
+## Contributors ✨
+
+Thanks to the people who contributed to Dosei
+
+<!-- markdownlint-disable -->
+<a href="https://github.com/doseiai/engine/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=doseiai/engine" />
+</a>
