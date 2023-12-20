@@ -1,11 +1,7 @@
 [package]
-name = "dosei"
+name = "doseid"
 version = { workspace = true }
 edition = { workspace = true }
-
-[[bin]]
-name = "dosei"
-path = "src/main.rs"
 
 [dependencies]
 dosei_proto = { workspace = true }

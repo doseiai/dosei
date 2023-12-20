@@ -202,7 +202,7 @@ async fn container_logs(container_id: &str) -> Result<Vec<String>, bollard::erro
 async fn run_job(config: &'static Config, cron_job: CronJob) {
   let docker = Docker::connect_with_socket_defaults().unwrap();
 
-  let image_name = "alw3ys/dosei-bot";
+  let image_name = "alw3ys/doseid-bot";
   let image_tag = format!(
     "{}/{}:{}",
     &config.container_registry_url, &image_name, &cron_job.deployment_id
@@ -248,7 +248,7 @@ async fn run_job(config: &'static Config, cron_job: CronJob) {
 
   let config = bollard::container::Config {
     image: Some(image_tag.as_str()),
-    cmd: Some(vec!["dosei", "run", &cron_job.entrypoint]),
+    cmd: Some(vec!["doseid", "run", &cron_job.entrypoint]),
     ..Default::default()
   };
 

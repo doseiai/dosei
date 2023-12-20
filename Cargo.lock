@@ -875,7 +875,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "dosei"
+name = "dosei_proto"
+version = "0.1.0"
+dependencies = [
+ "prost",
+ "prost-build",
+]
+
+[[package]]
+name = "doseid"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -898,14 +906,6 @@ dependencies = [
  "sqlx",
  "tokio",
  "uuid",
-]
-
-[[package]]
-name = "dosei_proto"
-version = "0.1.0"
-dependencies = [
- "prost",
- "prost-build",
 ]
 
 [[package]]
