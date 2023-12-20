@@ -1,5 +1,6 @@
 [package]
 name = "doseid"
+description = "Dosei Daemon"
 version = { workspace = true }
 edition = { workspace = true }
 

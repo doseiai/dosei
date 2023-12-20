@@ -11,12 +11,19 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None, disable_help_flag = true)]
 struct Args {
-  #[arg(short, long, default_value = "127.0.0.1")]
+  #[arg(long, default_value = "127.0.0.1", help = "The host address to use.")]
   host: String,
-  #[arg(short, long, default_value = "8844")]
+  #[arg(
+    short,
+    long,
+    default_value = "8844",
+    help = "The port number to connect to."
+  )]
   port: u16,
   #[arg(short, long)]
   connect: Option<String>,
+  #[arg(long, action = clap::ArgAction::Help, help = "Print help")]
+  help: bool,
 }
 
 #[derive(Debug, Clone)]
