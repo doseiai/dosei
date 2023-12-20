@@ -17,10 +17,10 @@ struct Args {
     short,
     long,
     default_value = "8844",
-    help = "The port number to connect to."
+    help = "The port number to to use."
   )]
   port: u16,
-  #[arg(short, long)]
+  #[arg(short, long, help = "Primary cluster node's address to connect to.")]
   connect: Option<String>,
   #[arg(long, action = clap::ArgAction::Help, help = "Print help")]
   help: bool,
