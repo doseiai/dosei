@@ -6,7 +6,10 @@ resolver = "2"
 version = "0.0.1"
 license = "Apache-2.0"
 repository = "https://github.com/doseiai/engine"
-authors = ["Alvaro Molina <am@dosei.ai>", "Rahul Lakhanpal"]
+authors = [
+    "Alvaro Molina <am@dosei.ai>",
+    "Rahul Lakhanpal <rahulkp220@gmail.com>",
+]
 edition = "2021"
 
 [workspace.dependencies]
