@@ -13,12 +13,7 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 struct Args {
   #[arg(long, default_value = "127.0.0.1", help = "The host address to use.")]
   host: String,
-  #[arg(
-    short,
-    long,
-    default_value = "8844",
-    help = "The port number to use."
-  )]
+  #[arg(short, long, default_value = "8844", help = "The port number to use.")]
   port: u16,
   #[arg(short, long, help = "Primary cluster node's address to connect to.")]
   connect: Option<String>,
