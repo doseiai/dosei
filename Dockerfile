@@ -11,15 +11,15 @@ RUN apt-get update && apt-get install protobuf-compiler --yes
 COPY Cargo.toml Cargo.lock ./
 
 # Mock proto
-RUN cargo new proto --lib ./
+RUN cargo new proto --lib
 COPY proto/Cargo.toml /proto
 
 # Mock doseid
-RUN cargo new proto --bin ./
+RUN cargo new proto --bin
 COPY doseid/Cargo.toml /doseid
 
 # Mock proxy
-RUN cargo new proxy --bin ./
+RUN cargo new proxy --bin
 COPY proxy/Cargo.toml /proxy
 
 RUN cargo build --release
