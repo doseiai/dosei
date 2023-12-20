@@ -248,7 +248,7 @@ async fn run_job(config: &'static Config, cron_job: CronJob) {
 
   let config = bollard::container::Config {
     image: Some(image_tag.as_str()),
-    cmd: Some(vec!["doseid", "run", &cron_job.entrypoint]),
+    cmd: Some(vec!["dosei", "run", &cron_job.entrypoint]),
     ..Default::default()
   };
 
