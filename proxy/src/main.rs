@@ -128,11 +128,6 @@ async fn handler(
   }
 }
 
-static DOMAINS_CACHE: Lazy<Arc<Mutex<TimedCache<String, String>>>> = Lazy::new(|| {
-  let cache = TimedCache::with_lifespan(120);
-  Arc::new(Mutex::new(cache))
-});
-
 async fn get_domain(mongo_client: Extension<Arc<mongodb::Client>>, host: String) -> Option<String> {
   let domains_cache = Arc::clone(&DOMAINS_CACHE);
   {
@@ -160,3 +155,8 @@ async fn get_domain(mongo_client: Extension<Arc<mongodb::Client>>, host: String)
     _ => None,
   }
 }
+
+static DOMAINS_CACHE: Lazy<Arc<Mutex<TimedCache<String, String>>>> = Lazy::new(|| {
+  let cache = TimedCache::with_lifespan(120);
+  Arc::new(Mutex::new(cache))
+});
