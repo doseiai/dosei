@@ -15,7 +15,7 @@ RUN cargo new proto --lib
 COPY proto/Cargo.toml /proto
 
 # Mock doseid
-RUN cargo new proto --bin
+RUN cargo new doseid --bin
 COPY doseid/Cargo.toml /doseid
 
 # Mock proxy
