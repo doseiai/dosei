@@ -57,7 +57,6 @@ async fn main() -> anyhow::Result<()> {
 
   let app = Router::new()
     .route("/health", get(health))
-    .route("/healthz", get(health))
     .route("/", any(handler))
     .route("/*path", any(handler))
     .with_state(client)
