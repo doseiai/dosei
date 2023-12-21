@@ -29,18 +29,20 @@ pub fn init() -> anyhow::Result<Config> {
         host: args.host.clone(),
         port: args.port,
       })
-      .node_info(NodeInfo {
-        id: Uuid::new_v4(),
-        node_type: if args.connect.is_some() {
-          NodeType::Replica
-        } else {
-          NodeType::Primary
-        },
-        address: Address {
-          host: args.host,
-          port: args.port + 10000,
-        },
-      })
+      .node_info(
+        NodeInfoBuilder::default()
+          .id(Uuid::new_v4())
+          .node_type(if args.connect.is_some() {
+            NodeType::Replica
+          } else {
+            NodeType::Primary
+          })
+          .address(Address {
+            host: args.host,
+            port: args.port + 10000,
+          })
+          .build()?,
+      )
       .primary_address(args.connect)
       .database_url(env::var("DATABASE_URL").context("DATABASE_URL is required.")?)
       .container_registry_url(
@@ -118,7 +120,7 @@ impl Config {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Builder, Debug, Clone)]
 pub struct NodeInfo {
   pub id: Uuid,
   pub node_type: NodeType,
