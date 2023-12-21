@@ -1,6 +1,7 @@
 mod config;
 mod schema;
 mod server;
+mod util;
 
 use config::Config;
 
