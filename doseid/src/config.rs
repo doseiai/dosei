@@ -15,45 +15,6 @@ use std::path::PathBuf;
 use std::{env, fmt, fs, write};
 use uuid::Uuid;
 
-pub fn init() -> anyhow::Result<Config> {
-  dotenv().ok();
-  let args = Args::parse();
-  if env::var("RUST_LOG").is_err() {
-    env::set_var("RUST_LOG", "info");
-  }
-  env_logger::init();
-  Ok(Config {
-    address: Address {
-      host: args.host.clone(),
-      port: args.port,
-    },
-    node_info: NodeInfo {
-      id: Uuid::new_v4(),
-      node_type: if args.connect.is_some() {
-        NodeType::Replica
-      } else {
-        NodeType::Primary
-      },
-      address: Address {
-        host: args.host,
-        port: args.port + 10000,
-      },
-    },
-    primary_address: args.connect,
-    database_url: env::var("DATABASE_URL").context("DATABASE_URL is required.")?,
-    container_registry_url: env::var("CONTAINER_REGISTRY_URL")
-      .context("CONTAINER_REGISTRY_URL is required.")?,
-    telemetry: Telemetry::new()
-      .enabled(
-        args.disable_telemetry.unwrap_or(false)
-          || env::var("DOSEID_TELEMETRY_DISABLED")
-            .map(|v| v == "true")
-            .unwrap_or(false),
-      )
-      .build(),
-  })
-}
-
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Parser, Debug)]
@@ -81,6 +42,45 @@ pub struct Config {
 }
 
 impl Config {
+  pub fn new() -> anyhow::Result<Config> {
+    dotenv().ok();
+    let args = Args::parse();
+    if env::var("RUST_LOG").is_err() {
+      env::set_var("RUST_LOG", "info");
+    }
+    env_logger::init();
+    Ok(Config {
+      address: Address {
+        host: args.host.clone(),
+        port: args.port,
+      },
+      node_info: NodeInfo {
+        id: Uuid::new_v4(),
+        node_type: if args.connect.is_some() {
+          NodeType::Replica
+        } else {
+          NodeType::Primary
+        },
+        address: Address {
+          host: args.host,
+          port: args.port + 10000,
+        },
+      },
+      primary_address: args.connect,
+      database_url: env::var("DATABASE_URL").context("DATABASE_URL is required.")?,
+      container_registry_url: env::var("CONTAINER_REGISTRY_URL")
+        .context("CONTAINER_REGISTRY_URL is required.")?,
+      telemetry: Telemetry::new()
+        .enabled(
+          args.disable_telemetry.unwrap_or(false)
+            || env::var("DOSEID_TELEMETRY_DISABLED")
+              .map(|v| v == "true")
+              .unwrap_or(false),
+        )
+        .build(),
+    })
+  }
+
   #[allow(dead_code)]
   pub fn is_primary(&self) -> bool {
     self.node_info.node_type == NodeType::Primary
