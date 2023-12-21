@@ -2,8 +2,13 @@ use anyhow::Context;
 use clap::Parser;
 use dosei_proto::ping::NodeType;
 use dotenv::dotenv;
+use std::env::home_dir;
 use std::fmt::Formatter;
-use std::{env, fmt};
+use std::fs::File;
+use std::io::Read;
+use std::io::Write;
+use std::path::{Path, PathBuf};
+use std::{env, fmt, fs, write};
 use uuid::Uuid;
 
 pub fn init() -> anyhow::Result<Config> {
@@ -134,10 +139,32 @@ impl Telemetry {
   fn enabled(mut self, value: bool) -> Telemetry {
     self.client = match value {
       true => None,
-      false => Some(PostHogClientOptions {
-        api_endpoint: "https://app.posthog.com".to_string(),
-        project_api_key: "phc_oMPDQ6wwINgWo7tdfIw8btoksBWkrn5Pq0DgPjBFw6E".to_string(),
-      }),
+      false => {
+        let mut path = home_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
+        path.push(".dosei/doseid/data/id");
+        let dir = path.parent().unwrap();
+        if !dir.exists() {
+          let _ = fs::create_dir_all(dir);
+        }
+        let uuid = match File::open(&path) {
+          Ok(mut file) => {
+            let mut content = String::new();
+            match file.read_to_string(&mut content) {
+              Ok(_) => content,
+              Err(_) => Uuid::new_v4().to_string(),
+            }
+          }
+          Err(_) => Uuid::new_v4().to_string(),
+        };
+
+        let _ = File::create(&path).and_then(|mut file| write!(file, "{}", uuid));
+
+        Some(PostHogClientOptions {
+          id: uuid,
+          api_endpoint: "https://app.posthog.com".to_string(),
+          project_api_key: "phc_oMPDQ6wwINgWo7tdfIw8btoksBWkrn5Pq0DgPjBFw6E".to_string(),
+        })
+      }
     };
     self
   }
@@ -150,6 +177,7 @@ impl Telemetry {
 }
 
 pub struct PostHogClientOptions {
+  id: String,
   api_endpoint: String,
   project_api_key: String,
 }
