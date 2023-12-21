@@ -6,6 +6,45 @@ use std::fmt::Formatter;
 use std::{env, fmt};
 use uuid::Uuid;
 
+pub fn init() -> anyhow::Result<Config> {
+  dotenv().ok();
+  let args = Args::parse();
+  if env::var("RUST_LOG").is_err() {
+    env::set_var("RUST_LOG", "info");
+  }
+  env_logger::init();
+  Ok(Config {
+    address: Address {
+      host: args.host.clone(),
+      port: args.port,
+    },
+    node_info: NodeInfo {
+      id: Uuid::new_v4(),
+      node_type: if args.connect.is_some() {
+        NodeType::Replica
+      } else {
+        NodeType::Primary
+      },
+      address: Address {
+        host: args.host,
+        port: args.port + 10000,
+      },
+    },
+    primary_address: args.connect,
+    database_url: env::var("DATABASE_URL").context("DATABASE_URL is required.")?,
+    container_registry_url: env::var("CONTAINER_REGISTRY_URL")
+      .context("CONTAINER_REGISTRY_URL is required.")?,
+    telemetry: Telemetry::new()
+      .enabled(
+        args.disable_telemetry.unwrap_or(false)
+          || env::var("DOSEID_TELEMETRY_DISABLED")
+            .map(|v| v == "true")
+            .unwrap_or(false),
+      )
+      .build(),
+  })
+}
+
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Parser, Debug)]
@@ -23,33 +62,13 @@ struct Args {
   help: Option<bool>,
 }
 
-#[derive(Debug, Clone)]
-pub struct NodeInfo {
-  pub id: Uuid,
-  pub node_type: NodeType,
-  pub address: Address,
-}
-
-#[derive(Debug, Clone)]
-pub struct Address {
-  pub host: String,
-  pub port: u16,
-}
-
-impl fmt::Display for Address {
-  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-    write!(f, "{}:{}", self.host, self.port)
-  }
-}
-
-#[derive(Debug, Clone)]
 pub struct Config {
   pub address: Address,
   pub node_info: NodeInfo,
   pub primary_address: Option<String>,
   pub database_url: String,
   pub container_registry_url: String,
-  pub telemetry_disabled: bool,
+  pub telemetry: Telemetry,
 }
 
 impl Config {
@@ -85,37 +104,52 @@ impl Config {
   }
 }
 
-pub fn init() -> anyhow::Result<Config> {
-  dotenv().ok();
-  let args = Args::parse();
-  if env::var("RUST_LOG").is_err() {
-    env::set_var("RUST_LOG", "info");
+#[derive(Debug, Clone)]
+pub struct NodeInfo {
+  pub id: Uuid,
+  pub node_type: NodeType,
+  pub address: Address,
+}
+
+#[derive(Debug, Clone)]
+pub struct Address {
+  pub host: String,
+  pub port: u16,
+}
+
+impl fmt::Display for Address {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    write!(f, "{}:{}", self.host, self.port)
   }
-  env_logger::init();
-  Ok(Config {
-    address: Address {
-      host: args.host.clone(),
-      port: args.port,
-    },
-    node_info: NodeInfo {
-      id: Uuid::new_v4(),
-      node_type: if args.connect.is_some() {
-        NodeType::Replica
-      } else {
-        NodeType::Primary
-      },
-      address: Address {
-        host: args.host,
-        port: args.port + 10000,
-      },
-    },
-    primary_address: args.connect,
-    database_url: env::var("DATABASE_URL").context("DATABASE_URL is required.")?,
-    container_registry_url: env::var("CONTAINER_REGISTRY_URL")
-      .context("CONTAINER_REGISTRY_URL is required.")?,
-    telemetry_disabled: args.disable_telemetry.unwrap_or(false)
-      || env::var("DOSEID_TELEMETRY_DISABLED")
-        .map(|v| v == "true")
-        .unwrap_or(false),
-  })
+}
+
+pub struct Telemetry {
+  client: Option<PostHogClientOptions>,
+}
+
+impl Telemetry {
+  fn new() -> Telemetry {
+    Telemetry { client: None }
+  }
+  fn enabled(mut self, value: bool) -> Telemetry {
+    self.client = match value {
+      true => None,
+      false => Some(PostHogClientOptions {
+        api_endpoint: "https://app.posthog.com".to_string(),
+        project_api_key: "phc_oMPDQ6wwINgWo7tdfIw8btoksBWkrn5Pq0DgPjBFw6E".to_string(),
+      }),
+    };
+    self
+  }
+  fn is_disabled(&self) -> bool {
+    self.client.is_none()
+  }
+  fn build(self) -> Telemetry {
+    self
+  }
+}
+
+pub struct PostHogClientOptions {
+  api_endpoint: String,
+  project_api_key: String,
 }
