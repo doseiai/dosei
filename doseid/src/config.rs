@@ -202,11 +202,10 @@ impl PostHogClient {
     todo!();
   }
   pub async fn identify(&self) {
+    let mut set: HashMap<String, String> = HashMap::new();
+    set.insert("version".to_string(), VERSION.to_string());
     let mut properties: HashMap<String, serde_json::Value> = HashMap::new();
-    properties.insert(
-      "$set".parse().unwrap(),
-      json!(HashMap::<String, serde_json::Value>::new()),
-    );
+    properties.insert("$set".to_string(), json!(set));
     let result = reqwest::Client::new()
       .post(&self.api_endpoint)
       .header(CONTENT_TYPE, "application/json")
