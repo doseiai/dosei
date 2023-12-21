@@ -206,7 +206,7 @@ impl PostHogClient {
     set.insert("version".to_string(), VERSION.to_string());
     let mut properties: HashMap<String, serde_json::Value> = HashMap::new();
     properties.insert("$set".to_string(), json!(set));
-    let result = reqwest::Client::new()
+    let _ = reqwest::Client::new()
       .post(&self.api_endpoint)
       .header(CONTENT_TYPE, "application/json")
       .json(&CaptureEvent {
@@ -217,6 +217,5 @@ impl PostHogClient {
       })
       .send()
       .await;
-    info!("{:?}", result)
   }
 }
