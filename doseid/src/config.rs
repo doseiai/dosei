@@ -2,6 +2,12 @@ use anyhow::Context;
 use clap::Parser;
 use dosei_proto::ping::NodeType;
 use dotenv::dotenv;
+use log::{info, warn};
+use reqwest::header::CONTENT_TYPE;
+use serde::{Deserialize, Serialize};
+use serde_json::json;
+use sqlx::Any;
+use std::collections::HashMap;
 use std::env::home_dir;
 use std::fmt::Formatter;
 use std::fs::File;
@@ -129,10 +135,14 @@ impl fmt::Display for Address {
 }
 
 pub struct Telemetry {
-  client: Option<PostHogClientOptions>,
+  pub client: Option<PostHogClient>,
 }
 
 impl Telemetry {
+  pub fn is_disabled(&self) -> bool {
+    self.client.is_none()
+  }
+
   fn new() -> Telemetry {
     Telemetry { client: None }
   }
@@ -159,25 +169,55 @@ impl Telemetry {
 
         let _ = File::create(&path).and_then(|mut file| write!(file, "{}", uuid));
 
-        Some(PostHogClientOptions {
+        Some(PostHogClient {
           id: uuid,
-          api_endpoint: "https://app.posthog.com".to_string(),
+          api_endpoint: "https://app.posthog.com/capture".to_string(),
           project_api_key: "phc_oMPDQ6wwINgWo7tdfIw8btoksBWkrn5Pq0DgPjBFw6E".to_string(),
         })
       }
     };
     self
   }
-  fn is_disabled(&self) -> bool {
-    self.client.is_none()
-  }
   fn build(self) -> Telemetry {
     self
   }
 }
 
-pub struct PostHogClientOptions {
+pub struct PostHogClient {
   id: String,
   api_endpoint: String,
   project_api_key: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct CaptureEvent {
+  api_key: String,
+  event: String,
+  distinct_id: String,
+  properties: HashMap<String, serde_json::Value>,
+}
+
+impl PostHogClient {
+  pub async fn capture(&self) {
+    todo!();
+  }
+  pub async fn identify(&self) {
+    let mut properties: HashMap<String, serde_json::Value> = HashMap::new();
+    properties.insert(
+      "$set".parse().unwrap(),
+      json!(HashMap::<String, serde_json::Value>::new()),
+    );
+    let result = reqwest::Client::new()
+      .post(&self.api_endpoint)
+      .header(CONTENT_TYPE, "application/json")
+      .json(&CaptureEvent {
+        api_key: self.project_api_key.clone(),
+        event: "$identify".to_string(),
+        distinct_id: self.id.to_string(),
+        properties,
+      })
+      .send()
+      .await;
+    info!("{:?}", result)
+  }
 }
