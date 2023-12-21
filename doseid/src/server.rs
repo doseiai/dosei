@@ -5,7 +5,6 @@ mod secret;
 use anyhow::Context;
 use sqlx::postgres::Postgres;
 use sqlx::Pool;
-use std::env;
 use std::sync::Arc;
 
 use crate::config::Config;
@@ -14,7 +13,7 @@ use log::info;
 use tokio::net::TcpListener;
 
 pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
-  let pool = Pool::<Postgres>::connect(&env::var("DATABASE_URL")?).await?;
+  let pool = Pool::<Postgres>::connect(&config.database_url).await?;
   let shared_pool = Arc::new(pool);
   info!("Successfully connected to Postgres");
   cluster::start_cluster(config)?;
