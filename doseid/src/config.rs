@@ -47,6 +47,7 @@ pub struct Config {
   pub address: Address,
   pub node_info: NodeInfo,
   pub primary_address: Option<String>,
+  pub database_url: String,
   pub container_registry_url: String,
   pub telemetry_disabled: bool,
 }
@@ -109,6 +110,7 @@ pub fn init() -> anyhow::Result<Config> {
       },
     },
     primary_address: args.connect,
+    database_url: env::var("DATABASE_URL").context("DATABASE_URL is required.")?,
     container_registry_url: env::var("CONTAINER_REGISTRY_URL")
       .context("CONTAINER_REGISTRY_URL is required.")?,
     telemetry_disabled: args.disable_telemetry.unwrap_or(false)
