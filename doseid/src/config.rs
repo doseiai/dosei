@@ -148,6 +148,7 @@ impl Telemetry {
     self.client = match value {
       true => None,
       false => {
+        // We are not focusing on windows support for now, so whatever.
         let mut path = home_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
         path.push(".dosei/doseid/data/id");
         let dir = path.parent().unwrap();
