@@ -1,5 +1,6 @@
 use anyhow::Context;
 use clap::Parser;
+use derive_builder::Builder;
 use dosei_proto::ping::NodeType;
 use dotenv::dotenv;
 use reqwest::header::CONTENT_TYPE;
@@ -22,36 +23,39 @@ pub fn init() -> anyhow::Result<Config> {
     env::set_var("RUST_LOG", "info");
   }
   env_logger::init();
-  Ok(Config {
-    address: Address {
-      host: args.host.clone(),
-      port: args.port,
-    },
-    node_info: NodeInfo {
-      id: Uuid::new_v4(),
-      node_type: if args.connect.is_some() {
-        NodeType::Replica
-      } else {
-        NodeType::Primary
-      },
-      address: Address {
-        host: args.host,
-        port: args.port + 10000,
-      },
-    },
-    primary_address: args.connect,
-    database_url: env::var("DATABASE_URL").context("DATABASE_URL is required.")?,
-    container_registry_url: env::var("CONTAINER_REGISTRY_URL")
-      .context("CONTAINER_REGISTRY_URL is required.")?,
-    telemetry: Telemetry::new()
-      .enabled(
-        args.disable_telemetry.unwrap_or(false)
-          || env::var("DOSEID_TELEMETRY_DISABLED")
-            .map(|v| v == "true")
-            .unwrap_or(false),
+  Ok(
+    ConfigBuilder::default()
+      .address(Address {
+        host: args.host.clone(),
+        port: args.port,
+      })
+      .node_info(NodeInfo {
+        id: Uuid::new_v4(),
+        node_type: if args.connect.is_some() {
+          NodeType::Replica
+        } else {
+          NodeType::Primary
+        },
+        address: Address {
+          host: args.host,
+          port: args.port + 10000,
+        },
+      })
+      .primary_address(args.connect)
+      .database_url(env::var("DATABASE_URL").context("DATABASE_URL is required.")?)
+      .container_registry_url(
+        env::var("CONTAINER_REGISTRY_URL").context("CONTAINER_REGISTRY_URL is required.")?,
       )
-      .build(),
-  })
+      .telemetry(
+        Telemetry::new().enabled(
+          args.disable_telemetry.unwrap_or(false)
+            || env::var("DOSEID_TELEMETRY_DISABLED")
+              .map(|v| v == "true")
+              .unwrap_or(false),
+        ),
+      )
+      .build()?,
+  )
 }
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -71,6 +75,7 @@ struct Args {
   help: Option<bool>,
 }
 
+#[derive(Builder, Clone)]
 pub struct Config {
   pub address: Address,
   pub node_info: NodeInfo,
@@ -132,6 +137,7 @@ impl fmt::Display for Address {
   }
 }
 
+#[derive(Debug, Clone)]
 pub struct Telemetry {
   pub client: Option<PostHogClient>,
 }
@@ -182,6 +188,7 @@ impl Telemetry {
   }
 }
 
+#[derive(Debug, Clone)]
 pub struct PostHogClient {
   id: String,
   api_endpoint: String,
