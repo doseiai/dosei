@@ -8,7 +8,6 @@ use tracing_subscriber;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   let subscriber = tracing_subscriber::fmt()
-    .compact()
     .with_line_number(true)
     .with_target(true)
     .finish();

@@ -67,7 +67,7 @@ pub fn start_node(config: &'static Config) {
           };
           let mut cluster_info = cluster_info.lock().await;
           cluster_info.add_or_update_replica(received_data.clone());
-          println!("{:?}", cluster_info);
+          info!("{:?}", cluster_info);
         }
         Some(&cron_job::CronJob::PROTO_ID) => {
           let received_data = match cron_job::CronJob::decode(buf_slice) {
