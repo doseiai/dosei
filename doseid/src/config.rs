@@ -42,13 +42,20 @@ pub struct Config {
 }
 
 impl Config {
-  #[tracing::instrument]
   pub fn new() -> anyhow::Result<Config> {
     dotenv().ok();
     let args = Args::parse();
     if env::var("RUST_LOG").is_err() {
       env::set_var("RUST_LOG", "info");
     }
+
+    // enable subscriber
+    let subscriber = tracing_subscriber::fmt()
+      .with_line_number(true)
+      .with_target(true)
+      .finish();
+    tracing::subscriber::set_global_default(subscriber)?;
+
     Ok(Config {
       address: Address {
         host: args.host.clone(),
