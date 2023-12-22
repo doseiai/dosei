@@ -30,7 +30,6 @@ use axum::{
 use cached::{Cached, TimedCache};
 use hyper::StatusCode;
 use hyper_util::{client::legacy::connect::HttpConnector, rt::TokioExecutor};
-use log::info;
 use mongodb::bson::{doc, Bson, Document};
 use mongodb::Database;
 use once_cell::sync::Lazy;
@@ -38,12 +37,23 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
+use tracing::info;
 
 type Client = hyper_util::client::legacy::Client<HttpConnector, Body>;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+  // create tracing subscriber
+  let subscriber = tracing_subscriber::fmt()
+    .with_line_number(true)
+    .with_target(true)
+    .finish();
+  tracing::subscriber::set_global_default(subscriber)?;
+
+  // initialize config
   let config: &'static Config = Box::leak(Box::new(config::init()?));
+
+  // connect with database
   let client_options = mongodb::options::ClientOptions::parse(&config.mongo_url).await?;
   let client = mongodb::Client::with_options(client_options)?;
   client

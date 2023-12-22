@@ -1,9 +1,9 @@
 use anyhow::Context;
 use clap::Parser;
 use dotenv::dotenv;
-use log::warn;
 use std::fmt::Formatter;
 use std::{env, fmt};
+use tracing::warn;
 
 pub fn init() -> anyhow::Result<Config> {
   dotenv().ok();
@@ -11,7 +11,6 @@ pub fn init() -> anyhow::Result<Config> {
   if env::var("RUST_LOG").is_err() {
     env::set_var("RUST_LOG", "info");
   }
-  env_logger::init();
   let redis_url = match env::var("REDIS_URL") {
     Ok(url) => {
       warn!("TODO: Implement redis, falling back to single instance caching.");

@@ -13,8 +13,9 @@ hyper = { version = "1.0.0", features = ["full"] }
 hyper-util = { version = "0.1.1", features = ["client-legacy"] }
 tokio = { version = "1", features = ["full"] }
 anyhow = "1.0.75"
-env_logger = "0.10.1"
 log = "0.4.20"
 cached = "0.46.1"
 redis = { version = "0.24.0", features = ["tokio-comp", "async-std-comp", "aio"] }
 once_cell = { version = "1.19.0", features = [] }
+tracing-subscriber = "0.3.18"
+tracing = "0.1.40"

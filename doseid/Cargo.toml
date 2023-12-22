@@ -16,7 +16,6 @@ prost = { workspace = true }
 dotenv = { workspace = true }
 
 axum = "0.7.2"
-env_logger = "0.10.1"
 cron = "0.12.0"
 chrono = { version = "0.4.31", features = ["serde"] }
 bollard = "0.15.0"
