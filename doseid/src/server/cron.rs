@@ -14,7 +14,6 @@ use chrono::Utc;
 use cron::Schedule;
 use futures_util::stream::StreamExt;
 use gcp_auth::AuthenticationManager;
-use log::{error, info};
 use serde::Deserialize;
 use sqlx::{Pool, Postgres};
 use std::collections::HashMap;
@@ -22,6 +21,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::sleep;
+use tracing::{error, info};
 use uuid::Uuid;
 
 pub fn start_job_manager(config: &'static Config, pool: Arc<Pool<Postgres>>) {

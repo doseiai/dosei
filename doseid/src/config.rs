@@ -42,13 +42,13 @@ pub struct Config {
 }
 
 impl Config {
+  #[tracing::instrument]
   pub fn new() -> anyhow::Result<Config> {
     dotenv().ok();
     let args = Args::parse();
     if env::var("RUST_LOG").is_err() {
       env::set_var("RUST_LOG", "info");
     }
-    env_logger::init();
     Ok(Config {
       address: Address {
         host: args.host.clone(),
