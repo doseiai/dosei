@@ -2,11 +2,11 @@ use anyhow::Context;
 use clap::Parser;
 use dosei_proto::ping::NodeType;
 use dotenv::dotenv;
+use home::home_dir;
 use reqwest::header::CONTENT_TYPE;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::HashMap;
-use std::env::home_dir;
 use std::fmt::Formatter;
 use std::fs::File;
 use std::io::Read;
@@ -155,7 +155,6 @@ impl Telemetry {
     self.client = match value {
       true => None,
       false => {
-        // We are not focusing on windows support for now, so whatever.
         let mut path = home_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
         path.push(".dosei/doseid/data/id");
         let dir = path.parent().unwrap();
