@@ -5,34 +5,6 @@ use log::warn;
 use std::fmt::Formatter;
 use std::{env, fmt};
 
-pub fn init() -> anyhow::Result<Config> {
-  dotenv().ok();
-  let args = Args::parse();
-  if env::var("RUST_LOG").is_err() {
-    env::set_var("RUST_LOG", "info");
-  }
-  env_logger::init();
-  let redis_url = match env::var("REDIS_URL") {
-    Ok(url) => {
-      warn!("TODO: Implement redis, falling back to single instance caching.");
-      None
-      // Some(url)
-    }
-    Err(_) => {
-      warn!("Single instance caching in use. Concurrent replicas require REDIS_URL.");
-      None
-    }
-  };
-  Ok(Config {
-    address: Address {
-      host: args.host.clone(),
-      port: args.port,
-    },
-    mongo_url: env::var("MONGODB_URL").context("MONGODB_URL is required.")?,
-    redis_url,
-  })
-}
-
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None, disable_help_flag = true)]
 struct Args {
@@ -49,6 +21,36 @@ pub struct Config {
   pub address: Address,
   pub mongo_url: String,
   pub redis_url: Option<String>,
+}
+
+impl Config {
+  pub fn new() -> anyhow::Result<Config> {
+    dotenv().ok();
+    let args = Args::parse();
+    if env::var("RUST_LOG").is_err() {
+      env::set_var("RUST_LOG", "info");
+    }
+    env_logger::init();
+    let redis_url = match env::var("REDIS_URL") {
+      Ok(url) => {
+        warn!("TODO: Implement redis, falling back to single instance caching.");
+        None
+        // Some(url)
+      }
+      Err(_) => {
+        warn!("Single instance caching in use. Concurrent replicas require REDIS_URL.");
+        None
+      }
+    };
+    Ok(Config {
+      address: Address {
+        host: args.host.clone(),
+        port: args.port,
+      },
+      mongo_url: env::var("MONGODB_URL").context("MONGODB_URL is required.")?,
+      redis_url,
+    })
+  }
 }
 
 #[derive(Debug, Clone)]
