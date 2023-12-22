@@ -35,7 +35,6 @@ use mongodb::bson::{doc, Bson, Document};
 use mongodb::Database;
 use once_cell::sync::Lazy;
 use std::sync::Arc;
-use std::time::Duration;
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
 
@@ -43,7 +42,7 @@ type Client = hyper_util::client::legacy::Client<HttpConnector, Body>;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-  let config: &'static Config = Box::leak(Box::new(config::init()?));
+  let config: &'static Config = Box::leak(Box::new(Config::new()?));
   let client_options = mongodb::options::ClientOptions::parse(&config.mongo_url).await?;
   let client = mongodb::Client::with_options(client_options)?;
   client
