@@ -3,7 +3,6 @@ mod schema;
 mod server;
 
 use config::Config;
-use tracing_subscriber;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
