@@ -73,7 +73,7 @@ async fn main() -> anyhow::Result<()> {
   Ok(())
 }
 
-async fn health(mongo_client: Extension<Arc<mongodb::Client>>) -> Result<Response, StatusCode> {
+async fn health(_mongo_client: Extension<Arc<mongodb::Client>>) -> Result<Response, StatusCode> {
   // TODO: Fix, not sure wtf but not working prod
   // let db: Database = mongo_client.database("admin");
   // match db.run_command(doc! {"ping": 1}, None).await {
