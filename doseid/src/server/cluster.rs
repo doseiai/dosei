@@ -2,7 +2,6 @@ use crate::config;
 use crate::config::Config;
 use dosei_proto::ProtoChannel;
 use dosei_proto::{cron_job, ping};
-use log::{error, info};
 use once_cell::sync::Lazy;
 use prost::Message;
 use std::error::Error;
@@ -12,6 +11,7 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::Mutex;
 use tokio::time::sleep;
+use tracing::{error, info};
 
 static CLUSTER_INFO: Lazy<Arc<Mutex<ClusterInfo>>> = Lazy::new(|| {
   Arc::new(Mutex::new(ClusterInfo {
@@ -67,7 +67,7 @@ pub fn start_node(config: &'static Config) {
           };
           let mut cluster_info = cluster_info.lock().await;
           cluster_info.add_or_update_replica(received_data.clone());
-          println!("{:?}", cluster_info);
+          info!("{:?}", cluster_info);
         }
         Some(&cron_job::CronJob::PROTO_ID) => {
           let received_data = match cron_job::CronJob::decode(buf_slice) {

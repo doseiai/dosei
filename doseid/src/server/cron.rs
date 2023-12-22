@@ -14,7 +14,6 @@ use chrono::Utc;
 use cron::Schedule;
 use futures_util::stream::StreamExt;
 use gcp_auth::AuthenticationManager;
-use log::{error, info};
 use serde::Deserialize;
 use sqlx::{Pool, Postgres};
 use std::collections::HashMap;
@@ -22,6 +21,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::sleep;
+use tracing::{error, info};
 use uuid::Uuid;
 
 pub fn start_job_manager(config: &'static Config, pool: Arc<Pool<Postgres>>) {
@@ -127,16 +127,16 @@ async fn listen_docker_events() {
         match event.typ {
           Some(EventMessageTypeEnum::CONTAINER) => match event.action.clone().unwrap().as_str() {
             "create" => {
-              println!("create");
+              info!("create");
             }
             "start" => {
-              println!("start");
+              info!("start");
             }
             "die" => {
               error!("die");
               let actor = event.actor.unwrap();
               let job = new_job_from_event(&actor.id.unwrap()).await;
-              println!("{:?}", job);
+              info!("{:?}", job);
             }
             _ => {}
           },
@@ -194,7 +194,7 @@ async fn container_logs(container_id: &str) -> Result<Vec<String>, bollard::erro
         _ => {}
       },
       Err(e) => {
-        eprintln!("Error fetching logs: {}", e);
+        error!("Error fetching logs: {}", e);
         return Err(e);
       }
     }

@@ -3,11 +3,11 @@ use axum::extract::Path;
 use axum::http::StatusCode;
 use axum::{Extension, Json};
 use chrono::Utc;
-use log::error;
 use serde::Deserialize;
 use sqlx::{Pool, Postgres};
 use std::collections::HashMap;
 use std::sync::Arc;
+use tracing::error;
 use uuid::Uuid;
 
 // TODO: Return owner envs when project_id provided as well.

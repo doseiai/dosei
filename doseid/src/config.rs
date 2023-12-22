@@ -48,7 +48,14 @@ impl Config {
     if env::var("RUST_LOG").is_err() {
       env::set_var("RUST_LOG", "info");
     }
-    env_logger::init();
+
+    // enable subscriber
+    let subscriber = tracing_subscriber::fmt()
+      .with_line_number(true)
+      .with_target(true)
+      .finish();
+    tracing::subscriber::set_global_default(subscriber)?;
+
     Ok(Config {
       address: Address {
         host: args.host.clone(),

@@ -9,8 +9,8 @@ use std::sync::Arc;
 
 use crate::config::Config;
 use axum::{routing, Extension, Router};
-use log::info;
 use tokio::net::TcpListener;
+use tracing::info;
 
 pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
   let pool = Pool::<Postgres>::connect(&config.database_url).await?;
