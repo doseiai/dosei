@@ -2,11 +2,11 @@ use anyhow::Context;
 use clap::Parser;
 use dosei_proto::ping::NodeType;
 use dotenv::dotenv;
+use home::home_dir;
 use reqwest::header::CONTENT_TYPE;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::HashMap;
-use std::env::home_dir;
 use std::fmt::Formatter;
 use std::fs::File;
 use std::io::Read;
@@ -48,7 +48,14 @@ impl Config {
     if env::var("RUST_LOG").is_err() {
       env::set_var("RUST_LOG", "info");
     }
-    env_logger::init();
+
+    // enable subscriber
+    let subscriber = tracing_subscriber::fmt()
+      .with_line_number(true)
+      .with_target(true)
+      .finish();
+    tracing::subscriber::set_global_default(subscriber)?;
+
     Ok(Config {
       address: Address {
         host: args.host.clone(),
@@ -148,7 +155,6 @@ impl Telemetry {
     self.client = match value {
       true => None,
       false => {
-        // We are not focusing on windows support for now, so whatever.
         let mut path = home_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
         path.push(".dosei/doseid/data/id");
         let dir = path.parent().unwrap();

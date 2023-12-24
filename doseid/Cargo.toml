@@ -16,12 +16,16 @@ prost = { workspace = true }
 dotenv = { workspace = true }
 
 axum = "0.7.2"
-env_logger = "0.10.1"
-log = "0.4.20"
 cron = "0.12.0"
 chrono = { version = "0.4.31", features = ["serde"] }
 bollard = "0.15.0"
-sqlx = { version = "0.7.3", features = [ "runtime-tokio", "postgres", "uuid", "chrono", "tls-native-tls" ] }
+sqlx = { version = "0.7.3", features = [
+    "runtime-tokio",
+    "postgres",
+    "uuid",
+    "chrono",
+    "tls-native-tls",
+] }
 anyhow = "1.0.75"
 once_cell = "1.19.0"
 futures-util = "0.3.29"
@@ -31,3 +35,6 @@ reqwest = { version = "0.11.23", features = ["json"] }
 regex = "1.10.2"
 walkdir = "2.4.0"
 tempfile = "3.8.1"
+tracing-subscriber = "0.3.18"
+tracing = "0.1.40"
+home = "0.5.9"
