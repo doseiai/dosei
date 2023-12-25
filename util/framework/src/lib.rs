@@ -1,9 +1,29 @@
+use pyo3::exceptions::PyValueError;
+use pyo3::prelude::*;
+use pyo3::PyErr;
 use regex::Regex;
 use std::fs;
 use std::path::Path;
+use std::str::FromStr;
 use walkdir::WalkDir;
 
-fn find_framework_init(framework: Framework, folder_path: &Path) -> Result<String, &'static str> {
+#[pyfunction]
+fn find_framework_init(framework: String, path: String) -> Result<String, PyErr> {
+  let framework: Framework = Framework::from_str(&framework).map_err(|_| {
+    PyErr::new::<PyValueError, _>("Framework not supported, Choose Dosei or FastAPI")
+  })?;
+  let folder_path = Path::new(&path);
+  _find_framework_init(&framework, folder_path)
+    .map_err(|error| PyErr::new::<PyValueError, _>(error))
+}
+
+#[pymodule]
+fn dosei_framework(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+  m.add_function(wrap_pyfunction!(find_framework_init, m)?)?;
+  Ok(())
+}
+
+fn _find_framework_init(framework: &Framework, folder_path: &Path) -> Result<String, &'static str> {
   let pattern = Regex::new(&format!(r"(\w+)\s*=\s*{}\(", framework.class_name())).unwrap();
 
   let folder_path = match fs::canonicalize(folder_path) {
@@ -46,9 +66,22 @@ fn find_framework_init(framework: Framework, folder_path: &Path) -> Result<Strin
 }
 
 // TODO: Support Django and Flask
+#[derive(Debug)]
 enum Framework {
   Dosei,
   FastAPI,
+}
+
+impl FromStr for Framework {
+  type Err = ();
+
+  fn from_str(input: &str) -> Result<Framework, Self::Err> {
+    match input {
+      "Dosei" => Ok(Framework::Dosei),
+      "FastAPI" => Ok(Framework::FastAPI),
+      _ => Err(()), // You can implement more sophisticated error handling
+    }
+  }
 }
 
 impl Framework {
@@ -78,14 +111,14 @@ mod tests {
   fn test_no_framework_initialization() {
     let temp_dir = tempdir().unwrap();
     create_file(temp_dir.path(), "test.py", "print('Hello')");
-    let result = find_framework_init(Framework::Dosei, temp_dir.path());
+    let result = _find_framework_init(&Framework::Dosei, temp_dir.path());
     assert!(result.is_err());
   }
 
   #[test]
   fn test_invalid_directory_path() {
     let invalid_path = PathBuf::from("/invalid/path");
-    let result = find_framework_init(Framework::Dosei, &invalid_path);
+    let result = _find_framework_init(&Framework::Dosei, &invalid_path);
     assert!(result.is_err());
   }
 
@@ -93,14 +126,14 @@ mod tests {
   fn test_unsupported_file_extension() {
     let temp_dir = tempdir().unwrap();
     create_file(temp_dir.path(), "test.txt", "Dosei = Dosei()");
-    let result = find_framework_init(Framework::Dosei, temp_dir.path());
+    let result = _find_framework_init(&Framework::Dosei, temp_dir.path());
     assert!(result.is_err());
   }
 
   #[test]
   fn test_empty_directory() {
     let temp_dir = tempdir().unwrap();
-    let result = find_framework_init(Framework::Dosei, temp_dir.path());
+    let result = _find_framework_init(&Framework::Dosei, temp_dir.path());
     assert!(result.is_err());
   }
 
@@ -111,7 +144,7 @@ mod tests {
     fs::create_dir(&nested_dir).unwrap();
     create_file(&nested_dir, "test.py", "Dosei = Dosei()");
 
-    let result = find_framework_init(Framework::Dosei, temp_dir.path());
+    let result = _find_framework_init(&Framework::Dosei, temp_dir.path());
     assert!(result.is_ok());
   }
 
@@ -119,7 +152,7 @@ mod tests {
   fn test_dosei_framework_specific() {
     let temp_dir = tempdir().unwrap();
     create_file(temp_dir.path(), "test.py", "Dosei = Dosei()");
-    let result = find_framework_init(Framework::Dosei, temp_dir.path());
+    let result = _find_framework_init(&Framework::Dosei, temp_dir.path());
     assert!(result.is_ok());
   }
 
@@ -127,7 +160,7 @@ mod tests {
   fn test_fastapi_framework_specific() {
     let temp_dir = tempdir().unwrap();
     create_file(temp_dir.path(), "test.py", "FastAPI = FastAPI()");
-    let result = find_framework_init(Framework::FastAPI, temp_dir.path());
+    let result = _find_framework_init(&Framework::FastAPI, temp_dir.path());
     assert!(result.is_ok());
   }
 }
