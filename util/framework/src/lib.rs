@@ -13,8 +13,7 @@ fn find_framework_init(framework: String, path: String) -> Result<String, PyErr>
     PyErr::new::<PyValueError, _>("Framework not supported, Choose Dosei or FastAPI")
   })?;
   let folder_path = Path::new(&path);
-  _find_framework_init(&framework, folder_path)
-    .map_err(|error| PyErr::new::<PyValueError, _>(error))
+  _find_framework_init(&framework, folder_path).map_err(PyErr::new::<PyValueError, _>)
 }
 
 #[pymodule]
