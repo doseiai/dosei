@@ -1,1 +1,1 @@
-`dosei_framework`
+`dosei_util`
