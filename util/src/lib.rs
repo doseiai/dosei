@@ -17,7 +17,7 @@ fn find_framework_init(framework: String, path: String) -> Result<String, PyErr>
 }
 
 #[pymodule]
-fn dosei_framework(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+fn dosei_util(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
   m.add_function(wrap_pyfunction!(find_framework_init, m)?)?;
   Ok(())
 }
