@@ -1,4 +1,3 @@
-use std::fs::File;
 use std::path::Path;
 use std::{fmt, fs};
 
@@ -7,7 +6,7 @@ pub fn _resolve_docker(folder_path: &Path) -> bool {
     Ok(path) => path,
     Err(_) => return false,
   };
-  return folder_path.join("Dockerfile").exists();
+  folder_path.join("Dockerfile").exists()
 }
 
 pub fn _resolve_package_manager(folder_path: &Path) -> Result<PackageManager, &'static str> {
@@ -69,7 +68,6 @@ impl fmt::Display for PackageManager {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use std::fs::File;
   use tempfile::Builder;
 
   #[test]

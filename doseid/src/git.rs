@@ -1,6 +1,5 @@
 mod github;
 use crate::config::Config;
-use anyhow::Context;
 use chrono::{Duration, Utc};
 use git2::build::RepoBuilder;
 use git2::{FetchOptions, Repository};
@@ -9,7 +8,6 @@ use regex::Regex;
 use reqwest::{header, Client};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::error::Error;
 use std::path::Path;
 use tokio::task;
 use tokio::time::Instant;
@@ -177,7 +175,6 @@ mod tests {
 
   async fn test_clone() {
     let temp_dir = tempdir().expect("Failed to create a temp dir");
-    let dir = temp_dir.path().to_owned();
     let repo_path = temp_dir.path();
 
     let repo: anyhow::Result<Repository> = crate::git::github::github_clone(

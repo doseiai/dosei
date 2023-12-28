@@ -10,6 +10,7 @@ dosei_proto = { path = "../proto" }
 clap = { workspace = true, features = ["derive"] }
 uuid = { workspace = true, features = ["v4", "serde"] }
 tokio = { workspace = true, features = ["full"] }
+tokio-util = "0.7.10"
 serde_json = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 prost = { workspace = true }
