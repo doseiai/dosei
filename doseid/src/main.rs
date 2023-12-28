@@ -1,5 +1,5 @@
 mod config;
-mod github;
+mod git;
 mod schema;
 mod server;
 

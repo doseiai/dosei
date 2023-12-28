@@ -1,10 +1,43 @@
+mod github;
 use crate::config::Config;
+use anyhow::Context;
 use chrono::{Duration, Utc};
+use git2::build::RepoBuilder;
+use git2::{FetchOptions, Repository};
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
 use reqwest::{header, Client};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::error::Error;
+use std::path::Path;
+use tokio::task;
+use tracing::info;
+
+async fn git_clone(
+  from_url: &str,
+  to_path: &Path,
+  branch: Option<&str>,
+) -> anyhow::Result<Repository> {
+  let from_url = from_url.to_string();
+  let to_path = to_path.to_path_buf();
+  let branch = branch.map(|s| s.to_string());
+
+  task::spawn_blocking(move || {
+    let mut fetch_options = FetchOptions::new();
+    fetch_options.depth(1);
+    let mut repo_builder = RepoBuilder::new();
+    repo_builder.fetch_options(fetch_options);
+    if let Some(branch_name) = branch {
+      info!("branch provided");
+      repo_builder.branch(&branch_name);
+    }
+    match repo_builder.clone(&from_url, &to_path) {
+      Ok(repo) => Ok(repo),
+      Err(e) => panic!("failed to clone: {}", e),
+    }
+  })
+  .await?
+}
 
 async fn update_deployment_status(
   config: &'static Config,
@@ -118,12 +151,58 @@ impl GithubDeploymentStatus {
 #[cfg(test)]
 mod tests {
   use crate::config::Config;
-  use crate::github::create_github_app_jwt;
+  use crate::git::create_github_app_jwt;
+  use git2::Repository;
+  use once_cell::sync::Lazy;
+  use tempfile::tempdir;
+  use tokio::fs;
+  use tracing::info;
+
+  static CONFIG: Lazy<Config> = Lazy::new(|| Config::new().unwrap());
 
   #[test]
   fn test_create_github_app_jwt() {
-    let config: &'static Config = Box::leak(Box::new(Config::new().unwrap()));
-    let result = create_github_app_jwt(config);
+    let result = create_github_app_jwt(&CONFIG);
     assert!(result.is_ok());
+  }
+
+  async fn test_clone() {
+    let temp_dir = tempdir().expect("Failed to create a temp dir");
+    let dir = temp_dir.path().to_owned();
+    let repo_path = temp_dir.path();
+
+    let repo: Repository = crate::git::github::github_clone(
+      "https://github.com/doseiai/dosei.git",
+      repo_path,
+      None,
+      None,
+      None,
+      &CONFIG,
+    )
+    .await
+    .unwrap();
+
+    info!("Temp directory: {:?}", repo_path);
+
+    let mut paths = fs::read_dir(&dir).await.expect("Failed to read dir");
+    while let Some(path) = paths.next_entry().await.expect("Failed to read next entry") {
+      info!("Path: {:?}", path.path());
+    }
+    drop(temp_dir)
+  }
+
+  #[tokio::test]
+  async fn test_clone_repos() {
+    use futures::future::join_all;
+
+    let tests: Vec<_> = (0..10)
+      .map(|_| {
+        tokio::spawn(async {
+          test_clone().await;
+        })
+      })
+      .collect();
+
+    join_all(tests).await;
   }
 }
