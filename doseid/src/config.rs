@@ -13,7 +13,7 @@ use std::io::Read;
 use std::io::Write;
 use std::path::PathBuf;
 use std::{env, fmt, fs, write};
-use tracing::{error, info, warn};
+use tracing::warn;
 use uuid::Uuid;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -66,14 +66,12 @@ impl Config {
       .finish();
     tracing::subscriber::set_global_default(subscriber)?;
 
-    match TOMLConfig::new(args.config) {
-      Ok(toml_config) => {
-        if toml_config.github.unstable.enabled {
-          warn!("[Integrations] Enabling github.unstable");
-        }
+    if let Ok(toml_config) = TOMLConfig::new(args.config) {
+      if toml_config.github.unstable.enabled {
+        warn!("[Integrations] Enabling github.unstable");
       }
-      Err(_) => {}
     };
+
     Ok(Config {
       address: Address {
         host: args.host.clone(),
@@ -286,7 +284,7 @@ impl TOMLConfig {
       None => return Err(anyhow::Error::msg("Config file not provided")),
       Some(filename) => filename,
     };
-    let contents = fs::read_to_string(&filename)
+    let contents = fs::read_to_string(filename)
       .map_err(|_| anyhow::Error::msg("Could not read config file"))?;
     let data: TOMLConfig =
       toml::from_str(&contents).map_err(|_| anyhow::Error::msg("Could not parse config file"))?;
