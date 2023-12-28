@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install protobuf-compiler --yes
 COPY Cargo.toml Cargo.lock ./
 
 # Mock workspace members
-RUN cargo new proto --lib && cargo new doseid --bin && cargo new proxy --bin
+RUN cargo new proto --lib && cargo new doseid --bin && cargo new proxy --bin && cargo new util --lib
 COPY proto/Cargo.toml ./proto/
 COPY doseid/Cargo.toml ./doseid/
 COPY proxy/Cargo.toml ./proxy/
