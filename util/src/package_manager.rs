@@ -68,6 +68,7 @@ impl fmt::Display for PackageManager {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use std::fs::File;
   use tempfile::Builder;
 
   #[test]
