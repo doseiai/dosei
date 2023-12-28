@@ -914,6 +914,7 @@ dependencies = [
  "jsonwebtoken",
  "once_cell",
  "prost",
+ "regex",
  "reqwest",
  "serde",
  "serde_json",

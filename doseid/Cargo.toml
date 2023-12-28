@@ -38,6 +38,7 @@ home = "0.5.9"
 jsonwebtoken = "9.2.0"
 tempfile = "3.9.0"
 git2 = "0.18.1"
+regex = "1.10.2"
 
 [dev-dependencies]
 futures = "0.3.30"

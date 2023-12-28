@@ -5,12 +5,14 @@ use chrono::{Duration, Utc};
 use git2::build::RepoBuilder;
 use git2::{FetchOptions, Repository};
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
+use regex::Regex;
 use reqwest::{header, Client};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::error::Error;
 use std::path::Path;
 use tokio::task;
+use tokio::time::Instant;
 use tracing::info;
 
 async fn git_clone(
@@ -21,18 +23,27 @@ async fn git_clone(
   let from_url = from_url.to_string();
   let to_path = to_path.to_path_buf();
   let branch = branch.map(|s| s.to_string());
-
   task::spawn_blocking(move || {
     let mut fetch_options = FetchOptions::new();
     fetch_options.depth(1);
     let mut repo_builder = RepoBuilder::new();
     repo_builder.fetch_options(fetch_options);
     if let Some(branch_name) = branch {
-      info!("branch provided");
       repo_builder.branch(&branch_name);
     }
+
+    let re = Regex::new(r"(?:https?://)?(?:[^@]+@)?([^/]+/[^/]+/[^/.]+)").unwrap();
+    match re.captures(&from_url.to_string()) {
+      Some(cap) => info!("Cloning {}", &cap[1]),
+      None => info!("Cloning repository"),
+    }
+    let start = Instant::now();
     match repo_builder.clone(&from_url, &to_path) {
-      Ok(repo) => Ok(repo),
+      Ok(repo) => {
+        let elapsed = start.elapsed().as_secs_f64() * 1000.0;
+        info!("Cloning completed: {:.2}ms", elapsed);
+        Ok(repo)
+      }
       Err(e) => panic!("failed to clone: {}", e),
     }
   })
@@ -154,8 +165,8 @@ mod tests {
   use crate::git::create_github_app_jwt;
   use git2::Repository;
   use once_cell::sync::Lazy;
+  use regex::Regex;
   use tempfile::tempdir;
-  use tokio::fs;
   use tracing::info;
 
   static CONFIG: Lazy<Config> = Lazy::new(|| Config::new().unwrap());
@@ -181,13 +192,6 @@ mod tests {
     )
     .await
     .unwrap();
-
-    info!("Temp directory: {:?}", repo_path);
-
-    let mut paths = fs::read_dir(&dir).await.expect("Failed to read dir");
-    while let Some(path) = paths.next_entry().await.expect("Failed to read next entry") {
-      info!("Path: {:?}", path.path());
-    }
     drop(temp_dir)
   }
 
