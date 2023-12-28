@@ -7,7 +7,7 @@ pub fn _resolve_package_manager(folder_path: &Path) -> Result<PackageManager, &'
     Err(_) => return Err("Invalid folder path"),
   };
 
-  if folder_path.join("poetry.lock").exists() {
+  if folder_path.join("poetry.lock").exists() || folder_path.join("poetry.toml").exists() {
     return Ok(PackageManager::Poetry);
   }
 
@@ -39,9 +39,18 @@ mod tests {
   use tempfile::Builder;
 
   #[test]
-  fn test_resolve_package_manager_with_poetry() {
+  fn test_resolve_package_manager_with_poetry_lock() {
     let temp_dir = Builder::new().prefix("example").tempdir().unwrap();
     File::create(temp_dir.path().join("poetry.lock")).unwrap();
+
+    let result = _resolve_package_manager(temp_dir.path());
+    assert_eq!(result, Ok(PackageManager::Poetry));
+  }
+
+  #[test]
+  fn test_resolve_package_manager_with_poetry_toml() {
+    let temp_dir = Builder::new().prefix("example").tempdir().unwrap();
+    File::create(temp_dir.path().join("poetry.toml")).unwrap();
 
     let result = _resolve_package_manager(temp_dir.path());
     assert_eq!(result, Ok(PackageManager::Poetry));
