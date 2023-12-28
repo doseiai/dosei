@@ -1,0 +1,13 @@
+[package]
+name = "dosei_util"
+version = { workspace = true }
+edition = { workspace = true }
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = "0.20.0"
+regex = "1.10.2"
+walkdir = "2.4.0"
+tempfile = "3.8.1"
