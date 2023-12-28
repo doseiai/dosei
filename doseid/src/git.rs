@@ -165,7 +165,6 @@ mod tests {
   use crate::git::create_github_app_jwt;
   use git2::Repository;
   use once_cell::sync::Lazy;
-  use regex::Regex;
   use tempfile::tempdir;
 
   static CONFIG: Lazy<Config> = Lazy::new(|| Config::new().unwrap());
@@ -181,7 +180,7 @@ mod tests {
     let dir = temp_dir.path().to_owned();
     let repo_path = temp_dir.path();
 
-    let repo: Repository = crate::git::github::github_clone(
+    let repo: anyhow::Result<Repository> = crate::git::github::github_clone(
       "https://github.com/doseiai/dosei.git",
       repo_path,
       None,
@@ -189,9 +188,9 @@ mod tests {
       None,
       &CONFIG,
     )
-    .await
-    .unwrap();
-    drop(temp_dir)
+    .await;
+    drop(temp_dir);
+    assert!(repo.is_ok())
   }
 
   #[tokio::test]
