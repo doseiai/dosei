@@ -2,3 +2,4 @@ data/
 target/
 .env.production
 .env
+config.toml
