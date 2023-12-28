@@ -39,6 +39,7 @@ pub struct Config {
   pub database_url: String,
   pub container_registry_url: String,
   pub telemetry: Telemetry,
+  pub github_integration: GithubIntegration,
 }
 
 impl Config {
@@ -85,6 +86,7 @@ impl Config {
               .unwrap_or(false),
         )
         .build(),
+      github_integration: GithubIntegration::new()?,
     })
   }
 
@@ -222,5 +224,26 @@ impl PostHogClient {
       })
       .send()
       .await;
+  }
+}
+
+pub struct GithubIntegration {
+  pub app_name: String,
+  pub app_id: String,
+  pub client_id: String,
+  pub client_secret: String,
+  pub private_key: String,
+}
+
+impl GithubIntegration {
+  pub fn new() -> anyhow::Result<GithubIntegration> {
+    Ok(GithubIntegration {
+      app_name: env::var("GITHUB_APP_NAME").unwrap_or("Dosei".to_string()),
+      app_id: env::var("GITHUB_APP_ID").context("GITHUB_APP_ID is required.")?,
+      client_id: env::var("GITHUB_CLIENT_ID").context("GITHUB_CLIENT_ID is required.")?,
+      client_secret: env::var("GITHUB_CLIENT_SECRET")
+        .context("GITHUB_CLIENT_SECRET is required.")?,
+      private_key: env::var("GITHUB_PRIVATE_KEY").context("GITHUB_PRIVATE_KEY is required.")?,
+    })
   }
 }
