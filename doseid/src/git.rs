@@ -167,7 +167,6 @@ mod tests {
   use once_cell::sync::Lazy;
   use regex::Regex;
   use tempfile::tempdir;
-  use tracing::info;
 
   static CONFIG: Lazy<Config> = Lazy::new(|| Config::new().unwrap());
 
