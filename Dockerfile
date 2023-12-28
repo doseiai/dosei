@@ -16,6 +16,7 @@ RUN cargo new proto --lib && cargo new doseid --bin && cargo new proxy --bin
 COPY proto/Cargo.toml ./proto/
 COPY doseid/Cargo.toml ./doseid/
 COPY proxy/Cargo.toml ./proxy/
+COPY util/Cargo.toml ./util/
 
 RUN cargo build --release
 
