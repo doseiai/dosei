@@ -1,3 +1,4 @@
+use std::fs::File;
 use std::path::Path;
 use std::{fmt, fs};
 
@@ -15,6 +16,31 @@ pub fn _resolve_package_manager(folder_path: &Path) -> Result<PackageManager, &'
     return Ok(PackageManager::Pip);
   }
   Err("No supported package manager found")
+}
+
+pub fn _resolve_python_version(folder_path: &Path) -> Result<String, String> {
+  match _resolve_package_manager(folder_path) {
+    Ok(PackageManager::Poetry) => {
+      let file_path = folder_path.join("pyproject.toml");
+      let contents =
+        fs::read_to_string(file_path).map_err(|_| "Failed to read pyproject.toml".to_string())?;
+      let data: toml::Value = contents
+        .parse()
+        .map_err(|_| "Failed to parse TOML".to_string())?;
+
+      let version = data
+        .get("tool")
+        .and_then(|tool| tool.get("poetry"))
+        .and_then(|poetry| poetry.get("dependencies"))
+        .and_then(|deps| deps.get("python"))
+        .map(|version| version.to_string())
+        .ok_or_else(|| "Python version not found in pyproject.toml".to_string())?;
+
+      Ok(version)
+    }
+    Ok(PackageManager::Pip) => Err("Python version couldn't be auto resolved".to_string()),
+    _ => Err("Python version couldn't be auto resolved".to_string()),
+  }
 }
 
 #[derive(Debug, PartialEq)]
