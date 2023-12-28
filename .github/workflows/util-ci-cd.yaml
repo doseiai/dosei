@@ -36,9 +36,8 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
-          working-directory: util
           name: wheels
-          path: dist
+          path: util/dist
 
   windows:
     runs-on: windows-latest
