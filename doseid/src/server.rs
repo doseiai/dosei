@@ -45,6 +45,7 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
   Ok(())
 }
 
+// TODO: Add this to some sort of healthcheck or periodically check, if this is dead, exit 1
 async fn check_docker_daemon_status() {
   match Docker::connect_with_socket_defaults() {
     Ok(connection) => match connection.ping().await {
