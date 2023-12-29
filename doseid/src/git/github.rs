@@ -166,6 +166,7 @@ impl GithubDeploymentStatus {
 #[cfg(test)]
 mod tests {
   use crate::config::Config;
+  use crate::git::git_clone;
   use git2::Repository;
   use once_cell::sync::Lazy;
   use tempfile::tempdir;
@@ -189,7 +190,7 @@ mod tests {
     let repo_path = temp_dir.path();
 
     let repo: anyhow::Result<Repository> =
-      crate::git::git_clone("https://github.com/doseiai/dosei.git", repo_path, None).await;
+      git_clone("https://github.com/Alw3ys/dosei-bot.git", repo_path, None).await;
     drop(temp_dir);
     assert!(repo.is_ok())
   }

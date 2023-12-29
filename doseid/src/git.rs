@@ -8,7 +8,7 @@ use tokio::task;
 use tokio::time::Instant;
 use tracing::info;
 
-async fn git_clone(
+pub async fn git_clone(
   from_url: &str,
   to_path: &Path,
   branch: Option<&str>,

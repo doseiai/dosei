@@ -1,4 +1,5 @@
 mod config;
+mod deployment;
 mod docker;
 pub mod git;
 mod schema;

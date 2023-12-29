@@ -5,14 +5,18 @@ mod secret;
 use anyhow::Context;
 use sqlx::postgres::Postgres;
 use sqlx::Pool;
+use std::future::Future;
 use std::sync::Arc;
 
 use crate::config::Config;
 use axum::{routing, Extension, Router};
+use bollard::Docker;
+use futures_util::TryFutureExt;
 use tokio::net::TcpListener;
-use tracing::info;
+use tracing::{error, info};
 
 pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
+  check_docker_daemon_status().await;
   let pool = Pool::<Postgres>::connect(&config.database_url).await?;
   let shared_pool = Arc::new(pool);
   info!("Successfully connected to Postgres");
@@ -39,4 +43,20 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
   info!("Dosei running on http://{} (Press CTRL+C to quit", address);
   axum::serve(listener, app).await?;
   Ok(())
+}
+
+async fn check_docker_daemon_status() {
+  match Docker::connect_with_socket_defaults() {
+    Ok(connection) => match connection.ping().await {
+      Ok(_) => info!("Successfully connected to Docker Daemon"),
+      Err(e) => {
+        error!("Failed to ping Docker: {}", e);
+        std::process::exit(1);
+      }
+    },
+    Err(e) => {
+      error!("Failed to connect to Docker: {}", e);
+      return std::process::exit(1);
+    }
+  };
 }
