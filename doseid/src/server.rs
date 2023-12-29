@@ -1,5 +1,6 @@
 mod cluster;
 mod cron;
+mod health;
 mod secret;
 
 use anyhow::Context;
@@ -20,6 +21,7 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
   let pool = Pool::<Postgres>::connect(&config.database_url)
     .await
     .context("Failed to connect to Postgres")?;
+
   let shared_pool = Arc::new(pool);
   info!("Successfully connected to Postgres");
   cluster::start_cluster(config)?;
@@ -37,6 +39,7 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
     )
     .route("/cron-jobs", routing::post(cron::api_create_job))
     .route("/cron-jobs", routing::get(cron::api_get_cron_jobs))
+    .route("/health", routing::get(health::api_health))
     .layer(Extension(Arc::clone(&shared_pool)));
   let address = config.address.to_string();
   let listener = TcpListener::bind(&address)
@@ -47,7 +50,6 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
   Ok(())
 }
 
-// TODO: Add this to some sort of healthcheck or periodically check, if this is dead, exit 1
 async fn check_docker_daemon_status() {
   match Docker::connect_with_socket_defaults() {
     Ok(connection) => match connection.ping().await {
