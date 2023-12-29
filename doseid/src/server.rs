@@ -17,7 +17,9 @@ use tracing::{error, info};
 
 pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
   check_docker_daemon_status().await;
-  let pool = Pool::<Postgres>::connect(&config.database_url).await?;
+  let pool = Pool::<Postgres>::connect(&config.database_url)
+    .await
+    .context("Failed to connect to Postgres")?;
   let shared_pool = Arc::new(pool);
   info!("Successfully connected to Postgres");
   cluster::start_cluster(config)?;

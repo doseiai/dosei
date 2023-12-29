@@ -25,7 +25,7 @@ mod tests {
     let repo_path = temp_dir.path();
 
     let repo: anyhow::Result<Repository> =
-      git_clone("https://github.com/alw3ys/dosei-bot.git", repo_path, None).await;
+      git_clone("https://github.com/Alw3ys/dosei-bot.git", repo_path, None).await;
     build(repo_path).await;
     drop(temp_dir);
   }
