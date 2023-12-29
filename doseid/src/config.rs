@@ -284,8 +284,8 @@ impl TOMLConfig {
       None => return Err(anyhow::Error::msg("Config file not provided")),
       Some(filename) => filename,
     };
-    let contents = fs::read_to_string(filename)
-      .map_err(|_| anyhow::Error::msg("Could not read config file"))?;
+    let contents =
+      fs::read_to_string(filename).map_err(|_| anyhow::Error::msg("Could not read config file"))?;
     let data: TOMLConfig =
       toml::from_str(&contents).map_err(|_| anyhow::Error::msg("Could not parse config file"))?;
     Ok(data)
