@@ -24,10 +24,10 @@ pub async fn gcr_credentials() -> DockerCredentials {
   }
 }
 
-// TODO: This sucks, is blocking, refactor.
 pub async fn build_image(name: &str, tag: &str, folder_path: &Path) {
   let docker = Docker::connect_with_socket_defaults().unwrap();
 
+  // TODO: This sucks, is blocking, refactor.
   // Compress starts
   let output_path = "output.tar.gz";
   let tar_gz = File::create(output_path).unwrap();

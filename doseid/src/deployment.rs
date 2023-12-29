@@ -3,8 +3,6 @@ use std::path::Path;
 use tracing::info;
 
 async fn build(folder_path: &Path) {
-  // todo!("Update status");
-  println!("{:?}", folder_path);
   let detected_docker_file = dosei_util::package_manager::_resolve_docker(folder_path);
   if detected_docker_file {
     println!("Detected `Dockerfile`");
