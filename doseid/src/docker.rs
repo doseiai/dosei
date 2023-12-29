@@ -59,6 +59,24 @@ pub async fn build_image(name: &str, tag: &str, folder_path: &Path) {
   remove_file(output_path).await.unwrap();
 }
 
+pub async fn push_image(name: &str, tag: &str) {
+  let docker = Docker::connect_with_socket_defaults().unwrap();
+  let mut stream = docker.push_image(
+    name,
+    Some(PushImageOptions { tag }),
+    Some(gcr_credentials().await),
+  );
+  while let Some(push_result) = stream.next().await {
+    match push_result {
+      Ok(output) => println!("{:?}", output),
+      Err(e) => {
+        eprintln!("Push error: {:?}", e);
+        break;
+      }
+    }
+  }
+}
+
 async fn read_tar_gz_content(output_path: &str) -> Vec<u8> {
   use tokio::fs::File;
   use tokio::io::AsyncReadExt;
@@ -67,13 +85,4 @@ async fn read_tar_gz_content(output_path: &str) -> Vec<u8> {
   let mut contents = Vec::new();
   file.read_to_end(&mut contents).await.unwrap();
   contents
-}
-
-async fn push_image(name: &str, tag: &str) {
-  let docker = Docker::connect_with_socket_defaults().unwrap();
-  let _ = docker.push_image(
-    name,
-    Some(PushImageOptions { tag }),
-    Some(gcr_credentials().await),
-  );
 }

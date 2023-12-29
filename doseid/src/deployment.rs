@@ -1,4 +1,4 @@
-use crate::docker::build_image;
+use crate::docker::{build_image, push_image};
 use std::path::Path;
 use tracing::info;
 
@@ -9,6 +9,7 @@ async fn build(folder_path: &Path) {
   if detected_docker_file {
     println!("Detected `Dockerfile`");
     let _ = build_image("example", "example", folder_path).await;
+    let _ = push_image("example", "example").await;
   }
 }
 
