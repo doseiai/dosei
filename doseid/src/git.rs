@@ -1,4 +1,4 @@
-mod github;
+pub mod github;
 use git2::build::RepoBuilder;
 use git2::{FetchOptions, Repository};
 use regex::Regex;

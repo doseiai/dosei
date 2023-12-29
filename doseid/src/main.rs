@@ -1,6 +1,6 @@
 mod config;
 mod docker;
-mod git;
+pub mod git;
 mod schema;
 mod server;
 

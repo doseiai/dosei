@@ -1,3 +1,4 @@
+use crate::git::github::GithubIntegration;
 use anyhow::Context;
 use clap::Parser;
 use dosei_proto::ping::NodeType;
@@ -13,7 +14,6 @@ use std::io::Read;
 use std::io::Write;
 use std::path::PathBuf;
 use std::{env, fmt, fs, write};
-use tracing::warn;
 use uuid::Uuid;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -31,8 +31,8 @@ struct Args {
   disable_telemetry: Option<bool>,
   #[arg(long, action = clap::ArgAction::Help, help = "Print help")]
   help: Option<bool>,
-  #[arg(long)]
-  config: Option<String>,
+  #[arg(long, help = "Path to doseid TOML config file")]
+  config_path: Option<String>,
 }
 
 pub struct Config {
@@ -42,7 +42,7 @@ pub struct Config {
   pub database_url: String,
   pub container_registry_url: String,
   pub telemetry: Telemetry,
-  pub github_integration: GithubIntegration,
+  pub github_integration: Option<GithubIntegration>,
 }
 
 impl Config {
@@ -59,16 +59,17 @@ impl Config {
     if env::var("RUST_LOG").is_err() {
       env::set_var("RUST_LOG", "info");
     }
-    // enable subscriber
+
     let subscriber = tracing_subscriber::fmt()
       .with_line_number(true)
       .with_target(true)
       .finish();
     tracing::subscriber::set_global_default(subscriber)?;
 
-    if let Ok(toml_config) = TOMLConfig::new(args.config) {
+    let mut github_integration = None;
+    if let Ok(toml_config) = TOMLConfig::new(args.config_path) {
       if toml_config.github.unstable.enabled {
-        warn!("[Integrations] Enabling github.unstable");
+        github_integration = Some(GithubIntegration::new()?);
       }
     };
 
@@ -101,7 +102,7 @@ impl Config {
               .unwrap_or(false),
         )
         .build(),
-      github_integration: GithubIntegration::new()?,
+      github_integration,
     })
   }
 
@@ -239,27 +240,6 @@ impl PostHogClient {
       })
       .send()
       .await;
-  }
-}
-
-pub struct GithubIntegration {
-  pub app_name: String,
-  pub app_id: String,
-  pub client_id: String,
-  pub client_secret: String,
-  pub private_key: String,
-}
-
-impl GithubIntegration {
-  pub fn new() -> anyhow::Result<GithubIntegration> {
-    Ok(GithubIntegration {
-      app_name: env::var("GITHUB_APP_NAME").unwrap_or("Dosei".to_string()),
-      app_id: env::var("GITHUB_APP_ID").context("GITHUB_APP_ID is required.")?,
-      client_id: env::var("GITHUB_CLIENT_ID").context("GITHUB_CLIENT_ID is required.")?,
-      client_secret: env::var("GITHUB_CLIENT_SECRET")
-        .context("GITHUB_CLIENT_SECRET is required.")?,
-      private_key: env::var("GITHUB_PRIVATE_KEY").context("GITHUB_PRIVATE_KEY is required.")?,
-    })
   }
 }
 
