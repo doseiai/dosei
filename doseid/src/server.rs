@@ -57,7 +57,7 @@ async fn check_docker_daemon_status() {
     },
     Err(e) => {
       error!("Failed to connect to Docker: {}", e);
-      return std::process::exit(1);
+      std::process::exit(1);
     }
   };
 }
