@@ -1,3 +1,4 @@
+use crate::git::github::GithubIntegration;
 use anyhow::Context;
 use clap::Parser;
 use dosei_proto::ping::NodeType;
@@ -30,6 +31,8 @@ struct Args {
   disable_telemetry: Option<bool>,
   #[arg(long, action = clap::ArgAction::Help, help = "Print help")]
   help: Option<bool>,
+  #[arg(long, help = "Path to doseid TOML config file")]
+  config_path: Option<String>,
 }
 
 pub struct Config {
@@ -39,9 +42,17 @@ pub struct Config {
   pub database_url: String,
   pub container_registry_url: String,
   pub telemetry: Telemetry,
+  pub github_integration: Option<GithubIntegration>,
 }
 
 impl Config {
+  /// Creates a new Config instance.
+  ///
+  /// Configuration settings are determined based on a defined hierarchy of importance:
+  /// 1. Command-line arguments
+  /// 2. Environment variables
+  /// 3. Configuration file
+  ///
   pub fn new() -> anyhow::Result<Config> {
     dotenv().ok();
     let args = Args::parse();
@@ -49,12 +60,18 @@ impl Config {
       env::set_var("RUST_LOG", "info");
     }
 
-    // enable subscriber
     let subscriber = tracing_subscriber::fmt()
       .with_line_number(true)
       .with_target(true)
       .finish();
     tracing::subscriber::set_global_default(subscriber)?;
+
+    let mut github_integration = None;
+    if let Ok(toml_config) = TOMLConfig::new(args.config_path) {
+      if toml_config.github.unstable.enabled {
+        github_integration = Some(GithubIntegration::new()?);
+      }
+    };
 
     Ok(Config {
       address: Address {
@@ -85,6 +102,7 @@ impl Config {
               .unwrap_or(false),
         )
         .build(),
+      github_integration,
     })
   }
 
@@ -222,5 +240,34 @@ impl PostHogClient {
       })
       .send()
       .await;
+  }
+}
+
+#[derive(Deserialize)]
+pub struct TOMLConfig {
+  github: GithubTOML,
+}
+
+#[derive(Deserialize)]
+pub struct GithubTOML {
+  unstable: GithubUnstableTOML,
+}
+
+#[derive(Deserialize)]
+pub struct GithubUnstableTOML {
+  enabled: bool,
+}
+
+impl TOMLConfig {
+  pub fn new(config: Option<String>) -> anyhow::Result<TOMLConfig> {
+    let filename = match config {
+      None => return Err(anyhow::Error::msg("Config file not provided")),
+      Some(filename) => filename,
+    };
+    let contents =
+      fs::read_to_string(filename).map_err(|_| anyhow::Error::msg("Could not read config file"))?;
+    let data: TOMLConfig =
+      toml::from_str(&contents).map_err(|_| anyhow::Error::msg("Could not parse config file"))?;
+    Ok(data)
   }
 }

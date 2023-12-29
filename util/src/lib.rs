@@ -1,3 +1,6 @@
+mod package_manager;
+
+use crate::package_manager::_resolve_package_manager;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::PyErr;
@@ -16,9 +19,18 @@ fn find_framework_init(framework: String, path: String) -> Result<String, PyErr>
   _find_framework_init(&framework, folder_path).map_err(PyErr::new::<PyValueError, _>)
 }
 
+#[pyfunction]
+fn resolve_package_manager(path: String) -> Result<String, PyErr> {
+  let folder_path = Path::new(&path);
+  _resolve_package_manager(folder_path)
+    .map(|pm| pm.to_string())
+    .map_err(PyErr::new::<PyValueError, _>)
+}
+
 #[pymodule]
 fn dosei_util(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
   m.add_function(wrap_pyfunction!(find_framework_init, m)?)?;
+  m.add_function(wrap_pyfunction!(resolve_package_manager, m)?)?;
   Ok(())
 }
 

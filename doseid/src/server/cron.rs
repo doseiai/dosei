@@ -1,8 +1,8 @@
 use crate::config::Config;
+use crate::docker;
 use crate::schema::{CronJob, Job};
 use axum::http::StatusCode;
 use axum::{Extension, Json};
-use bollard::auth::DockerCredentials;
 use bollard::container::{
   CreateContainerOptions, InspectContainerOptions, LogOutput, LogsOptions, StartContainerOptions,
 };
@@ -13,7 +13,6 @@ use bollard::Docker;
 use chrono::Utc;
 use cron::Schedule;
 use futures_util::stream::StreamExt;
-use gcp_auth::AuthenticationManager;
 use serde::Deserialize;
 use sqlx::{Pool, Postgres};
 use std::collections::HashMap;
@@ -231,14 +230,7 @@ async fn run_job(config: &'static Config, cron_job: CronJob) {
           tag: &cron_job.deployment_id,
           ..Default::default()
         });
-        let authentication_manager = AuthenticationManager::new().await.unwrap();
-        let scopes = &["https://www.googleapis.com/auth/cloud-platform"];
-        let token = authentication_manager.get_token(scopes).await.unwrap();
-        let credentials = DockerCredentials {
-          username: Some("oauth2accesstoken".to_string()),
-          password: Some(token.as_str().to_string()),
-          ..Default::default()
-        };
+        let credentials = docker::gcr_credentials().await;
         let mut stream = docker.create_image(options, None, Some(credentials));
         while let Some(result) = stream.next().await {
           if let Err(e) = result {
