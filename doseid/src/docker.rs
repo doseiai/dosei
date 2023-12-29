@@ -27,12 +27,15 @@ pub async fn gcr_credentials() -> DockerCredentials {
 // TODO: This sucks, is blocking, refactor.
 pub async fn build_image(name: &str, tag: &str, folder_path: &Path) {
   let docker = Docker::connect_with_socket_defaults().unwrap();
+
+  // Compress starts
   let output_path = "output.tar.gz";
   let tar_gz = File::create(output_path).unwrap();
   let enc = GzEncoder::new(tar_gz, Compression::default());
   let mut tar = Builder::new(enc);
   tar.append_dir_all(".", folder_path).unwrap();
   tar.into_inner().unwrap().finish().unwrap();
+  // Compress ends
 
   let build_image_options = BuildImageOptions {
     dockerfile: "Dockerfile",
@@ -40,10 +43,8 @@ pub async fn build_image(name: &str, tag: &str, folder_path: &Path) {
     ..Default::default()
   };
 
-  let mut file = File::open(output_path).unwrap();
-  let mut contents = Vec::new();
-  file.read_to_end(&mut contents).unwrap();
-  let mut stream = docker.build_image(build_image_options, None, Some(contents.into()));
+  let tar = read_tar_gz_content(output_path).await;
+  let mut stream = docker.build_image(build_image_options, None, Some(tar.into()));
   while let Some(build_result) = stream.next().await {
     match build_result {
       Ok(build_info) => {
@@ -56,6 +57,16 @@ pub async fn build_image(name: &str, tag: &str, folder_path: &Path) {
     }
   }
   remove_file(output_path).await.unwrap();
+}
+
+async fn read_tar_gz_content(output_path: &str) -> Vec<u8> {
+  use tokio::fs::File;
+  use tokio::io::AsyncReadExt;
+
+  let mut file = File::open(output_path).await.unwrap();
+  let mut contents = Vec::new();
+  file.read_to_end(&mut contents).await.unwrap();
+  contents
 }
 
 async fn push_image(name: &str, tag: &str) {
