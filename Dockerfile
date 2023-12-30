@@ -25,11 +25,11 @@ RUN cargo build --release
 FROM rust:1.74.1
 
 ARG DOSEID_INSTALL=/bin/doseid
-COPY --from=builder target/release/doseid ${DOSEID_INSTALL}
+COPY --from=builder /usr/src/doseid/target/release/doseid ${DOSEID_INSTALL}
 RUN chmod +x ${DOSEID_INSTALL}
 
 ARG DOSEI_PROXY_INSTALL=/bin/dosei-proxy
-COPY --from=builder target/release/proxy ${DOSEI_PROXY_INSTALL}
+COPY --from=builder /usr/src/doseid/target/release/proxy ${DOSEI_PROXY_INSTALL}
 RUN chmod +x ${DOSEI_PROXY_INSTALL}
 
 CMD ["/bin/doseid"]
