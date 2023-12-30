@@ -35,7 +35,7 @@ pub struct Server {
   version: String,
 }
 
-#[allow(clippy::upper_case_acronyms)] // Just want to return uppercase mode on response
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Mode {
   STANDALONE,
