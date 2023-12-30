@@ -42,6 +42,12 @@ type Client = hyper_util::client::legacy::Client<HttpConnector, Body>;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+  let subscriber = tracing_subscriber::fmt()
+    .with_line_number(true)
+    .with_target(true)
+    .finish();
+  tracing::subscriber::set_global_default(subscriber)?;
+
   let config: &'static Config = Box::leak(Box::new(Config::new()?));
   let client_options = mongodb::options::ClientOptions::parse(&config.mongo_url).await?;
   let client = mongodb::Client::with_options(client_options)?;
