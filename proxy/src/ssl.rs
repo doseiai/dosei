@@ -5,8 +5,9 @@
 //! Tries to keep the Let's Encrypt API limits in check
 //!
 
-use anyhow::Ok;
 use anyhow::{anyhow, Result};
+use std::error::Error;
+use std::fmt;
 use std::time::Duration;
 use tokio::time::sleep;
 
@@ -20,21 +21,37 @@ use tracing::{error, info};
 const MAX_WAIT_ATTEMPTS: usize = 20;
 const MAX_CERTIFICATE_RETRIES: usize = 5;
 
-// create account and get creds
-pub async fn create_account(email: &str) -> Result<AccountCredentials, anyhow::Error> {
-  let server_url = LetsEncrypt::Staging.url().to_string();
+// Custom error type for better error reporting
+#[derive(Debug)]
+struct AccountCreationError;
 
-  let new_account = &NewAccount {
-    contact: &[&format!("mailto:{email}")],
+impl fmt::Display for AccountCreationError {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "Failed to create a new account.")
+  }
+}
+
+impl Error for AccountCreationError {}
+
+// Create an account and retrieve credentials
+pub async fn create_account(email: &str) -> Result<AccountCredentials, anyhow::Error> {
+  // Use the staging server URL from LetsEncrypt
+  let staging_server_url = LetsEncrypt::Staging.url().to_string();
+
+  // Define the new account information
+  let new_account_info = NewAccount {
+    contact: &[&format!("mailto:{}", email)],
     terms_of_service_agreed: true,
     only_return_existing: false,
   };
 
-  let (_account, credentials) = Account::create(new_account, &server_url, None)
-    .await
-    .unwrap();
+  // Create a new account and obtain credentials
+  let result = Account::create(&new_account_info, &staging_server_url, None).await;
 
-  Ok(credentials)
+  match result {
+    Ok((_, credentials)) => Ok(credentials),
+    Err(_) => Err(AccountCreationError.into()), // Convert the error to a custom error type
+  }
 }
 
 // create certificate and get it's private key
