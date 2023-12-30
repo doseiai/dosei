@@ -1,34 +1,35 @@
-FROM rust:1.74.1
+FROM rust:1.74.1 as builder
 
-ARG DOSEID_INSTALL=/bin/doseid
-ARG DOSEI_PROXY_INSTALL=/bin/dosei-proxy
 ENV SQLX_OFFLINE=true
 
 WORKDIR /usr/src/doseid
 
-RUN apt-get update && apt-get install protobuf-compiler --yes
+RUN apt-get update && apt-get install -y build-essential protobuf-compiler python3 python3.11-dev
 
-# Mock workspace
+## Mock workspace
 COPY Cargo.toml Cargo.lock ./
 
 # Mock workspace members
-RUN cargo new proto --lib && cargo new doseid --bin && cargo new proxy --bin && cargo new util --lib
+RUN cargo new proto --lib && cargo new util --lib && cargo new doseid --bin && cargo new proxy --bin
 COPY proto/Cargo.toml ./proto/
 COPY doseid/Cargo.toml ./doseid/
 COPY proxy/Cargo.toml ./proxy/
-COPY util/Cargo.toml ./util/
+# Exception, for some reason doesn't work with this stuff
+COPY util/ ./util/
 
 RUN cargo build --release
 
 COPY . .
 RUN cargo build --release
 
-RUN mv target/release/doseid ${DOSEID_INSTALL}
+FROM rust:1.74.1
+
+ARG DOSEID_INSTALL=/bin/doseid
+COPY --from=builder target/release/doseid ${DOSEID_INSTALL}
 RUN chmod +x ${DOSEID_INSTALL}
 
-RUN mv target/release/proxy ${DOSEI_PROXY_INSTALL}
+ARG DOSEI_PROXY_INSTALL=/bin/dosei-proxy
+COPY --from=builder target/release/proxy ${DOSEI_PROXY_INSTALL}
 RUN chmod +x ${DOSEI_PROXY_INSTALL}
-
-RUN rm -rf target
 
 CMD ["/bin/doseid"]
