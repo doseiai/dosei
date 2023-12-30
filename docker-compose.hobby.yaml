@@ -21,6 +21,8 @@ services:
     extends:
       file: docker-compose.yaml
       service: postgres
+    env_file:
+      - .env.hobby
     networks:
       - net
 
