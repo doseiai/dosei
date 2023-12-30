@@ -19,7 +19,7 @@ services:
       - net
   postgres:
     extends:
-      file: docker-compose-dev.yaml
+      file: docker-compose.yaml
       service: postgres
     networks:
       - net
