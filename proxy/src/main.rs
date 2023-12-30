@@ -14,8 +14,10 @@
 //! - Implement events: onProxyPassEvent
 
 mod config;
+mod ssl;
 
 use crate::config::Config;
+use crate::ssl::{create_account, create_certificate};
 use anyhow::Context;
 use axum::response::Redirect;
 use axum::routing::get;
@@ -58,6 +60,7 @@ async fn main() -> anyhow::Result<()> {
     .route("/health", get(health))
     .route("/", any(handler))
     .route("/*path", any(handler))
+    .route("/ssl", get(provision_ssl_certificate))
     .with_state(client)
     .layer(Extension(Arc::clone(&shared_mongo_client)));
 
@@ -69,6 +72,12 @@ async fn main() -> anyhow::Result<()> {
     "Dosei Proxy running on http://{} (Press CTRL+C to quit",
     address
   );
+
+  // test
+  info!("creating an account for let's encrypt");
+  let credentials = create_account("john@doe.com").await?;
+  create_certificate("johndoe.com", credentials).await?;
+
   axum::serve(listener, app).await?;
   Ok(())
 }
@@ -158,3 +167,5 @@ static DOMAINS_CACHE: Lazy<Arc<Mutex<TimedCache<String, String>>>> = Lazy::new(|
   let cache = TimedCache::with_lifespan(120);
   Arc::new(Mutex::new(cache))
 });
+
+async fn provision_ssl_certificate() {}

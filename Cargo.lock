@@ -1725,6 +1725,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "instant-acme"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dfd67650b79d84a42241813361d52f313271987a48330606653995881fe47ef4"
+dependencies = [
+ "base64 0.21.5",
+ "hyper 0.14.28",
+ "hyper-rustls",
+ "ring",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "io-lifetimes"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2523,10 +2538,13 @@ dependencies = [
  "dotenv",
  "hyper 1.1.0",
  "hyper-util",
+ "instant-acme",
  "log",
  "mongodb",
  "once_cell",
+ "rcgen",
  "redis",
+ "serde_json",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -2642,6 +2660,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 dependencies = [
  "getrandom",
+]
+
+[[package]]
+name = "rcgen"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d918c80c5a4c7560db726763020bd16db179e4d5b828078842274a443addb5d"
+dependencies = [
+ "pem",
+ "ring",
+ "time",
+ "yasna",
 ]
 
 [[package]]
@@ -4380,6 +4410,15 @@ dependencies = [
  "libc",
  "linux-raw-sys 0.4.12",
  "rustix 0.38.28",
+]
+
+[[package]]
+name = "yasna"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e17bb3549cc1321ae1296b9cdc2698e2b6cb1992adfa19a8c72e5b7a738f44cd"
+dependencies = [
+ "time",
 ]
 
 [[package]]
