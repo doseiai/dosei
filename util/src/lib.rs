@@ -1,4 +1,4 @@
-mod package_manager;
+pub mod package_manager;
 
 use crate::package_manager::_resolve_package_manager;
 use pyo3::exceptions::PyValueError;
