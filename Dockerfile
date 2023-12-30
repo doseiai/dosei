@@ -4,7 +4,7 @@ ENV SQLX_OFFLINE=true
 
 WORKDIR /usr/src/doseid
 
-RUN apt-get update && apt-get install -y build-essential protobuf-compiler python3 python3.11-dev
+RUN apt-get update && apt-get install -y build-essential protobuf-compiler python3.11-dev
 
 ## Mock workspace
 COPY Cargo.toml Cargo.lock ./
@@ -23,6 +23,8 @@ COPY . .
 RUN cargo build --release
 
 FROM rust:1.74.1
+
+RUN apt-get update && apt-get install -y python3.11-dev
 
 ARG DOSEID_INSTALL=/bin/doseid
 COPY --from=builder /usr/src/doseid/target/release/doseid ${DOSEID_INSTALL}
