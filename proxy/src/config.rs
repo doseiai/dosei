@@ -31,7 +31,6 @@ impl Config {
       env::set_var("RUST_LOG", "info");
     }
 
-    // initialise logging
     let subscriber = tracing_subscriber::fmt()
       .with_line_number(true)
       .with_target(true)
