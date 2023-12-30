@@ -1,6 +1,6 @@
 # Contributing to Dosei
 
-We appreciate your help! To contribute please read this contributing guidelines.
+We appreciate your help! To contribute, please read these contributing guidelines.
 
 ## Commit Message Format
 
