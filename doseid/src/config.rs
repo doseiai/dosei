@@ -106,7 +106,6 @@ impl Config {
     })
   }
 
-  #[allow(dead_code)]
   pub fn is_primary(&self) -> bool {
     self.node_info.node_type == NodeType::Primary
   }
@@ -145,7 +144,7 @@ pub struct NodeInfo {
   pub address: Address,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Address {
   pub host: String,
   pub port: u16,

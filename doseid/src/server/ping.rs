@@ -1,5 +1,3 @@
-// Thoughts: maybe this should be ping instead of health, idk.
-
 use axum::http::StatusCode;
 use axum::Extension;
 use bollard::Docker;
