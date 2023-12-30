@@ -1,6 +1,6 @@
 mod cluster;
 mod cron;
-mod health;
+mod ping;
 mod secret;
 
 use anyhow::Context;
@@ -39,7 +39,7 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
     )
     .route("/cron-jobs", routing::post(cron::api_create_job))
     .route("/cron-jobs", routing::get(cron::api_get_cron_jobs))
-    .route("/health", routing::get(health::api_health))
+    .route("/ping", routing::get(ping::api_ping))
     .layer(Extension(Arc::clone(&shared_pool)));
   let address = config.address.to_string();
   let listener = TcpListener::bind(&address)

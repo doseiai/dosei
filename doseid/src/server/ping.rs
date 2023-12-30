@@ -1,13 +1,12 @@
 // Thoughts: maybe this should be ping instead of health, idk.
 
 use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
 use axum::Extension;
 use bollard::Docker;
 use sqlx::{Connection, Pool, Postgres};
 use std::sync::Arc;
 
-pub async fn api_health(pool: Extension<Arc<Pool<Postgres>>>) -> Result<Response, StatusCode> {
+pub async fn api_ping(pool: Extension<Arc<Pool<Postgres>>>) -> Result<StatusCode, StatusCode> {
   let mut conn = pool
     .acquire()
     .await
@@ -23,5 +22,5 @@ pub async fn api_health(pool: Extension<Arc<Pool<Postgres>>>) -> Result<Response
     .ping()
     .await
     .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?;
-  Ok((StatusCode::OK, "OK").into_response())
+  Ok(StatusCode::OK)
 }
