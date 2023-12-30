@@ -21,7 +21,7 @@ The fastest and most reliable way to get started is with our Foundational plan o
 ### Self-hosting
 
 For hobby projects and prototyping with minimal setup, we have published a pre-built image that you can download from [Docker Hub](https://hub.docker.com/r/doseiai/dosei).
-The Dosei engine depends on [PostgreSQL](https://github.com/postgres/postgres) and [Redis](https://github.com/redis/redis)
+The Dosei engine depends on [PostgreSQL](https://github.com/postgres/postgres).
 
 For more advanced setups on distributed systems or other requirements not listed, join our [Discord Server](https://discord.com/invite/BP5aUkhcAh). We are more than happy to help!
 
