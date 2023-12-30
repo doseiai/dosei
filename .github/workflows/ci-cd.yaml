@@ -65,7 +65,7 @@ jobs:
         with:
           context: .
           push: false
-          tags: doseiai/dosei:latest
+          tags: doseiai/dosei:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           load: true
@@ -75,5 +75,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: doseiai/dosei:latest
+          tags: |
+            doseiai/dosei:${{ github.sha }}
+            doseiai/dosei:latest
           cache-from: type=gha

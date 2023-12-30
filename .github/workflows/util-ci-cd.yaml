@@ -5,6 +5,8 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  release:
+    types: [ published ]
 
 permissions:
   contents: read
@@ -115,7 +117,7 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
     needs: [linux, windows, macos, sdist]
     steps:
       - uses: actions/download-artifact@v3
