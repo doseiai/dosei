@@ -13,7 +13,7 @@ use tokio::sync::Mutex;
 use tokio::time::sleep;
 use tracing::{error, info};
 
-static CLUSTER_INFO: Lazy<Arc<Mutex<ClusterInfo>>> = Lazy::new(|| {
+pub static CLUSTER_INFO: Lazy<Arc<Mutex<ClusterInfo>>> = Lazy::new(|| {
   Arc::new(Mutex::new(ClusterInfo {
     replicas: Vec::new(),
   }))
