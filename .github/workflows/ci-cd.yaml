@@ -5,6 +5,8 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  release:
+    types: [ published ]
 
 concurrency:
   group: ${{ github.ref }}
@@ -64,7 +66,7 @@ jobs:
         with:
           context: .
           push: false
-          tags: doseiai/dosei:${{ github.sha }}
+          tags: doseiai/dosei
           cache-from: type=gha
           cache-to: type=gha,mode=max
           load: true
@@ -76,6 +78,17 @@ jobs:
           context: .
           push: true
           tags: |
+            doseiai/dosei
             doseiai/dosei:${{ github.sha }}
-            doseiai/dosei:latest
+          cache-from: type=gha
+
+      - name: Docker Push Release
+        if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: |
+            doseiai/dosei
+            doseiai/dosei:${{ github.ref_name }}
           cache-from: type=gha
