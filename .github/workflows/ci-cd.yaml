@@ -44,7 +44,6 @@ jobs:
 
   cd:
     needs: ci
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-22.04
 
     steps:
@@ -71,6 +70,7 @@ jobs:
           load: true
 
       - name: Docker Push
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v4
         with:
           context: .
