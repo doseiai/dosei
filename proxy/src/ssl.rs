@@ -6,6 +6,7 @@
 //!
 
 use anyhow::Ok;
+use anyhow::{anyhow, Result};
 use std::time::Duration;
 use tokio::time::sleep;
 
@@ -16,7 +17,7 @@ use instant_acme::{
 use rcgen::{Certificate, CertificateParams, DistinguishedName};
 use tracing::{error, info};
 
-const MAX_RETRIES: usize = 20;
+const MAX_WAIT_ATTEMPTS: usize = 20;
 const MAX_CERTIFICATE_RETRIES: usize = 5;
 
 // create account and get creds
@@ -93,8 +94,7 @@ pub async fn create_certificate(
     .set_challenge_ready(&dns_challenge.url)
     .await?;
 
-  // exponential backoff
-  await_order_completion(&mut certificate_order).await?;
+  wait_for_completed_order(&mut certificate_order).await?;
 
   let mut cert_params = CertificateParams::new(vec![identifier.to_owned()]);
   cert_params.distinguished_name = DistinguishedName::new();
@@ -118,33 +118,38 @@ pub async fn create_certificate(
   Ok(certificate.serialize_private_key_pem())
 }
 
-pub async fn await_order_completion(order: &mut Order) -> anyhow::Result<()> {
-  let mut tries = 1;
-  let mut delay = Duration::from_millis(250);
+pub async fn wait_for_completed_order(order: &mut Order) -> Result<()> {
+  let mut attempts = 1;
+  let mut backoff_duration = Duration::from_millis(250);
+
   loop {
-    sleep(delay).await;
+    sleep(backoff_duration).await;
 
-    let state = order.refresh().await?;
+    let order_state = order.refresh().await?;
 
-    if let OrderStatus::Ready | OrderStatus::Invalid = state.status {
-      info!("order state: {:#?}", state);
-      break;
-    }
+    match order_state.status {
+      OrderStatus::Ready | OrderStatus::Invalid => {
+        info!("Order state: {:#?}", order_state);
+        break;
+      }
+      _ => {
+        backoff_duration *= 2;
+        attempts += 1;
 
-    delay *= 2;
-    tries += 1;
-    match tries < MAX_RETRIES {
-      true => info!("order is not ready, waiting {delay:?}"),
-      false => {
-        error!("order is not yet ready in {MAX_RETRIES} tries");
-        return Err(anyhow::anyhow!("order is not ready"));
+        if attempts < MAX_WAIT_ATTEMPTS {
+          info!("Order is not ready, waiting {backoff_duration:?}");
+        } else {
+          error!("Order is not yet ready after {MAX_WAIT_ATTEMPTS} attempts");
+          return Err(anyhow!("Order is not ready"));
+        }
       }
     }
   }
 
-  let order_state = order.state();
-  if order_state.status != OrderStatus::Ready {
-    error!("unexpected order status: {:?}", order_state.status)
+  let final_order_state = order.state();
+  if final_order_state.status != OrderStatus::Ready {
+    error!("Unexpected order status: {:?}", final_order_state.status);
   }
+
   Ok(())
 }
