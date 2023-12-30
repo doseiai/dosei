@@ -10,7 +10,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./data/doseid:/root/.dosei/doseid/data
     env_file:
-      - .env.hobby
+      - .env
     depends_on:
       - postgres
     ports:
@@ -21,8 +21,6 @@ services:
     extends:
       file: docker-compose.yaml
       service: postgres
-    env_file:
-      - .env.hobby
     networks:
       - net
 

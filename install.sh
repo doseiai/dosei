@@ -2,14 +2,14 @@
 
 set -e
 
-if ! [ -f .env.hobby ]; then
-    cp .env.example .env.hobby
+if ! [ -f .env ]; then
+    cp .env.example .env
 
     NEW_POSTGRES_PASSWORD=$(openssl rand -hex 8)
 
-    sed -i '' "s/<replace_with_secure_postgres_password>/$NEW_POSTGRES_PASSWORD/" .env.hobby
-    sed -i '' 's/127.0.0.1:5432/postgres:5432/' .env.hobby
-    echo ".env.hobby file created and populated"
+    sed -i '' "s/<replace_with_secure_postgres_password>/$NEW_POSTGRES_PASSWORD/" .env
+    sed -i '' 's/127.0.0.1:5432/postgres:5432/' .env
+    echo ".env file created and populated"
     echo
     echo "Run docker compose -f docker-compose.hobby.yaml up"
 else
