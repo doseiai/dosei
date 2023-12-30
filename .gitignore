@@ -1,5 +1,5 @@
 data/
 target/
-.env.production
 .env
+.env*
 *doseid.toml
