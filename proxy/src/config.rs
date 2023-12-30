@@ -30,6 +30,13 @@ impl Config {
     if env::var("RUST_LOG").is_err() {
       env::set_var("RUST_LOG", "info");
     }
+
+    let subscriber = tracing_subscriber::fmt()
+      .with_line_number(true)
+      .with_target(true)
+      .finish();
+    tracing::subscriber::set_global_default(subscriber)?;
+
     let redis_url = match env::var("REDIS_URL") {
       Ok(_url) => {
         warn!("TODO: Implement redis, falling back to single instance caching.");
