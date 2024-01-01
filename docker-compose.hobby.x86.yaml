@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  doseid:
+    container_name: doseid
+    restart: always
+    image: doseiai/dosei:0.0.5
+    command: /bin/doseid --host 0.0.0.0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data/doseid:/root/.dosei/doseid/data
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+    ports:
+      - '8844:8844'
+    networks:
+      - net
+  postgres:
+    extends:
+      file: docker-compose.yaml
+      service: postgres
+    networks:
+      - net
+
+networks:
+  net:
+    driver: bridge
