@@ -17,9 +17,9 @@ if ! [ -f .env ]; then
     sed -i '' 's/127.0.0.1:5432/postgres:5432/' .env
     echo ".env file created and populated"
     echo
-    echo "Run make run Or make run-arm depending upon your platform."
+    echo "Run docker compose -f docker-compose.hobby.yaml up"
 else
-    echo "Run make run Or make run-arm depending upon your platform."
+    echo "Run docker compose -f docker-compose.hobby.yaml up"
 fi
 echo
 echo "Stuck? Join our Discord https://discord.com/invite/BP5aUkhcAh"
