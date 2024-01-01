@@ -22,7 +22,7 @@ Dosei is an open-source project under the [Apache-2.0 license](LICENSE). You can
 To install the Dosei engine, run the following commands:
 
 ```bash
-git clone git@github.com:doseiai/engine.git && cd engine && ./install.sh
+make install-hobby
 ```
 
 #### Running Dosei
@@ -30,7 +30,7 @@ git clone git@github.com:doseiai/engine.git && cd engine && ./install.sh
 Start Dosei using the following command:
 
 ```bash
-docker compose -f docker-compose.hobby.yaml up
+make run-hobby
 ```
 
 #### Need Help?
