@@ -21,16 +21,14 @@ Dosei is an open-source project under the [Apache-2.0 license](LICENSE). You can
 
 To install the Dosei engine, run the following commands:
 
+For users using x86 architecture,
 ```bash
-git clone git@github.com:doseiai/engine.git && cd engine && ./install.sh
+make install && make run
 ```
 
-#### Running Dosei
-
-Start Dosei using the following command:
-
+For users using arm based platforms (e.g. Mac M1)
 ```bash
-docker compose -f docker-compose.hobby.yaml up
+make install && make run-arm
 ```
 
 #### Need Help?
