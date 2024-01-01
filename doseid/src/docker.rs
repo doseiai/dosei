@@ -1,17 +1,17 @@
 use bollard::auth::DockerCredentials;
+use bollard::container::{CreateContainerOptions, LogOutput, LogsOptions, StartContainerOptions};
 use bollard::image::{BuildImageOptions, PushImageOptions};
 use bollard::Docker;
 use flate2::write::GzEncoder;
 use flate2::Compression;
 use futures_util::StreamExt;
 use gcp_auth::AuthenticationManager;
+use serde::{Deserialize, Serialize};
 use std::default::Default;
 use std::fs::File;
 use std::hash::Hasher;
 use std::io::prelude::*;
 use std::path::Path;
-use bollard::container::{CreateContainerOptions, LogOutput, LogsOptions, StartContainerOptions};
-use serde::{Deserialize, Serialize};
 use tar::Builder;
 use tokio::fs::remove_file;
 use tokio::task;
@@ -72,7 +72,10 @@ pub async fn run_command(name: &str, tag: &str, app_instance: &str) {
     .await
     .unwrap();
 
-  docker.start_container(&container.id, None::<StartContainerOptions<String>>).await.unwrap();
+  docker
+    .start_container(&container.id, None::<StartContainerOptions<String>>)
+    .await
+    .unwrap();
 
   let logs_options = LogsOptions::<String> {
     follow: true,

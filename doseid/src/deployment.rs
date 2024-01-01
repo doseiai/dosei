@@ -1,9 +1,7 @@
 use crate::docker::{build_image, push_image, run_command};
+use dosei_util::Framework;
 use std::path::Path;
 use tracing::error;
-use dosei_util::Framework;
-
-
 
 // This is some code I've on python which I need to move here
 // app_json = DockerManager.run_command(
@@ -26,7 +24,7 @@ async fn build(folder_path: &Path) {
       }
       Err(_) => {
         eprintln!("We couldn't find it!");
-        return error!("We couldn't find it")
+        return error!("We couldn't find it");
       }
     }
 
@@ -34,10 +32,9 @@ async fn build(folder_path: &Path) {
   }
 }
 
-
 #[cfg(test)]
 mod tests {
-  use crate::deployment::{build};
+  use crate::deployment::build;
   use crate::git::git_clone;
   use git2::Repository;
   use tempfile::tempdir;

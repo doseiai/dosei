@@ -34,7 +34,10 @@ fn dosei_util(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
   Ok(())
 }
 
-pub fn _find_framework_init(framework: &Framework, folder_path: &Path) -> Result<String, &'static str> {
+pub fn _find_framework_init(
+  framework: &Framework,
+  folder_path: &Path,
+) -> Result<String, &'static str> {
   let pattern = Regex::new(&format!(r"(\w+)\s*=\s*{}\(", framework.class_name())).unwrap();
 
   let folder_path = match fs::canonicalize(folder_path) {
