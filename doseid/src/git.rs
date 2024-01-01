@@ -2,7 +2,6 @@ pub mod github;
 use git2::build::RepoBuilder;
 use git2::{FetchOptions, Repository};
 use regex::Regex;
-use serde::{Deserialize, Serialize};
 use std::path::Path;
 use tokio::task;
 use tokio::time::Instant;

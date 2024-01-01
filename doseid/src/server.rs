@@ -7,13 +7,11 @@ mod secret;
 use anyhow::Context;
 use sqlx::postgres::Postgres;
 use sqlx::Pool;
-use std::future::Future;
 use std::sync::Arc;
 
 use crate::config::Config;
 use axum::{routing, Extension, Router};
 use bollard::Docker;
-use futures_util::TryFutureExt;
 use tokio::net::TcpListener;
 use tracing::{error, info};
 

@@ -1,12 +1,10 @@
 use bollard::auth::DockerCredentials;
-use bollard::container::{CreateContainerOptions, LogOutput, LogsOptions, StartContainerOptions};
 use bollard::image::{BuildImageOptions, PushImageOptions};
 use bollard::Docker;
 use flate2::write::GzEncoder;
 use flate2::Compression;
 use futures_util::StreamExt;
 use gcp_auth::AuthenticationManager;
-use serde::{Deserialize, Serialize};
 use std::default::Default;
 use std::fs::File;
 use std::hash::Hasher;
@@ -53,71 +51,6 @@ pub async fn build_image(name: &str, tag: &str, folder_path: &Path) {
     }
   }
   remove_file(output_path).await.unwrap();
-}
-
-pub async fn run_command(name: &str, tag: &str, app_instance: &str) {
-  let docker = Docker::connect_with_socket_defaults().unwrap();
-
-  let image_tag = format!("{}:{}", name, tag);
-  let command = format!("dosei export {} && cat .dosei/app.json", app_instance);
-
-  let config = bollard::container::Config {
-    image: Some(image_tag.as_str()),
-    cmd: Some(vec!["/bin/sh", "-c", command.as_str()]),
-    ..Default::default()
-  };
-
-  let container = docker
-    .create_container(None::<CreateContainerOptions<String>>, config)
-    .await
-    .unwrap();
-
-  docker
-    .start_container(&container.id, None::<StartContainerOptions<String>>)
-    .await
-    .unwrap();
-
-  let logs_options = LogsOptions::<String> {
-    follow: true,
-    stdout: true,
-    stderr: true,
-    timestamps: false,
-    ..Default::default()
-  };
-  let mut logs_stream = docker.logs(&container.id, Some(logs_options));
-  let mut message_accumulator = Vec::new(); // to accumulate message bytes
-
-  while let Some(log_result) = logs_stream.next().await {
-    match log_result {
-      Ok(log_output) => match log_output {
-        LogOutput::StdOut { message } | LogOutput::StdErr { message } => {
-          message_accumulator.extend_from_slice(&message);
-        }
-        _ => eprintln!("Received other type of log"),
-      },
-      Err(e) => eprintln!("Error fetching logs: {}", e),
-    }
-  }
-  // Attempt to deserialize the complete JSON string.
-  let complete_message = String::from_utf8_lossy(&message_accumulator);
-  let dosei_app: Result<DoseiApp, _> = serde_json::from_str(&complete_message);
-
-  match dosei_app {
-    Ok(app) => println!("{:?}", app),
-    Err(e) => eprintln!("Error deserializing message: {}", e),
-  }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct CronJob {
-  schedule: String,
-  entrypoint: String,
-  is_async: bool,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct DoseiApp {
-  cron_jobs: Vec<CronJob>,
 }
 
 pub async fn push_image(name: &str, tag: &str) {
