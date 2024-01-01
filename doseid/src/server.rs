@@ -19,12 +19,14 @@ use tracing::{error, info};
 
 pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
   check_docker_daemon_status().await;
+
   let pool = Pool::<Postgres>::connect(&config.database_url)
     .await
     .context("Failed to connect to Postgres")?;
-
+  sqlx::migrate!("./migrations").run(&pool).await?;
   let shared_pool = Arc::new(pool);
   info!("Successfully connected to Postgres");
+
   cluster::start_cluster(config)?;
   cron::start_job_manager(config, Arc::clone(&shared_pool));
   let app = Router::new()
