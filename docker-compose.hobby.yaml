@@ -4,7 +4,7 @@ services:
   doseid:
     container_name: doseid
     restart: always
-    image: doseiai/dosei:0.0.4
+    image: doseiai/dosei:0.0.5
     command: /bin/doseid --host 0.0.0.0
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
