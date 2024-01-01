@@ -23,7 +23,7 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
   let pool = Pool::<Postgres>::connect(&config.database_url)
     .await
     .context("Failed to connect to Postgres")?;
-  sqlx::migrate!("./migrations").run(&pool).await?;
+  sqlx::migrate!().run(&pool).await?;
   let shared_pool = Arc::new(pool);
   info!("Successfully connected to Postgres");
 
