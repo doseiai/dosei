@@ -746,7 +746,6 @@ dependencies = [
  "sqlx",
  "tar",
  "tempfile",
- "thiserror",
  "tokio",
  "tokio-util",
  "toml",

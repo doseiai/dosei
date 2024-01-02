@@ -1,6 +1,5 @@
 use crate::git::git_clone;
-use anyhow::Context;
-use axum::http::HeaderValue;
+use anyhow::{anyhow, Context};
 use chrono::{Duration, Utc};
 use git2::Repository;
 use hmac::{Hmac, Mac};
@@ -11,7 +10,6 @@ use serde_json::{json, Value};
 use sha2::Sha256;
 use std::env;
 use std::path::Path;
-use thiserror::Error;
 use tracing::warn;
 
 type HmacSha256 = Hmac<Sha256>;
@@ -67,23 +65,18 @@ impl GithubIntegration {
   pub fn verify_signature(
     &self,
     payload_body: &[u8],
-    signature_header: Option<&HeaderValue>,
-  ) -> Result<(), VerifyGithubSignatureError> {
-    let signature_header =
-      signature_header.ok_or(VerifyGithubSignatureError::SignatureHeaderMissing)?;
-    let signature_str = std::str::from_utf8(signature_header.as_bytes())
-      .map_err(|_| VerifyGithubSignatureError::InvalidSignatureHeaderEncoding)?;
+    signature_header: &[u8],
+  ) -> anyhow::Result<()> {
+    let signature_str = std::str::from_utf8(signature_header)?;
 
-    let mut mac = HmacSha256::new_from_slice(self.webhook_secret.as_bytes())
-      .map_err(|_| VerifyGithubSignatureError::InvalidSecretLength)?;
+    let mut mac = HmacSha256::new_from_slice(self.webhook_secret.as_bytes())?;
     mac.update(payload_body);
 
-    let signature_bytes = hex::decode(&signature_str[7..])
-      .map_err(|_| VerifyGithubSignatureError::InvalidSignatureLength)?;
+    let signature_bytes = hex::decode(&signature_str[7..])?;
 
     mac
       .verify_slice(&signature_bytes)
-      .map_err(|_| VerifyGithubSignatureError::InvalidSignature)
+      .map_err(|_| anyhow!("invalid secret"))
   }
 
   async fn update_deployment_status(
@@ -164,20 +157,6 @@ impl GithubIntegration {
       &encoding_key,
     )?)
   }
-}
-
-#[derive(Error, Debug)]
-pub enum VerifyGithubSignatureError {
-  #[error("x-hub-signature-256 header is missing")]
-  SignatureHeaderMissing,
-  #[error("invalid signature header encoding")]
-  InvalidSignatureHeaderEncoding,
-  #[error("invalid signature length")]
-  InvalidSignatureLength,
-  #[error("invalid signature")]
-  InvalidSignature,
-  #[error("invalid secret length")]
-  InvalidSecretLength,
 }
 
 #[derive(PartialEq)]
