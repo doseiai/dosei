@@ -10,8 +10,14 @@ pub async fn api_integration_github_events(
   headers: axum::http::HeaderMap,
   body: axum::body::Bytes,
 ) -> Result<StatusCode, StatusCode> {
+  let github_integration = match config.github_integration.as_ref() {
+    Some(github) => github,
+    None => {
+      error!("Github integration not enabled");
+      return Err(StatusCode::SERVICE_UNAVAILABLE);
+    }
+  };
   if let Some(signature_header) = headers.get("X-Hub-Signature-256") {
-    let github_integration = config.github_integration.as_ref().unwrap();
     if let Err(err) = github_integration.verify_signature(&body, Some(signature_header)) {
       error!("{}", err);
       return Err(StatusCode::FORBIDDEN);
