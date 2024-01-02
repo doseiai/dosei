@@ -41,7 +41,7 @@ impl GithubIntegration {
 
   pub async fn github_clone(
     &self,
-    from_url: &str,
+    repo_full_name: &str,
     to_path: &Path,
     branch: Option<&str>,
     access_token: Option<&str>,
@@ -55,7 +55,7 @@ impl GithubIntegration {
       },
     };
 
-    let mut repo_link = from_url.to_string();
+    let mut repo_link = format!("https://github.com/{}", repo_full_name);
     if let Some(token) = &github_token {
       repo_link = repo_link.replace("https://", &format!("https://x-access-token:{}@", token));
     }
