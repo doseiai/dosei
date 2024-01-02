@@ -12,8 +12,8 @@ use std::time::Duration;
 use tokio::time::sleep;
 
 use instant_acme::{
-  Account, AccountCredentials, Authorization, AuthorizationStatus, Challenge, ChallengeType,
-  Identifier, LetsEncrypt, NewAccount, NewOrder, Order, OrderStatus,
+  Account, AccountCredentials, Authorization, AuthorizationStatus, ChallengeType, Identifier,
+  LetsEncrypt, NewAccount, NewOrder, Order, OrderStatus,
 };
 use rcgen::{Certificate, CertificateParams, DistinguishedName};
 use tracing::{error, info};
@@ -59,19 +59,19 @@ pub async fn create_certificate(
   credentials: AccountCredentials,
 ) -> Result<String, anyhow::Error> {
   // place an order
-  let mut certificate_order = Account::from_credentials(credentials)
+  let mut order = Account::from_credentials(credentials)
     .await?
     .new_order(&NewOrder {
       identifiers: &[Identifier::Dns(identifier.to_string())],
     })
     .await?;
 
-  let state = certificate_order.state();
+  let state = order.state();
   info!("order state: {:#?}", state);
   assert!(matches!(state.status, OrderStatus::Pending));
 
   // add order authorization
-  let authorizations = certificate_order.authorizations().await?;
+  let authorizations = order.authorizations().await?;
 
   let authorization = authorizations.first().unwrap();
   match authorization.status {
@@ -85,7 +85,7 @@ pub async fn create_certificate(
   }
 
   // complete acme dns01 challenge
-  perform_dns_challenge(authorization, identifier, &mut certificate_order).await?;
+  perform_dns_challenge(authorization, identifier, &mut order).await?;
 
   let mut cert_params = CertificateParams::new(vec![identifier.to_owned()]);
   cert_params.distinguished_name = DistinguishedName::new();
@@ -93,13 +93,11 @@ pub async fn create_certificate(
   let certificate = Certificate::from_params(cert_params)?;
   let certificate_signing_request = certificate.serialize_request_der()?;
 
-  certificate_order
-    .finalize(&certificate_signing_request)
-    .await?;
+  order.finalize(&certificate_signing_request).await?;
 
   // certifcate polling
   let _cert_chain_pem = loop {
-    match certificate_order.certificate().await.unwrap() {
+    match order.certificate().await.unwrap() {
       Some(cert_chain_pem) => break cert_chain_pem,
       None => sleep(Duration::from_secs(1)).await,
     }
@@ -148,7 +146,7 @@ pub async fn wait_for_completed_order(order: &mut Order) -> Result<()> {
 async fn perform_dns_challenge(
   authorization: &Authorization,
   identifier: &str,
-  certificate_order: &mut Order,
+  order: &mut Order,
 ) -> anyhow::Result<()> {
   let dns_challenge = authorization
     .challenges
@@ -159,16 +157,12 @@ async fn perform_dns_challenge(
   info!(
     "_acme-challenge.{} IN TXT {}",
     identifier,
-    certificate_order
-      .key_authorization(dns_challenge)
-      .dns_value()
+    order.key_authorization(dns_challenge).dns_value()
   );
   info!("delaying for 2 mins to allow user to follow instructions");
   sleep(Duration::from_secs(120)).await;
 
-  certificate_order
-    .set_challenge_ready(&dns_challenge.url)
-    .await?;
+  order.set_challenge_ready(&dns_challenge.url).await?;
 
-  wait_for_completed_order(certificate_order).await
+  wait_for_completed_order(order).await
 }
