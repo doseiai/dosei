@@ -19,7 +19,6 @@ use rcgen::{Certificate, CertificateParams, DistinguishedName};
 use tracing::{error, info};
 
 const MAX_WAIT_ATTEMPTS: usize = 20;
-const MAX_CERTIFICATE_RETRIES: usize = 5;
 
 // Custom error type for better error reporting
 #[derive(Debug)]
@@ -55,12 +54,8 @@ pub async fn create_account(email: &str) -> Result<AccountCredentials, anyhow::E
 }
 
 // create certificate and get it's private key
-// for wildcard domains, DNS challenges are used
-// for simple domains, HTTP challenge holds fine.
 pub async fn create_certificate(
   identifier: &str,
-  // challenge_type: ChallengeType,
-  // account: Account,
   credentials: AccountCredentials,
 ) -> Result<String, anyhow::Error> {
   // place an order
@@ -89,29 +84,8 @@ pub async fn create_certificate(
     _ => todo!(),
   }
 
-  // complete acme challenge
-  // complete_acme_challenge(challenge_type, authorization, &mut certificate_order).await?;
-
-  // let server know system is ready to accept challenges
-  let dns_challenge = authorization
-    .challenges
-    .iter()
-    .find(|ch| ch.r#type == ChallengeType::Dns01)
-    .unwrap();
-
-  println!(
-    "_acme-challenge.{} IN TXT {}",
-    identifier,
-    certificate_order
-      .key_authorization(dns_challenge)
-      .dns_value()
-  );
-
-  certificate_order
-    .set_challenge_ready(&dns_challenge.url)
-    .await?;
-
-  wait_for_completed_order(&mut certificate_order).await?;
+  // complete acme dns01 challenge
+  perform_dns_challenge(authorization, identifier, &mut certificate_order).await?;
 
   let mut cert_params = CertificateParams::new(vec![identifier.to_owned()]);
   cert_params.distinguished_name = DistinguishedName::new();
@@ -124,13 +98,12 @@ pub async fn create_certificate(
     .await?;
 
   // certifcate polling
-  let mut res: Option<String> = None;
-  let mut retries = MAX_CERTIFICATE_RETRIES;
-  while res.is_none() && retries > 0 {
-    res = certificate_order.certificate().await?;
-    retries -= 1;
-    sleep(Duration::from_secs(1)).await;
-  }
+  let _cert_chain_pem = loop {
+    match certificate_order.certificate().await.unwrap() {
+      Some(cert_chain_pem) => break cert_chain_pem,
+      None => sleep(Duration::from_secs(1)).await,
+    }
+  };
 
   Ok(certificate.serialize_private_key_pem())
 }
@@ -169,4 +142,33 @@ pub async fn wait_for_completed_order(order: &mut Order) -> Result<()> {
   }
 
   Ok(())
+}
+
+// complete the dns challenge
+async fn perform_dns_challenge(
+  authorization: &Authorization,
+  identifier: &str,
+  certificate_order: &mut Order,
+) -> anyhow::Result<()> {
+  let dns_challenge = authorization
+    .challenges
+    .iter()
+    .find(|ch| ch.r#type == ChallengeType::Dns01)
+    .unwrap();
+
+  info!(
+    "_acme-challenge.{} IN TXT {}",
+    identifier,
+    certificate_order
+      .key_authorization(dns_challenge)
+      .dns_value()
+  );
+  info!("delaying for 2 mins to allow user to follow instructions");
+  sleep(Duration::from_secs(120)).await;
+
+  certificate_order
+    .set_challenge_ready(&dns_challenge.url)
+    .await?;
+
+  wait_for_completed_order(certificate_order).await
 }
