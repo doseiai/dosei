@@ -62,18 +62,12 @@ impl GithubIntegration {
     git_clone(&repo_link, to_path, branch).await
   }
 
-  pub fn verify_signature(
-    &self,
-    payload_body: &[u8],
-    signature_header: &[u8],
-  ) -> anyhow::Result<()> {
-    let signature_str = std::str::from_utf8(signature_header)?;
-
+  pub fn verify_signature(&self, payload_body: &[u8], signature: &[u8]) -> anyhow::Result<()> {
     let mut mac = HmacSha256::new_from_slice(self.webhook_secret.as_bytes())?;
     mac.update(payload_body);
 
+    let signature_str = std::str::from_utf8(signature)?;
     let signature_bytes = hex::decode(&signature_str["sha256=".len()..])?;
-
     mac
       .verify_slice(&signature_bytes)
       .map_err(|_| anyhow!("invalid secret"))
