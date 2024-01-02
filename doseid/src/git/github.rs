@@ -13,6 +13,8 @@ use std::env;
 use std::path::Path;
 use tracing::warn;
 
+type HmacSha256 = Hmac<Sha256>;
+
 pub struct GithubIntegration {
   pub app_name: String,
   pub app_id: String,
@@ -21,8 +23,6 @@ pub struct GithubIntegration {
   pub private_key: String,
   pub webhook_secret: String,
 }
-
-type HmacSha256 = Hmac<Sha256>;
 
 impl GithubIntegration {
   pub fn new() -> anyhow::Result<GithubIntegration> {
