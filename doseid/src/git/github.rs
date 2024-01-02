@@ -11,6 +11,7 @@ use serde_json::{json, Value};
 use sha2::Sha256;
 use std::env;
 use std::path::Path;
+use thiserror::Error;
 use tracing::warn;
 
 type HmacSha256 = Hmac<Sha256>;
@@ -67,21 +68,22 @@ impl GithubIntegration {
     &self,
     payload_body: &[u8],
     signature_header: Option<&HeaderValue>,
-  ) -> Result<(), &'static str> {
-    let signature_header = signature_header.ok_or("x-hub-signature-256 header is missing!")?;
+  ) -> Result<(), VerifyGithubSignatureError> {
+    let signature_header =
+      signature_header.ok_or(VerifyGithubSignatureError::SignatureHeaderMissing)?;
     let signature_str = std::str::from_utf8(signature_header.as_bytes())
-      .map_err(|_| "Invalid signature header encoding!")?;
+      .map_err(|_| VerifyGithubSignatureError::InvalidSignatureHeaderEncoding)?;
 
     let mut mac = HmacSha256::new_from_slice(self.webhook_secret.as_bytes())
-      .expect("HMAC can take key of any size");
+      .map_err(|_| VerifyGithubSignatureError::InvalidSecretLength)?;
     mac.update(payload_body);
 
-    let signature_bytes =
-      hex::decode(&signature_str[7..]).map_err(|_| "Invalid secret key length!")?;
+    let signature_bytes = hex::decode(&signature_str[7..])
+      .map_err(|_| VerifyGithubSignatureError::InvalidSignatureLength)?;
 
     mac
       .verify_slice(&signature_bytes)
-      .map_err(|_| "Invalid signature!")
+      .map_err(|_| VerifyGithubSignatureError::InvalidSignature)
   }
 
   async fn update_deployment_status(
@@ -162,6 +164,20 @@ impl GithubIntegration {
       &encoding_key,
     )?)
   }
+}
+
+#[derive(Error, Debug)]
+pub enum VerifyGithubSignatureError {
+  #[error("x-hub-signature-256 header is missing")]
+  SignatureHeaderMissing,
+  #[error("invalid signature header encoding")]
+  InvalidSignatureHeaderEncoding,
+  #[error("invalid signature length")]
+  InvalidSignatureLength,
+  #[error("invalid signature")]
+  InvalidSignature,
+  #[error("invalid secret length")]
+  InvalidSecretLength,
 }
 
 #[derive(PartialEq)]
