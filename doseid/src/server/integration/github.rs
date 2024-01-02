@@ -3,7 +3,7 @@ use axum::http::StatusCode;
 use axum::Extension;
 use serde::Deserialize;
 use serde_json::Value;
-use tracing::{error, warn};
+use tracing::{error, info, warn};
 
 pub async fn api_integration_github_events(
   config: Extension<&'static Config>,
@@ -34,15 +34,16 @@ pub async fn api_integration_github_events(
   if let Some(event_type) = headers.get("X-GitHub-Event") {
     match event_type.to_str().unwrap_or("") {
       "ping" => Ok(StatusCode::OK),
-      "check_suite" => {
-        if let Ok(parsed_payload) = serde_json::from_value::<CheckSuiteHookPayload>(payload) {
+      "check_suite" => match serde_json::from_value::<CheckSuiteHookPayload>(payload) {
+        Ok(parsed_payload) => {
           handle_check_suite(parsed_payload);
           Ok(StatusCode::OK)
-        } else {
-          error!("Failed to parse check_suite payload");
+        }
+        Err(e) => {
+          error!("Failed to parse check_suite payload: {:?}", e);
           Ok(StatusCode::INTERNAL_SERVER_ERROR)
         }
-      }
+      },
       event_name => {
         warn!("Github Event: {} not handled", event_name);
         Ok(StatusCode::OK)
@@ -72,7 +73,7 @@ struct CheckSuiteHookPayload {
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 struct CheckSuite {
-  id: i32,
+  id: i64,
   node_id: String,
   head_branch: String,
   head_sha: String,
@@ -105,7 +106,7 @@ struct GitCommitAuthor {
 #[derive(Debug, Deserialize)]
 struct NamedUser {
   login: String,
-  id: i32,
+  id: i64,
   avatar_url: String,
   url: String,
   html_url: String,
@@ -126,7 +127,7 @@ struct NamedUser {
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 struct Repository {
-  id: i32,
+  id: i64,
   name: String,
   full_name: String,
   description: Option<String>,
@@ -143,6 +144,6 @@ struct Repository {
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 struct Installation {
-  id: i32,
+  id: i64,
   node_id: String,
 }
