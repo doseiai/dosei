@@ -1,6 +1,8 @@
+mod build;
 mod cluster;
 mod cron;
 mod info;
+mod integrations;
 mod ping;
 mod secret;
 
@@ -40,6 +42,10 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
     )
     .route("/cron-jobs", routing::post(cron::api_create_job))
     .route("/cron-jobs", routing::get(cron::api_get_cron_jobs))
+    .route(
+      "/integrations/github/events",
+      routing::post(integrations::github::api_integration_github_events),
+    )
     .route("/info", routing::get(info::api_info))
     .route("/ping", routing::get(ping::api_ping))
     .layer(Extension(Arc::clone(&shared_pool)))

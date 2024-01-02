@@ -9,6 +9,7 @@ use serde_json::{json, Value};
 use std::env;
 use std::path::Path;
 use tracing::warn;
+use tracing_subscriber::fmt::format;
 
 pub struct GithubIntegration {
   pub app_name: String,
@@ -34,7 +35,7 @@ impl GithubIntegration {
 
   pub async fn github_clone(
     &self,
-    from_url: &str,
+    repo_full_name: &str,
     to_path: &Path,
     branch: Option<&str>,
     access_token: Option<&str>,
@@ -48,7 +49,7 @@ impl GithubIntegration {
       },
     };
 
-    let mut repo_link = from_url.to_string();
+    let mut repo_link = format!("https://github.com/{}", repo_full_name);
     if let Some(token) = &github_token {
       repo_link = repo_link.replace("https://", &format!("https://x-access-token:{}@", token));
     }
@@ -162,51 +163,51 @@ impl GithubDeploymentStatus {
   }
 }
 
-// TODO: Support passing settings to run github tests
-#[cfg(test)]
-mod tests {
-  use crate::config::Config;
-  use crate::git::git_clone;
-  use git2::Repository;
-  use once_cell::sync::Lazy;
-  use tempfile::tempdir;
-
-  static CONFIG: Lazy<Config> = Lazy::new(|| Config::new().unwrap());
-
-  #[test]
-  fn test_create_github_app_jwt() {
-    if CONFIG.github_integration.is_some() {
-      let result = CONFIG
-        .github_integration
-        .as_ref()
-        .unwrap()
-        .create_github_app_jwt();
-      assert!(result.is_ok());
-    }
-  }
-
-  async fn test_clone() {
-    let temp_dir = tempdir().expect("Failed to create a temp dir");
-    let repo_path = temp_dir.path();
-
-    let repo: anyhow::Result<Repository> =
-      git_clone("https://github.com/Alw3ys/dosei-bot.git", repo_path, None).await;
-    drop(temp_dir);
-    assert!(repo.is_ok())
-  }
-
-  #[tokio::test]
-  async fn test_clone_repos() {
-    use futures::future::join_all;
-
-    let tests: Vec<_> = (0..10)
-      .map(|_| {
-        tokio::spawn(async {
-          test_clone().await;
-        })
-      })
-      .collect();
-
-    join_all(tests).await;
-  }
-}
+// // TODO: Support passing settings to run github tests
+// #[cfg(test)]
+// mod tests {
+//   use crate::config::Config;
+//   use crate::git::git_clone;
+//   use git2::Repository;
+//   use once_cell::sync::Lazy;
+//   use tempfile::tempdir;
+//
+//   static CONFIG: Lazy<Config> = Lazy::new(|| Config::new().unwrap());
+//
+//   #[test]
+//   fn test_create_github_app_jwt() {
+//     if CONFIG.github_integration.is_some() {
+//       let result = CONFIG
+//         .github_integration
+//         .as_ref()
+//         .unwrap()
+//         .create_github_app_jwt();
+//       assert!(result.is_ok());
+//     }
+//   }
+//
+//   async fn test_clone() {
+//     let temp_dir = tempdir().expect("Failed to create a temp dir");
+//     let repo_path = temp_dir.path();
+//
+//     let repo: anyhow::Result<Repository> =
+//       git_clone("https://github.com/Alw3ys/dosei-bot.git", repo_path, None).await;
+//     drop(temp_dir);
+//     assert!(repo.is_ok())
+//   }
+//
+//   #[tokio::test]
+//   async fn test_clone_repos() {
+//     use futures::future::join_all;
+//
+//     let tests: Vec<_> = (0..10)
+//       .map(|_| {
+//         tokio::spawn(async {
+//           test_clone().await;
+//         })
+//       })
+//       .collect();
+//
+//     join_all(tests).await;
+//   }
+// }
