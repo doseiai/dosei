@@ -1,19 +1,18 @@
 mod cluster;
 mod cron;
 mod info;
+mod integration;
 mod ping;
 mod secret;
 
 use anyhow::Context;
 use sqlx::postgres::Postgres;
 use sqlx::Pool;
-use std::future::Future;
 use std::sync::Arc;
 
 use crate::config::Config;
 use axum::{routing, Extension, Router};
 use bollard::Docker;
-use futures_util::TryFutureExt;
 use tokio::net::TcpListener;
 use tracing::{error, info};
 
@@ -42,6 +41,10 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
     )
     .route("/cron-jobs", routing::post(cron::api_create_job))
     .route("/cron-jobs", routing::get(cron::api_get_cron_jobs))
+    .route(
+      "/unstable/integration/github/events",
+      routing::post(integration::github::api_integration_github_events),
+    )
     .route("/info", routing::get(info::api_info))
     .route("/ping", routing::get(ping::api_ping))
     .layer(Extension(Arc::clone(&shared_pool)))

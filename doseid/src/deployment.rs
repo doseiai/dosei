@@ -1,6 +1,5 @@
 use crate::docker::{build_image, push_image};
 use std::path::Path;
-use tracing::info;
 
 async fn build(folder_path: &Path) {
   let detected_docker_file = dosei_util::package_manager::_resolve_docker(folder_path);
