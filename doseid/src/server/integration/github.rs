@@ -12,12 +12,9 @@ pub async fn api_integration_github_events(
 ) -> Result<StatusCode, StatusCode> {
   if let Some(signature_header) = headers.get("X-Hub-Signature-256") {
     let github_integration = config.github_integration.as_ref().unwrap();
-    match github_integration.verify_signature(&body, Some(signature_header)) {
-      Err(err) => {
-        error!("{}", err);
-        return Err(StatusCode::FORBIDDEN);
-      }
-      _ => {}
+    if let Err(err) = github_integration.verify_signature(&body, Some(signature_header)) {
+      error!("{}", err);
+      return Err(StatusCode::FORBIDDEN);
     }
   } else {
     return Err(StatusCode::UNAUTHORIZED);
