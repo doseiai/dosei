@@ -1,4 +1,6 @@
 use crate::config::Config;
+use crate::deployment::build_from_github;
+use crate::git::github::GithubIntegration;
 use axum::http::StatusCode;
 use axum::Extension;
 use serde::Deserialize;
@@ -36,7 +38,7 @@ pub async fn api_integration_github_events(
       "ping" => Ok(StatusCode::OK),
       "check_suite" => match serde_json::from_value::<CheckSuiteHookPayload>(payload) {
         Ok(parsed_payload) => {
-          handle_check_suite(parsed_payload);
+          handle_check_suite(github_integration, parsed_payload);
           Ok(StatusCode::OK)
         }
         Err(e) => {
@@ -54,10 +56,24 @@ pub async fn api_integration_github_events(
   }
 }
 
-fn handle_check_suite(payload: CheckSuiteHookPayload) {
+fn handle_check_suite(github_integration: &GithubIntegration, payload: CheckSuiteHookPayload) {
   // Push to default branch == PROD Deployment
   if payload.check_suite.head_branch == payload.repository.default_branch {
-    // TODO: Trigger build
+    // Clone the necessary data for 'static lifetime
+    let github_integration_clone = github_integration.clone();
+    let head_sha = payload.check_suite.head_sha.clone();
+    let full_name = payload.repository.full_name.clone();
+    let installation_id = payload.installation.id;
+
+    tokio::spawn(async move {
+      build_from_github(
+        github_integration_clone,
+        head_sha,
+        full_name,
+        installation_id,
+      )
+      .await;
+    });
   }
 }
 
