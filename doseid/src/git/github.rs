@@ -1,6 +1,5 @@
 use crate::git::git_clone;
-use anyhow::Context;
-use axum::http::HeaderValue;
+use anyhow::{anyhow, Context};
 use chrono::{Duration, Utc};
 use git2::Repository;
 use hmac::{Hmac, Mac};
@@ -63,25 +62,15 @@ impl GithubIntegration {
     git_clone(&repo_link, to_path, branch).await
   }
 
-  pub fn verify_signature(
-    &self,
-    payload_body: &[u8],
-    signature_header: Option<&HeaderValue>,
-  ) -> Result<(), &'static str> {
-    let signature_header = signature_header.ok_or("x-hub-signature-256 header is missing!")?;
-    let signature_str = std::str::from_utf8(signature_header.as_bytes())
-      .map_err(|_| "Invalid signature header encoding!")?;
-
-    let mut mac = HmacSha256::new_from_slice(self.webhook_secret.as_bytes())
-      .expect("HMAC can take key of any size");
+  pub fn verify_signature(&self, payload_body: &[u8], signature: &[u8]) -> anyhow::Result<()> {
+    let mut mac = HmacSha256::new_from_slice(self.webhook_secret.as_bytes())?;
     mac.update(payload_body);
 
-    let signature_bytes =
-      hex::decode(&signature_str[7..]).map_err(|_| "Invalid secret key length!")?;
-
+    let signature_str = std::str::from_utf8(signature)?;
+    let signature_bytes = hex::decode(&signature_str["sha256=".len()..])?;
     mac
       .verify_slice(&signature_bytes)
-      .map_err(|_| "Invalid signature!")
+      .map_err(|_| anyhow!("invalid secret"))
   }
 
   async fn update_deployment_status(

@@ -18,7 +18,7 @@ pub async fn api_integration_github_events(
     }
   };
   if let Some(signature_header) = headers.get("X-Hub-Signature-256") {
-    if let Err(err) = github_integration.verify_signature(&body, Some(signature_header)) {
+    if let Err(err) = github_integration.verify_signature(&body, signature_header.as_bytes()) {
       error!("{}", err);
       return Err(StatusCode::FORBIDDEN);
     }
