@@ -41,7 +41,6 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
     )
     .route("/cron-jobs", routing::post(cron::api_create_job))
     .route("/cron-jobs", routing::get(cron::api_get_cron_jobs))
-    // TODO: Set dynamically on integration is enabled
     .route(
       "/unstable/integration/github/events",
       routing::post(integration::github::api_integration_github_events),
