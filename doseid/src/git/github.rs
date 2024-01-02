@@ -72,7 +72,7 @@ impl GithubIntegration {
     let mut mac = HmacSha256::new_from_slice(self.webhook_secret.as_bytes())?;
     mac.update(payload_body);
 
-    let signature_bytes = hex::decode(&signature_str[7..])?;
+    let signature_bytes = hex::decode(&signature_str["sha256=".len()..])?;
 
     mac
       .verify_slice(&signature_bytes)
