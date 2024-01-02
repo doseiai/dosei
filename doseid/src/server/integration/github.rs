@@ -3,7 +3,7 @@ use axum::http::StatusCode;
 use axum::Extension;
 use serde::Deserialize;
 use serde_json::Value;
-use tracing::{error, info, warn};
+use tracing::{error, warn};
 
 pub async fn api_integration_github_events(
   config: Extension<&'static Config>,
