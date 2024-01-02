@@ -1,13 +1,33 @@
+use crate::config::Config;
 use axum::http::StatusCode;
-use axum::Json;
+use axum::Extension;
 use serde::Deserialize;
 use serde_json::Value;
 use tracing::{error, warn};
 
 pub async fn api_integration_github_events(
+  config: Extension<&'static Config>,
   headers: axum::http::HeaderMap,
-  Json(payload): Json<Value>,
+  body: axum::body::Bytes,
 ) -> Result<StatusCode, StatusCode> {
+  if let Some(signature_header) = headers.get("X-Hub-Signature-256") {
+    let github_integration = config.github_integration.as_ref().unwrap();
+    match github_integration.verify_signature(&body, Some(signature_header)) {
+      Err(err) => {
+        error!("{}", err);
+        return Err(StatusCode::FORBIDDEN);
+      }
+      _ => {}
+    }
+  } else {
+    return Err(StatusCode::UNAUTHORIZED);
+  }
+
+  let payload: Value = match serde_json::from_slice(&body) {
+    Ok(val) => val,
+    Err(_) => return Err(StatusCode::BAD_REQUEST),
+  };
+
   if let Some(event_type) = headers.get("X-GitHub-Event") {
     match event_type.to_str().unwrap_or("") {
       "ping" => Ok(StatusCode::OK),

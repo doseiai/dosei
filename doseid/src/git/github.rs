@@ -1,11 +1,14 @@
 use crate::git::git_clone;
 use anyhow::Context;
+use axum::http::HeaderValue;
 use chrono::{Duration, Utc};
 use git2::Repository;
+use hmac::{Hmac, Mac};
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
 use reqwest::{header, Client};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use sha2::Sha256;
 use std::env;
 use std::path::Path;
 use tracing::warn;
@@ -16,7 +19,10 @@ pub struct GithubIntegration {
   pub client_id: String,
   pub client_secret: String,
   pub private_key: String,
+  pub webhook_secret: String,
 }
+
+type HmacSha256 = Hmac<Sha256>;
 
 impl GithubIntegration {
   pub fn new() -> anyhow::Result<GithubIntegration> {
@@ -27,6 +33,8 @@ impl GithubIntegration {
       client_secret: env::var("GITHUB_CLIENT_SECRET")
         .context("GITHUB_CLIENT_SECRET is required.")?,
       private_key: env::var("GITHUB_PRIVATE_KEY").context("GITHUB_PRIVATE_KEY is required.")?,
+      webhook_secret: env::var("GITHUB_WEBHOOK_SECRET")
+        .context("GITHUB_WEBHOOK_SECRET is required.")?,
     };
     warn!("[Integrations] Enabling github.unstable");
     Ok(github_integration)
@@ -53,6 +61,27 @@ impl GithubIntegration {
       repo_link = repo_link.replace("https://", &format!("https://x-access-token:{}@", token));
     }
     git_clone(&repo_link, to_path, branch).await
+  }
+
+  pub fn verify_signature(
+    &self,
+    payload_body: &[u8],
+    signature_header: Option<&HeaderValue>,
+  ) -> Result<(), &'static str> {
+    let signature_header = signature_header.ok_or("x-hub-signature-256 header is missing!")?;
+    let signature_str = std::str::from_utf8(signature_header.as_bytes())
+      .map_err(|_| "Invalid signature header encoding!")?;
+
+    let mut mac = HmacSha256::new_from_slice(self.webhook_secret.as_bytes())
+      .expect("HMAC can take key of any size");
+    mac.update(payload_body);
+
+    let signature_bytes =
+      hex::decode(&signature_str[7..]).map_err(|_| "Invalid secret key length!")?;
+
+    mac
+      .verify_slice(&signature_bytes)
+      .map_err(|_| "Invalid signature!")
   }
 
   async fn update_deployment_status(
