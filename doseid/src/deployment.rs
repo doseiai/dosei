@@ -5,7 +5,7 @@ use crate::docker::build_image;
 use crate::git::github::GithubIntegration;
 use std::path::Path;
 use tempfile::tempdir;
-use tracing::info;
+use tracing::{error, info};
 use uuid::Uuid;
 
 pub async fn build_from_github(
@@ -21,11 +21,7 @@ pub async fn build_from_github(
     .github_clone(repo_full_name, temp_path, None, None, Some(installation_id))
     .await
   {
-    eprintln!("ERROR: {}", err);
-    err
-      .chain()
-      .skip(1)
-      .for_each(|cause| eprintln!("because: {}", cause));
+    error!("{}", err);
     return;
   }
 
@@ -36,13 +32,15 @@ pub async fn build_from_github(
 async fn build(owner_id: Uuid, project_id: Uuid, deployment_id: String, folder_path: &Path) {
   let detected_docker_file = dosei_util::package_manager::_resolve_docker(folder_path);
   if !detected_docker_file {
-    todo!("Provision docker file template");
+    // TODO: Implement docker file templates.
+    error!("Failed to detect `Dockerfile`");
+    return;
   }
   info!("Detected `Dockerfile`");
   let image_name = &format!("{}/{}", owner_id, project_id);
   let image_tag = &deployment_id;
   if let Ok(app) = import_dosei_app(image_name, image_tag, folder_path).await {
-    todo!("Implement DoseiApp Deployment");
+    // TODO: Implement DoseiApp Deployment
   }
   build_image(image_name, image_tag, folder_path).await;
 }
