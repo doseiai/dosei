@@ -38,12 +38,23 @@ pub struct Secret {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct Deployment {
+  /// The unique identifier for the deployment, sourced from the Commit SHA.
+  pub id: String,
+  pub owner_id: Uuid,
+  pub project_id: Uuid,
+  pub updated_at: DateTime<Utc>,
+  pub created_at: DateTime<Utc>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Domain {
   pub id: Uuid,
   pub name: String,
   pub owner_id: Uuid,
   pub project_id: Option<Uuid>,
-  pub deployment_id: Option<Uuid>,
+  pub storage_id: Option<Uuid>,
+  pub deployment_id: Option<String>,
   pub updated_at: DateTime<Utc>,
   pub created_at: DateTime<Utc>,
 }
