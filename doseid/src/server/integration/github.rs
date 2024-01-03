@@ -62,12 +62,14 @@ fn handle_check_suite(
 ) {
   // Push to default branch == PROD Deployment
   if payload.check_suite.head_branch == payload.repository.default_branch {
-    let head_sha = payload.check_suite.head_sha;
-    let full_name = payload.repository.full_name;
-    let installation_id = payload.installation.id;
-
     tokio::spawn(async move {
-      build_from_github(github_integration, head_sha, full_name, installation_id).await;
+      build_from_github(
+        github_integration,
+        payload.check_suite.head_sha,
+        payload.repository.full_name,
+        payload.installation.id,
+      )
+      .await;
     });
   }
 }

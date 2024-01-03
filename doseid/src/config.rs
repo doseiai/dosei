@@ -220,7 +220,6 @@ struct CaptureEvent {
 }
 
 impl PostHogClient {
-
   #[allow(dead_code)]
   pub async fn capture(&self) {
     todo!();
