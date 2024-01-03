@@ -15,12 +15,13 @@
 
 mod config;
 mod ssl;
+use mongodb::bson::DateTime;
 
 use crate::config::Config;
 use crate::ssl::{create_account, create_certificate};
 use anyhow::Context;
 use axum::response::Redirect;
-use axum::routing::get;
+use axum::routing::{get, post};
 use axum::{
   body::Body,
   extract::{Request, State},
@@ -33,13 +34,14 @@ use cached::{Cached, TimedCache};
 use hyper::StatusCode;
 use hyper_util::{client::legacy::connect::HttpConnector, rt::TokioExecutor};
 use mongodb::bson::{doc, Bson, Document};
-use mongodb::Database;
+use mongodb::{Collection, Database};
 use once_cell::sync::Lazy;
+use serde::{Deserialize, Serialize};
+use std::error::Error;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
 use tracing::info;
-
 type Client = hyper_util::client::legacy::Client<HttpConnector, Body>;
 
 #[tokio::main]
@@ -60,7 +62,7 @@ async fn main() -> anyhow::Result<()> {
     .route("/health", get(health))
     .route("/", any(handler))
     .route("/*path", any(handler))
-    .route("/ssl", get(provision_ssl_certificate))
+    .route("/ssl", post(provision_ssl_certificate))
     .with_state(client)
     .layer(Extension(Arc::clone(&shared_mongo_client)));
 
@@ -72,11 +74,6 @@ async fn main() -> anyhow::Result<()> {
     "Dosei Proxy running on http://{} (Press CTRL+C to quit",
     address
   );
-
-  // test
-  info!("creating an account for let's encrypt");
-  let credentials = create_account("john@doe.com").await?;
-  create_certificate("johndoe.com", credentials).await?;
 
   axum::serve(listener, app).await?;
   Ok(())
@@ -168,4 +165,61 @@ static DOMAINS_CACHE: Lazy<Arc<Mutex<TimedCache<String, String>>>> = Lazy::new(|
   Arc::new(Mutex::new(cache))
 });
 
-async fn provision_ssl_certificate() {}
+#[derive(Serialize, Deserialize, Debug)]
+struct SslAccountInfo {
+  email: String,
+  domain: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct SslCertificateInfo {
+  email: String,
+  domain: String,
+  cert: String,
+  created: DateTime,
+}
+
+async fn provision_ssl_certificate(
+  mongo_client: Extension<Arc<mongodb::Client>>,
+  payload: axum::extract::Json<SslAccountInfo>,
+) -> Result<impl IntoResponse, StatusCode> {
+  let payload: SslAccountInfo = payload.0;
+
+  let ssl_collection: Collection<SslAccountInfo> = mongo_client.database("admin").collection("ssl");
+  let ssl_cert_collection: Collection<SslCertificateInfo> =
+    mongo_client.database("admin").collection("certificate");
+
+  info!("creating an account for payload {:?}", payload);
+  let credentials = create_account(&payload.email).await;
+  match credentials {
+    Ok(_) => {
+      let ssl_account_info = SslAccountInfo {
+        email: payload.email.clone(),
+        domain: payload.domain.clone(),
+      };
+      ssl_collection
+        .insert_one(ssl_account_info, None)
+        .await
+        .unwrap();
+
+      let certificate = create_certificate(&payload.domain, credentials.unwrap()).await;
+      match certificate {
+        Ok(_) => {
+          let ssl_certificate_info = SslCertificateInfo {
+            email: payload.email.clone(),
+            domain: payload.domain.clone(),
+            cert: certificate.unwrap(),
+            created: DateTime::now(),
+          };
+          ssl_cert_collection
+            .insert_one(ssl_certificate_info, None)
+            .await
+            .unwrap();
+          Ok("Successfully provisioned SSL certificate")
+        }
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+      }
+    }
+    Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+  }
+}

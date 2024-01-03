@@ -106,7 +106,7 @@ pub async fn create_certificate(
   Ok(certificate.serialize_private_key_pem())
 }
 
-pub async fn wait_for_completed_order(order: &mut Order) -> Result<()> {
+async fn wait_for_completed_order(order: &mut Order) -> Result<()> {
   let mut attempts = 1;
   let mut backoff_duration = Duration::from_millis(250);
 

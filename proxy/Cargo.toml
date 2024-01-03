@@ -26,3 +26,5 @@ tracing = "0.1.40"
 serde_json.workspace = true
 instant-acme = "0.4.1"
 rcgen = "0.12.0"
+serde.workspace = true
+chrono = "0.4.31"
