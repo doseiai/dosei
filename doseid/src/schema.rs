@@ -36,3 +36,20 @@ pub struct Secret {
   pub updated_at: DateTime<Utc>,
   pub created_at: DateTime<Utc>,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Domain {
+  pub id: Uuid,
+  pub name: String,
+  pub owner_id: Option<Uuid>,
+  pub project_id: Option<Uuid>,
+  pub updated_at: DateTime<Utc>,
+  pub created_at: DateTime<Utc>,
+}
+
+impl Domain {
+  pub fn new(mut domain: Domain) -> Domain {
+    domain.name = domain.name.to_lowercase();
+    domain
+  }
+}
