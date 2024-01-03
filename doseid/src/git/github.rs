@@ -41,11 +41,11 @@ impl GithubIntegration {
 
   pub async fn github_clone(
     &self,
-    repo_full_name: &str,
+    repo_full_name: String,
     to_path: &Path,
     branch: Option<&str>,
     access_token: Option<&str>,
-    installation_id: Option<&str>,
+    installation_id: Option<i64>,
   ) -> anyhow::Result<Repository> {
     let github_token = match access_token {
       Some(token) => Some(token.to_string()),
@@ -77,7 +77,7 @@ impl GithubIntegration {
     &self,
     status: GithubDeploymentStatus,
     repo_full_name: &str,
-    installation_id: &str,
+    installation_id: i64,
     commit_id: &str,
   ) -> Result<(), reqwest::Error> {
     let github_token = self.get_installation_token(installation_id).await;
@@ -115,7 +115,7 @@ impl GithubIntegration {
     Ok(())
   }
 
-  async fn get_installation_token(&self, installation_id: &str) -> anyhow::Result<String> {
+  async fn get_installation_token(&self, installation_id: i64) -> anyhow::Result<String> {
     let url = format!(
       "https://api.github.com/app/installations/{}/access_tokens",
       installation_id
@@ -126,6 +126,7 @@ impl GithubIntegration {
       .post(&url)
       .bearer_auth(jwt)
       .header("Accept", "application/vnd.github.v3+json")
+      .header("User-Agent", "Dosei")
       .send()
       .await?;
 
