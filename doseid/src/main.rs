@@ -1,7 +1,7 @@
 mod config;
 mod deployment;
 mod docker;
-pub mod git;
+mod git;
 mod schema;
 mod server;
 
