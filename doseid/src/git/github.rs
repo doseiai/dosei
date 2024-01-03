@@ -14,7 +14,6 @@ use tracing::warn;
 
 type HmacSha256 = Hmac<Sha256>;
 
-#[derive(Clone)]
 pub struct GithubIntegration {
   pub app_name: String,
   pub app_id: String,
