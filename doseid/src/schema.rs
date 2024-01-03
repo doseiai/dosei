@@ -43,6 +43,7 @@ pub struct Domain {
   pub name: String,
   pub owner_id: Option<Uuid>,
   pub project_id: Option<Uuid>,
+  pub deployment_id: Option<Uuid>,
   pub updated_at: DateTime<Utc>,
   pub created_at: DateTime<Utc>,
 }
