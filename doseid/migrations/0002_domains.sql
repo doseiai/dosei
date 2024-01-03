@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS domains (
    id UUID NOT NULL,
    name TEXT NOT NULL,
    project_id UUID,
+   storage_id UUID,
    deployment_id TEXT,
    owner_id UUID NOT NULL,
    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
