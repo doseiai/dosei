@@ -160,8 +160,8 @@ async fn perform_dns_challenge(
     identifier,
     order.key_authorization(dns_challenge).dns_value()
   );
-  info!("delaying for 2 mins to allow user to follow instructions");
-  sleep(Duration::from_secs(120)).await;
+  info!("delaying for 90 secs to allow user to follow instructions");
+  sleep(Duration::from_secs(90)).await;
 
   order.set_challenge_ready(&dns_challenge.url).await?;
 
