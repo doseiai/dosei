@@ -1,9 +1,8 @@
 //! ACME client implementation for Dosei using Let's Encrypt
 //! Provisions new certs and attach them to projects
-//! Uses for http01 and DNS based challenges
-//! Tries to renew the certificate if above a set age
-//! Tries to keep the Let's Encrypt API limits in check
-//!
+//! Uses DNS based challenges
+//! Todo: Renew
+//! Todo: Http01 challenges
 
 use anyhow::{anyhow, Result};
 use std::error::Error;
