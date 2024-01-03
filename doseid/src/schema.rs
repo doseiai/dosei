@@ -41,7 +41,7 @@ pub struct Secret {
 pub struct Domain {
   pub id: Uuid,
   pub name: String,
-  pub owner_id: Option<Uuid>,
+  pub owner_id: Uuid,
   pub project_id: Option<Uuid>,
   pub deployment_id: Option<Uuid>,
   pub updated_at: DateTime<Utc>,
