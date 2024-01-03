@@ -6,11 +6,10 @@ use crate::git::github::GithubIntegration;
 use std::path::Path;
 use tempfile::tempdir;
 use tracing::info;
-use tracing::log::error;
 use uuid::Uuid;
 
 pub async fn build_from_github(
-  github_integration: GithubIntegration,
+  github_integration: &'static GithubIntegration,
   deployment_id: String,
   repo_full_name: String,
   installation_id: i64,
@@ -37,7 +36,7 @@ pub async fn build_from_github(
 async fn build(owner_id: Uuid, project_id: Uuid, deployment_id: String, folder_path: &Path) {
   let detected_docker_file = dosei_util::package_manager::_resolve_docker(folder_path);
   if !detected_docker_file {
-    return todo!("Provision docker file template");
+    todo!("Provision docker file template");
   }
   info!("Detected `Dockerfile`");
   let image_name = &format!("{}/{}", owner_id, project_id);

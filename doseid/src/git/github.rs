@@ -10,7 +10,7 @@ use serde_json::{json, Value};
 use sha2::Sha256;
 use std::env;
 use std::path::Path;
-use tracing::{info, warn};
+use tracing::{warn};
 
 type HmacSha256 = Hmac<Sha256>;
 

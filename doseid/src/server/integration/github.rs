@@ -56,23 +56,18 @@ pub async fn api_integration_github_events(
   }
 }
 
-fn handle_check_suite(github_integration: &GithubIntegration, payload: CheckSuiteHookPayload) {
+fn handle_check_suite(
+  github_integration: &'static GithubIntegration,
+  payload: CheckSuiteHookPayload,
+) {
   // Push to default branch == PROD Deployment
   if payload.check_suite.head_branch == payload.repository.default_branch {
-    // Clone the necessary data for 'static lifetime
-    let github_integration_clone = github_integration.clone();
-    let head_sha = payload.check_suite.head_sha.clone();
-    let full_name = payload.repository.full_name.clone();
+    let head_sha = payload.check_suite.head_sha;
+    let full_name = payload.repository.full_name;
     let installation_id = payload.installation.id;
 
     tokio::spawn(async move {
-      build_from_github(
-        github_integration_clone,
-        head_sha,
-        full_name,
-        installation_id,
-      )
-      .await;
+      build_from_github(github_integration, head_sha, full_name, installation_id).await;
     });
   }
 }
