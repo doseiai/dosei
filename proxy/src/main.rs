@@ -37,7 +37,6 @@ use mongodb::bson::{doc, Bson, Document};
 use mongodb::{Collection, Database};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-use std::error::Error;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;

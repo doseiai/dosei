@@ -18,7 +18,7 @@ use instant_acme::{
 use rcgen::{Certificate, CertificateParams, DistinguishedName};
 use tracing::{error, info};
 
-const MAX_WAIT_ATTEMPTS: usize = 20;
+const MAX_WAIT_ATTEMPTS: usize = 10;
 
 // Custom error type for better error reporting
 #[derive(Debug)]
@@ -103,6 +103,7 @@ pub async fn create_certificate(
     }
   };
 
+  info!("certificate: {}", certificate.serialize_private_key_pem());
   Ok(certificate.serialize_private_key_pem())
 }
 
@@ -121,7 +122,7 @@ async fn wait_for_completed_order(order: &mut Order) -> Result<()> {
         break;
       }
       _ => {
-        backoff_duration *= 2;
+        backoff_duration *= 4;
         attempts += 1;
 
         if attempts < MAX_WAIT_ATTEMPTS {
