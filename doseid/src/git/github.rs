@@ -4,13 +4,14 @@ use chrono::{Duration, Utc};
 use git2::Repository;
 use hmac::{Hmac, Mac};
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
-use reqwest::{header, Client};
+use reqwest::{header, Client, StatusCode, Error, Response};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::Sha256;
 use std::env;
 use std::path::Path;
 use tracing::warn;
+use crate::git::github::CreateRepoError::RequestError;
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -73,13 +74,61 @@ impl GithubIntegration {
       .map_err(|_| anyhow!("invalid secret"))
   }
 
+  async fn new_individual_repo(
+    &self,
+    name: &str,
+    private: bool,
+    access_token: &str,
+  ) -> Result<(), CreateRepoError> {
+    let response = Client::new()
+      .post("https://api.github.com/user/repos")
+      .bearer_auth(access_token)
+      .json(&json!({"name": name, "private": private }))
+      .send()
+      .await;
+
+    if let Err(e) = response {
+
+      if e.status().unwrap().is_client_error() {
+
+      }
+
+
+      if e.is_redirect() {
+        if let Some(final_stop) = e.url() {
+          println!("redirect loop at {}", final_stop);
+        }
+      }
+    }
+
+    // if let Err(e) = response {
+    //
+    //   let status = &response.status();
+    //
+    //   if status.is_client_error() {
+    //     if status.as_u16() == StatusCode::UNPROCESSABLE_ENTITY {
+    //       let json_result = &response.json::<Value>().await?;
+    //       if let Some(errors) = json_result["errors"].as_array() {
+    //         for error in errors {
+    //           if error["message"] == "name already exists on this account" {
+    //             return Err(CreateRepoError::RepoExists);
+    //           }
+    //         }
+    //       }
+    //     }
+    //   }
+    //   return Err(RequestError(e));
+    // }
+    Ok(())
+  }
+
   async fn update_deployment_status(
     &self,
     status: GithubDeploymentStatus,
     repo_full_name: &str,
     installation_id: i64,
     commit_id: &str,
-  ) -> Result<(), reqwest::Error> {
+  ) -> Result<(), Error> {
     let github_token = self.get_installation_token(installation_id).await;
     let github_api_repo_url = format!("https://api.github.com/repos/{}", repo_full_name);
     let client = Client::new();
@@ -152,6 +201,17 @@ impl GithubIntegration {
       &encoding_key,
     )?)
   }
+}
+
+#[derive(Debug, thiserror::Error)]
+enum CreateRepoError {
+  #[error("Request failed")]
+  RequestError(#[from] reqwest::Error),
+
+  #[error(
+    "The specified name is already used for a different Git repository. Please enter a new one."
+  )]
+  RepoExists,
 }
 
 #[derive(PartialEq)]
