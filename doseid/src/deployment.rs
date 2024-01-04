@@ -44,3 +44,33 @@ async fn build(owner_id: Uuid, project_id: Uuid, deployment_id: String, folder_p
   }
   build_image(image_name, image_tag, folder_path).await;
 }
+
+mod tests {
+  use crate::config::Config;
+  use crate::deployment::build;
+  use crate::git::git_clone;
+  use git2::Repository;
+  use once_cell::sync::Lazy;
+  use tempfile::tempdir;
+  use uuid::Uuid;
+
+  static CONFIG: Lazy<Config> = Lazy::new(|| Config::new().unwrap());
+
+  #[tokio::test]
+  async fn test_clone_and_build() {
+    let temp_dir = tempdir().expect("Failed to create a temp dir");
+    let temp_path = temp_dir.path();
+
+    let repo: anyhow::Result<Repository> =
+      git_clone("https://github.com/Alw3ys/dosei-bot.git", temp_path, None).await;
+    build(
+      Uuid::new_v4(),
+      Uuid::new_v4(),
+      "test".to_string(),
+      temp_path,
+    )
+    .await;
+    drop(temp_dir);
+    assert!(repo.is_ok())
+  }
+}
