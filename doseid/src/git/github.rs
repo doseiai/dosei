@@ -73,7 +73,7 @@ impl GithubIntegration {
       .map_err(|_| anyhow!("invalid secret"))
   }
 
-  async fn new_individual_repo(
+  pub async fn new_individual_repo(
     &self,
     name: &str,
     private: Option<bool>,
@@ -193,7 +193,7 @@ impl GithubIntegration {
 }
 
 #[derive(Debug, thiserror::Error)]
-enum CreateRepoError {
+pub enum CreateRepoError {
   #[error("Request failed")]
   RequestError(#[from] Error),
 
