@@ -1,11 +1,10 @@
 use crate::git::git_clone;
-use crate::git::github::CreateRepoError::RequestError;
 use anyhow::{anyhow, Context};
 use chrono::{Duration, Utc};
 use git2::Repository;
 use hmac::{Hmac, Mac};
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
-use reqwest::{header, Client, Error, Response, StatusCode};
+use reqwest::{header, Client, Error, Response};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::Sha256;
@@ -169,17 +168,6 @@ impl GithubIntegration {
       &encoding_key,
     )?)
   }
-}
-
-#[derive(Debug, thiserror::Error)]
-enum CreateRepoError {
-  #[error("Request failed")]
-  RequestError(#[from] reqwest::Error),
-
-  #[error(
-    "The specified name is already used for a different Git repository. Please enter a new one."
-  )]
-  RepoExists,
 }
 
 #[derive(PartialEq)]
