@@ -73,20 +73,21 @@ impl GithubIntegration {
       .map_err(|_| anyhow!("invalid secret"))
   }
 
+  // TODO: handle 422; Existing repo
   async fn new_individual_repo(
     &self,
     name: &str,
-    private: bool,
+    private: Option<bool>,
     access_token: &str,
   ) -> Result<Response, Error> {
     let client = Client::new();
-    let response = client
+    client
       .post("https://api.github.com/user/repos")
       .bearer_auth(access_token)
-      .json(&json!({"name": name, "private": private }))
+      .json(&json!({"name": name, "private": private.unwrap_or(true) }))
       .send()
-      .await?;
-    Ok(response)
+      .await?
+      .error_for_status()
   }
 
   async fn update_deployment_status(
@@ -201,6 +202,7 @@ impl GithubDeploymentStatus {
 #[cfg(test)]
 mod tests {
   use crate::test_utils::CONFIG;
+  use std::env;
 
   #[test]
   fn test_create_github_app_jwt() {
@@ -212,5 +214,20 @@ mod tests {
         .create_github_app_jwt();
       assert!(result.is_ok());
     }
+  }
+
+  #[tokio::test]
+  async fn test_create_repo() {
+    let result = CONFIG
+      .github_integration
+      .as_ref()
+      .unwrap()
+      .new_individual_repo(
+        "rust-tests-create",
+        None,
+        &env::var("TEST_GITHUB_ACCESS_TOKEN").unwrap(),
+      )
+      .await;
+    assert!(result.is_ok(), "Failed to create repository: {:?}", result);
   }
 }
