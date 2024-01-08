@@ -80,11 +80,12 @@ impl GithubIntegration {
     private: Option<bool>,
     access_token: &str,
   ) -> Result<Response, Error> {
-    let client = Client::new();
-    client
+    Client::new()
       .post("https://api.github.com/user/repos")
       .bearer_auth(access_token)
       .json(&json!({"name": name, "private": private.unwrap_or(true) }))
+      .header("Accept", "application/vnd.github.v3+json")
+      .header("User-Agent", "Dosei")
       .send()
       .await?
       .error_for_status()
@@ -225,9 +226,9 @@ mod tests {
       .new_individual_repo(
         "rust-tests-create",
         None,
-        &env::var("TEST_GITHUB_ACCESS_TOKEN").unwrap(),
+        &env::var("GITHUB_TEST_ACCESS_TOKEN").unwrap(),
       )
       .await;
-    assert!(result.is_ok(), "Failed to create repository: {:?}", result);
+    assert!(result.is_ok(), "Failed to create repository: {:?}", result)
   }
 }

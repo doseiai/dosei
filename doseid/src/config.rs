@@ -67,7 +67,10 @@ impl Config {
     tracing::subscriber::set_global_default(subscriber)?;
 
     let mut github_integration = None;
-    if let Ok(toml_config) = TOMLConfig::new(args.config_path) {
+    // So ugly, wtf, but right now it works
+    if cfg!(test) {
+      github_integration = Some(GithubIntegration::new()?);
+    } else if let Ok(toml_config) = TOMLConfig::new(args.config_path) {
       if toml_config.github.unstable.enabled {
         github_integration = Some(GithubIntegration::new()?);
       }
