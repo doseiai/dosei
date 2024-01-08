@@ -1,17 +1,17 @@
 use crate::git::git_clone;
+use crate::git::github::CreateRepoError::RequestError;
 use anyhow::{anyhow, Context};
 use chrono::{Duration, Utc};
 use git2::Repository;
 use hmac::{Hmac, Mac};
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
-use reqwest::{header, Client, StatusCode, Error, Response};
+use reqwest::{header, Client, Error, Response, StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::Sha256;
 use std::env;
 use std::path::Path;
 use tracing::warn;
-use crate::git::github::CreateRepoError::RequestError;
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -79,47 +79,15 @@ impl GithubIntegration {
     name: &str,
     private: bool,
     access_token: &str,
-  ) -> Result<(), CreateRepoError> {
-    let response = Client::new()
+  ) -> Result<Response, Error> {
+    let client = Client::new();
+    let response = client
       .post("https://api.github.com/user/repos")
       .bearer_auth(access_token)
       .json(&json!({"name": name, "private": private }))
       .send()
-      .await;
-
-    if let Err(e) = response {
-
-      if e.status().unwrap().is_client_error() {
-
-      }
-
-
-      if e.is_redirect() {
-        if let Some(final_stop) = e.url() {
-          println!("redirect loop at {}", final_stop);
-        }
-      }
-    }
-
-    // if let Err(e) = response {
-    //
-    //   let status = &response.status();
-    //
-    //   if status.is_client_error() {
-    //     if status.as_u16() == StatusCode::UNPROCESSABLE_ENTITY {
-    //       let json_result = &response.json::<Value>().await?;
-    //       if let Some(errors) = json_result["errors"].as_array() {
-    //         for error in errors {
-    //           if error["message"] == "name already exists on this account" {
-    //             return Err(CreateRepoError::RepoExists);
-    //           }
-    //         }
-    //       }
-    //     }
-    //   }
-    //   return Err(RequestError(e));
-    // }
-    Ok(())
+      .await?;
+    Ok(response)
   }
 
   async fn update_deployment_status(
