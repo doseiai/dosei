@@ -4,6 +4,7 @@ mod docker;
 mod git;
 mod schema;
 mod server;
+mod test_utils;
 
 use config::Config;
 
@@ -15,4 +16,13 @@ async fn main() -> anyhow::Result<()> {
   }
   server::start_server(config).await?;
   Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use crate::test_utils::CONFIG;
+
+  #[test]
+  fn my_test() {}
 }

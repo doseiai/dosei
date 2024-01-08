@@ -200,13 +200,10 @@ impl GithubDeploymentStatus {
 // TODO: Support passing settings to run github tests
 #[cfg(test)]
 mod tests {
-  use crate::config::Config;
   use crate::git::git_clone;
+  use crate::test_utils::CONFIG;
   use git2::Repository;
-  use once_cell::sync::Lazy;
   use tempfile::tempdir;
-
-  static CONFIG: Lazy<Config> = Lazy::new(|| Config::new().unwrap());
 
   #[test]
   fn test_create_github_app_jwt() {
