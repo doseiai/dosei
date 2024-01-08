@@ -4,7 +4,7 @@ use chrono::{Duration, Utc};
 use git2::Repository;
 use hmac::{Hmac, Mac};
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
-use reqwest::{header, Client, Error, Response};
+use reqwest::{header, Client, Error, Response, StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::Sha256;
@@ -73,22 +73,42 @@ impl GithubIntegration {
       .map_err(|_| anyhow!("invalid secret"))
   }
 
-  // TODO: handle 422; Existing repo
   async fn new_individual_repo(
     &self,
     name: &str,
     private: Option<bool>,
     access_token: &str,
-  ) -> Result<Response, Error> {
-    Client::new()
+  ) -> Result<Response, CreateRepoError> {
+    let response = Client::new()
       .post("https://api.github.com/user/repos")
       .bearer_auth(access_token)
       .json(&json!({"name": name, "private": private.unwrap_or(true) }))
       .header("Accept", "application/vnd.github.v3+json")
       .header("User-Agent", "Dosei")
       .send()
-      .await?
-      .error_for_status()
+      .await?;
+
+    let status_code = response.status();
+    if status_code.is_success() {
+      return Ok(response);
+    }
+
+    let error_result = response.error_for_status_ref().err().unwrap(); // safe to unwrap after checking success
+    if status_code == StatusCode::UNPROCESSABLE_ENTITY {
+      let body = response.json::<Value>().await;
+      if let Err(e) = body {
+        return Err(CreateRepoError::RequestError(e));
+      }
+      let json_result = body.unwrap();
+      if let Some(errors) = json_result["errors"].as_array() {
+        for error in errors {
+          if error["message"] == "name already exists on this account" {
+            return Err(CreateRepoError::RepoExists);
+          }
+        }
+      }
+    }
+    Err(CreateRepoError::RequestError(error_result))
   }
 
   async fn update_deployment_status(
@@ -170,6 +190,17 @@ impl GithubIntegration {
       &encoding_key,
     )?)
   }
+}
+
+#[derive(Debug, thiserror::Error)]
+enum CreateRepoError {
+  #[error("Request failed")]
+  RequestError(#[from] Error),
+
+  #[error(
+    "The specified name is already used for a different Git repository. Please enter a new one."
+  )]
+  RepoExists,
 }
 
 #[derive(PartialEq)]
