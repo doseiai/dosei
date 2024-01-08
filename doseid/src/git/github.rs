@@ -4,7 +4,7 @@ use chrono::{Duration, Utc};
 use git2::Repository;
 use hmac::{Hmac, Mac};
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
-use reqwest::{header, Client};
+use reqwest::{header, Client, Error, Response};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::Sha256;
@@ -73,13 +73,31 @@ impl GithubIntegration {
       .map_err(|_| anyhow!("invalid secret"))
   }
 
+  // TODO: handle 422; Existing repo
+  async fn new_individual_repo(
+    &self,
+    name: &str,
+    private: Option<bool>,
+    access_token: &str,
+  ) -> Result<Response, Error> {
+    Client::new()
+      .post("https://api.github.com/user/repos")
+      .bearer_auth(access_token)
+      .json(&json!({"name": name, "private": private.unwrap_or(true) }))
+      .header("Accept", "application/vnd.github.v3+json")
+      .header("User-Agent", "Dosei")
+      .send()
+      .await?
+      .error_for_status()
+  }
+
   async fn update_deployment_status(
     &self,
     status: GithubDeploymentStatus,
     repo_full_name: &str,
     installation_id: i64,
     commit_id: &str,
-  ) -> Result<(), reqwest::Error> {
+  ) -> Result<(), Error> {
     let github_token = self.get_installation_token(installation_id).await;
     let github_api_repo_url = format!("https://api.github.com/repos/{}", repo_full_name);
     let client = Client::new();
@@ -184,48 +202,33 @@ impl GithubDeploymentStatus {
 // TODO: Support passing settings to run github tests
 #[cfg(test)]
 mod tests {
-  // use crate::config::Config;
-  use crate::git::git_clone;
-  use git2::Repository;
-  // use once_cell::sync::Lazy;
-  use tempfile::tempdir;
-  //
-  //   static CONFIG: Lazy<Config> = Lazy::new(|| Config::new().unwrap());
-  //
-  //   #[test]
-  //   fn test_create_github_app_jwt() {
-  //     if CONFIG.github_integration.is_some() {
-  //       let result = CONFIG
-  //         .github_integration
-  //         .as_ref()
-  //         .unwrap()
-  //         .create_github_app_jwt();
-  //       assert!(result.is_ok());
-  //     }
-  //   }
-  //
-  async fn test_clone() {
-    let temp_dir = tempdir().expect("Failed to create a temp dir");
-    let repo_path = temp_dir.path();
+  use crate::test_utils::CONFIG;
+  use std::env;
 
-    let repo: anyhow::Result<Repository> =
-      git_clone("https://github.com/Alw3ys/dosei-bot.git", repo_path, None).await;
-    drop(temp_dir);
-    assert!(repo.is_ok())
+  #[test]
+  fn test_create_github_app_jwt() {
+    if CONFIG.github_integration.is_some() {
+      let result = CONFIG
+        .github_integration
+        .as_ref()
+        .unwrap()
+        .create_github_app_jwt();
+      assert!(result.is_ok());
+    }
   }
 
   #[tokio::test]
-  async fn test_clone_repos() {
-    use futures::future::join_all;
-
-    let tests: Vec<_> = (0..10)
-      .map(|_| {
-        tokio::spawn(async {
-          test_clone().await;
-        })
-      })
-      .collect();
-
-    join_all(tests).await;
+  async fn test_create_repo() {
+    let result = CONFIG
+      .github_integration
+      .as_ref()
+      .unwrap()
+      .new_individual_repo(
+        "rust-tests-create",
+        None,
+        &env::var("GITHUB_TEST_ACCESS_TOKEN").unwrap(),
+      )
+      .await;
+    assert!(result.is_ok(), "Failed to create repository: {:?}", result)
   }
 }

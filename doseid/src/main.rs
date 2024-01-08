@@ -5,6 +5,9 @@ mod git;
 mod schema;
 mod server;
 
+#[cfg(test)]
+mod test_utils;
+
 use config::Config;
 
 #[tokio::main]
