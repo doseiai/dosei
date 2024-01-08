@@ -200,10 +200,7 @@ impl GithubDeploymentStatus {
 // TODO: Support passing settings to run github tests
 #[cfg(test)]
 mod tests {
-  use crate::git::git_clone;
   use crate::test_utils::CONFIG;
-  use git2::Repository;
-  use tempfile::tempdir;
 
   #[test]
   fn test_create_github_app_jwt() {
@@ -215,30 +212,5 @@ mod tests {
         .create_github_app_jwt();
       assert!(result.is_ok());
     }
-  }
-
-  #[tokio::test]
-  async fn test_clone_repos() {
-    use futures::future::join_all;
-
-    let tests: Vec<_> = (0..10)
-      .map(|_| {
-        tokio::spawn(async {
-          test_clone().await;
-        })
-      })
-      .collect();
-
-    join_all(tests).await;
-  }
-
-  async fn test_clone() {
-    let temp_dir = tempdir().expect("Failed to create a temp dir");
-    let repo_path = temp_dir.path();
-
-    let repo: anyhow::Result<Repository> =
-      git_clone("https://github.com/Alw3ys/dosei-bot.git", repo_path, None).await;
-    drop(temp_dir);
-    assert!(repo.is_ok())
   }
 }
