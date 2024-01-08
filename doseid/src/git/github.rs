@@ -108,7 +108,7 @@ impl GithubIntegration {
         }
       }
     }
-    return Err(CreateRepoError::RequestError(error_result));
+    Err(CreateRepoError::RequestError(error_result))
   }
 
   async fn update_deployment_status(
