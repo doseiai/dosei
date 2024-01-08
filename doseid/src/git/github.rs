@@ -220,16 +220,6 @@ mod tests {
     }
   }
 
-  async fn test_clone() {
-    let temp_dir = tempdir().expect("Failed to create a temp dir");
-    let repo_path = temp_dir.path();
-
-    let repo: anyhow::Result<Repository> =
-      git_clone("https://github.com/Alw3ys/dosei-bot.git", repo_path, None).await;
-    drop(temp_dir);
-    assert!(repo.is_ok())
-  }
-
   #[tokio::test]
   async fn test_clone_repos() {
     use futures::future::join_all;
@@ -243,5 +233,15 @@ mod tests {
       .collect();
 
     join_all(tests).await;
+  }
+
+  async fn test_clone() {
+    let temp_dir = tempdir().expect("Failed to create a temp dir");
+    let repo_path = temp_dir.path();
+
+    let repo: anyhow::Result<Repository> =
+      git_clone("https://github.com/Alw3ys/dosei-bot.git", repo_path, None).await;
+    drop(temp_dir);
+    assert!(repo.is_ok())
   }
 }
