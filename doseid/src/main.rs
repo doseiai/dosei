@@ -6,7 +6,7 @@ mod schema;
 mod server;
 
 #[cfg(test)]
-mod test_utils;
+mod test;
 
 use config::Config;
 

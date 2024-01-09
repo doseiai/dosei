@@ -46,15 +46,11 @@ async fn build(owner_id: Uuid, project_id: Uuid, deployment_id: String, folder_p
 }
 
 mod tests {
-  use crate::config::Config;
   use crate::deployment::build;
   use crate::git::git_clone;
   use git2::Repository;
-  use once_cell::sync::Lazy;
   use tempfile::tempdir;
   use uuid::Uuid;
-
-  static CONFIG: Lazy<Config> = Lazy::new(|| Config::new().unwrap());
 
   #[tokio::test]
   async fn test_clone_and_build() {
