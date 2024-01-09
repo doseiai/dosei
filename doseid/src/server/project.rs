@@ -4,7 +4,6 @@ use crate::schema::{GitSource, Project};
 use axum::http::StatusCode;
 use axum::{Extension, Json};
 use serde::Deserialize;
-use serde_json::json;
 use sqlx::{Pool, Postgres};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -61,12 +60,14 @@ pub async fn api_new_project(
     created_at: Default::default(),
   };
   info!("{:?}", project);
+  // TODO: Insert into db
 
   // TODO: Assign domain
 
   // TODO: Save secrets / envs
 
   // TODO: Git push
+  drop(temp_dir);
   Ok(StatusCode::OK)
 }
 
