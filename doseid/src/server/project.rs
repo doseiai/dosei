@@ -37,15 +37,16 @@ pub async fn api_new_project(
   let temp_path = temp_dir.path();
   let template_path = format!("{}/{}", temp_path.display(), &body.path.unwrap());
 
-  // github_integration
-  //   .github_clone(
-  //     body.source_full_name,
-  //     temp_path,
-  //     Some(&body.branch.unwrap()),
-  //     Some(access_token),
-  //     None,
-  //   )
-  //   .await?;
+  github_integration
+    .github_clone(
+      body.source_full_name,
+      temp_path,
+      body.branch.as_ref().map(|s| s.as_str()),
+      Some(access_token),
+      None,
+    )
+    .await
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
   // TODO: Assign domain
 
