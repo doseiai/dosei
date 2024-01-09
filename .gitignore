@@ -3,3 +3,4 @@ target/
 .env
 .env*
 *doseid.toml
+.vscode/
