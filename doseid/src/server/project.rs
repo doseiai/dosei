@@ -6,6 +6,7 @@ use axum::{Extension, Json};
 use serde::Deserialize;
 use sqlx::{Pool, Postgres};
 use std::collections::HashMap;
+use std::env;
 use std::sync::Arc;
 use tempfile::tempdir;
 use tracing::{error, info};
@@ -23,7 +24,8 @@ pub async fn api_new_project(
       return Err(StatusCode::SERVICE_UNAVAILABLE);
     }
   };
-  let access_token = "TODO:REPLACEWITH_REAL_TOKEN";
+  // TODO: Find on db
+  let access_token = &env::var("GITHUB_TEST_ACCESS_TOKEN").unwrap();
   let github_repo_response = github_integration
     .new_individual_repository(&body.name, None, access_token)
     .await
@@ -48,19 +50,41 @@ pub async fn api_new_project(
       None,
     )
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .map_err(|_| {
+      error!("Github Clone Failed");
+      StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
   let project = Project {
     id: Uuid::new_v4(),
     name: body.name,
-    owner_id: Default::default(),
+    owner_id: body.owner_id,
     git_source: GitSource::Github,
     git_source_metadata: github_repo_response,
     updated_at: Default::default(),
     created_at: Default::default(),
   };
-  info!("{:?}", project);
-  // TODO: Insert into db
+  match sqlx::query_as!(
+      Project,
+      r#"INSERT INTO projects (id, name, owner_id, git_source, git_source_metadata, updated_at, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING id, name, owner_id, git_source AS "git_source!: GitSource", git_source_metadata, updated_at, created_at"#,
+      project.id,
+      project.name,
+      project.owner_id,
+      project.git_source as GitSource,
+      project.git_source_metadata,
+      project.updated_at,
+      project.created_at,
+    ).fetch_one(&**pool).await {
+    Ok(recs) => {
+      info!("{:?}", recs);
+    },
+    Err(err) => {
+      error!("Error in creating project: {:?}", err);
+      return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+  }
 
   // TODO: Assign domain
 
@@ -77,7 +101,7 @@ pub struct NewProjectFromClone {
   branch: Option<String>,
   path: Option<String>,
   private: Option<bool>,
-  owner: String,
+  owner_id: Uuid,
   name: String,
   envs: Option<HashMap<String, String>>,
 }

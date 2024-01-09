@@ -1,0 +1,86 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO projects (id, name, owner_id, git_source, git_source_metadata, updated_at, created_at)\n       VALUES ($1, $2, $3, $4, $5, $6, $7)\n       RETURNING id, name, owner_id, git_source AS \"git_source!: GitSource\", git_source_metadata, updated_at, created_at",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "owner_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "git_source!: GitSource",
+        "type_info": {
+          "Custom": {
+            "name": "git_source",
+            "kind": {
+              "Enum": [
+                "github",
+                "gitlab",
+                "bitbucket"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "git_source_metadata",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 5,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 6,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Uuid",
+        {
+          "Custom": {
+            "name": "git_source",
+            "kind": {
+              "Enum": [
+                "github",
+                "gitlab",
+                "bitbucket"
+              ]
+            }
+          }
+        },
+        "Jsonb",
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "cc13749e05e61f3182c1c978dd96cd7eee6d4591542b5c58bff51c31cea6faa6"
+}

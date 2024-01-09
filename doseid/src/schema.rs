@@ -38,22 +38,12 @@ pub struct Secret {
   pub created_at: DateTime<Utc>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(sqlx::Type, Serialize, Deserialize, Debug)]
+#[sqlx(type_name = "git_source", rename_all = "lowercase")]
 pub enum GitSource {
   Github,
   Gitlab,
   Bitbucket,
-}
-
-impl From<&str> for GitSource {
-  fn from(value: &str) -> Self {
-    match value {
-      "github" => GitSource::Github,
-      "gitlab" => GitSource::Gitlab,
-      "bitbucket" => GitSource::Bitbucket,
-      _ => panic!("Invalid GitSource value"),
-    }
-  }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
