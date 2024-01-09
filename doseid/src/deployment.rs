@@ -71,7 +71,7 @@ mod tests {
 
     // create file rotation path
     let file_appender = RollingFileAppender::builder()
-      .rotation(Rotation::HOURLY)
+      .rotation(Rotation::DAILY)
       .filename_prefix("doseid.logs")
       .build(path)
       .expect("Unable to write logs to file, please check permissions.");
