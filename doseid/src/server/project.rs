@@ -23,7 +23,7 @@ pub async fn api_new_project(
   };
   let access_token = "TODO:REPLACEWITH_REAL_TOKEN";
   github_integration
-    .new_individual_repo(&body.name, None, access_token)
+    .new_individual_repository(&body.name, None, access_token)
     .await
     .map_err(|e| match e {
       CreateRepoError::RequestError(_) => {

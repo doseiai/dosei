@@ -73,7 +73,7 @@ impl GithubIntegration {
       .map_err(|_| anyhow!("invalid secret"))
   }
 
-  pub async fn new_individual_repo(
+  pub async fn new_individual_repository(
     &self,
     name: &str,
     private: Option<bool>,
@@ -109,6 +109,21 @@ impl GithubIntegration {
       }
     }
     Err(CreateRepoError::RequestError(error_result))
+  }
+
+  async fn delete_repository(
+    &self,
+    repo_full_name: &str,
+    access_token: &str,
+  ) -> Result<Response, Error> {
+    Client::new()
+      .delete(format!("https://api.github.com/repos/{}", repo_full_name))
+      .bearer_auth(access_token)
+      .header("Accept", "application/vnd.github.v3+json")
+      .header("User-Agent", "Dosei")
+      .send()
+      .await?
+      .error_for_status()
   }
 
   async fn update_deployment_status(
@@ -254,12 +269,12 @@ mod tests {
       .github_integration
       .as_ref()
       .unwrap()
-      .new_individual_repo(
+      .new_individual_repository(
         "rust-tests-create",
         None,
         &env::var("GITHUB_TEST_ACCESS_TOKEN").unwrap(),
       )
       .await;
-    assert!(result.is_ok(), "Failed to create repository: {:?}", result)
+    assert!(result.is_ok(), "Failed to create repository: {:?}", result);
   }
 }
