@@ -78,7 +78,7 @@ impl GithubIntegration {
     name: &str,
     private: Option<bool>,
     access_token: &str,
-  ) -> Result<Response, CreateRepoError> {
+  ) -> Result<Value, CreateRepoError> {
     let response = Client::new()
       .post("https://api.github.com/user/repos")
       .bearer_auth(access_token)
@@ -90,7 +90,8 @@ impl GithubIntegration {
 
     let status_code = response.status();
     if status_code.is_success() {
-      return Ok(response);
+      let body = response.json::<Value>().await?;
+      return Ok(body);
     }
 
     let error_result = response.error_for_status_ref().err().unwrap(); // safe to unwrap after checking success
