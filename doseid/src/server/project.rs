@@ -25,29 +25,27 @@ pub async fn api_new_project(
   github_integration
     .new_individual_repo(&body.name, None, access_token)
     .await
-    .map_err(|e| {
-      return match e {
-        CreateRepoError::RequestError(_) => {
-          // TODO: report to sentry or something
-          Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
-        CreateRepoError::RepoExists => Err(StatusCode::UNPROCESSABLE_ENTITY),
-      };
+    .map_err(|e| match e {
+      CreateRepoError::RequestError(_) => {
+        // TODO: report to sentry or something
+        StatusCode::INTERNAL_SERVER_ERROR
+      }
+      CreateRepoError::RepoExists => StatusCode::UNPROCESSABLE_ENTITY,
     })?;
 
-  let temp_dir = tempdir();
+  let temp_dir = tempdir().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
   let temp_path = temp_dir.path();
-  let template_path = format!("{}/{}", temp_path, &body.path.unwrap());
+  let template_path = format!("{}/{}", temp_path.display(), &body.path.unwrap());
 
-  github_integration
-    .github_clone(
-      body.source_full_name,
-      temp_path,
-      Some(&body.branch.unwrap()),
-      Some(access_token),
-      None,
-    )
-    .await?;
+  // github_integration
+  //   .github_clone(
+  //     body.source_full_name,
+  //     temp_path,
+  //     Some(&body.branch.unwrap()),
+  //     Some(access_token),
+  //     None,
+  //   )
+  //   .await?;
 
   // TODO: Assign domain
 
@@ -62,7 +60,6 @@ pub struct NewProjectFromClone {
   source_full_name: String,
   branch: Option<String>,
   path: Option<String>,
-  #[serde(default = "default_private")]
   private: Option<bool>,
   owner: String,
   name: String,

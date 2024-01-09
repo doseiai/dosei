@@ -47,7 +47,7 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
       routing::post(integration::github::api_integration_github_events),
     )
     .route(
-      "/projects/:owner_id",
+      "/projects/:owner_id/clone",
       routing::post(project::api_new_project),
     )
     .route("/info", routing::get(info::api_info))
