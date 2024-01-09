@@ -1,4 +1,10 @@
-CREATE TYPE git_source AS ENUM ('github', 'gitlab', 'bitbucket');
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'git_source') THEN
+        CREATE TYPE git_source AS ENUM ('github', 'gitlab', 'bitbucket');
+    END IF;
+END
+$$;
 
 CREATE TABLE IF NOT EXISTS projects (
     id UUID NOT NULL,
@@ -12,7 +18,13 @@ CREATE TABLE IF NOT EXISTS projects (
     UNIQUE (name, owner_id)
 );
 
-CREATE TYPE deployment_status AS ENUM ('queued', 'building', 'error', 'canceled', 'ready');
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'deployment_status') THEN
+        CREATE TYPE deployment_status AS ENUM ('queued', 'building', 'error', 'canceled', 'ready');
+    END IF;
+END
+$$;
 
 CREATE TABLE IF NOT EXISTS deployments (
     id UUID NOT NULL,
@@ -27,7 +39,13 @@ CREATE TABLE IF NOT EXISTS deployments (
     PRIMARY KEY (id)
 );
 
-CREATE TYPE service_type AS ENUM ('project', 'storage');
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'service_type') THEN
+        CREATE TYPE service_type AS ENUM ('project', 'storage');
+    END IF;
+END
+$$;
 
 CREATE TABLE IF NOT EXISTS domains (
    id UUID NOT NULL,
