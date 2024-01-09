@@ -233,7 +233,7 @@ impl GithubDeploymentStatus {
 // TODO: Support passing settings to run github tests
 #[cfg(test)]
 mod tests {
-  use crate::test_utils::CONFIG;
+  use crate::test::CONFIG;
   use std::env;
 
   #[test]
