@@ -20,22 +20,6 @@ pub async fn build_from_github(
   repo_full_name: String,
   installation_id: i64,
 ) {
-  let temp_dir = tempdir().unwrap();
-  let temp_path = temp_dir.path();
-
-  if let Err(err) = github_integration
-    .github_clone(repo_full_name, temp_path, None, None, Some(installation_id))
-    .await
-  {
-    error!("{}", err);
-    return;
-  }
-
-  // build(Uuid::new_v4(), Uuid::new_v4(), deployment_id, temp_path).await;
-  drop(temp_dir);
-}
-
-async fn build(owner_id: Uuid, project_id: Uuid, deployment_id: String, folder_path: &Path) {
   // aggregate deployment logs
   let mut path = home_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
   path.push(DOSEI_LOGPATH);
@@ -53,6 +37,22 @@ async fn build(owner_id: Uuid, project_id: Uuid, deployment_id: String, folder_p
   let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
   tracing_subscriber::fmt().with_writer(non_blocking).init();
 
+  let temp_dir = tempdir().unwrap();
+  let temp_path = temp_dir.path();
+
+  if let Err(err) = github_integration
+    .github_clone(repo_full_name, temp_path, None, None, Some(installation_id))
+    .await
+  {
+    error!("{}", err);
+    return;
+  }
+
+  // build(Uuid::new_v4(), Uuid::new_v4(), deployment_id, temp_path).await;
+  drop(temp_dir);
+}
+
+async fn build(owner_id: Uuid, project_id: Uuid, deployment_id: String, folder_path: &Path) {
   let detected_docker_file = dosei_util::package_manager::_resolve_docker(folder_path);
   if !detected_docker_file {
     // TODO: Implement docker file templates.
