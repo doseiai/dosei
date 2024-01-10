@@ -3,17 +3,40 @@ mod app;
 use crate::deployment::app::import_dosei_app;
 use crate::docker::build_image;
 use crate::git::github::GithubIntegration;
-use std::path::Path;
+use home::home_dir;
+use std::path::{Path, PathBuf};
 use tempfile::tempdir;
 use tracing::{error, info};
+
+use tracing_appender::rolling::RollingFileAppender;
 use uuid::Uuid;
 
+pub const DOSEI_LOGPATH: &str = ".dosei/doseid/data/deployments/logs";
+
+// build directly from github repo
 pub async fn build_from_github(
   github_integration: &'static GithubIntegration,
   deployment_id: String,
   repo_full_name: String,
   installation_id: i64,
 ) {
+  // aggregate deployment logs
+  let mut path = home_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
+  path.push(DOSEI_LOGPATH);
+  let dir = path.parent().unwrap();
+  if !dir.exists() {
+    let _ = std::fs::create_dir_all(dir);
+  }
+
+  // create file rotation path
+  let file_appender = RollingFileAppender::builder()
+    .filename_prefix(format!("{deployment_id}.logs"))
+    .build(path)
+    .expect("Unable to write logs to file, please check permissions.");
+
+  let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+  tracing_subscriber::fmt().with_writer(non_blocking).init();
+
   let temp_dir = tempdir().unwrap();
   let temp_path = temp_dir.path();
 
@@ -49,6 +72,7 @@ mod tests {
   use crate::deployment::build;
   use crate::git::git_clone;
   use git2::Repository;
+  use once_cell::sync::Lazy;
   use tempfile::tempdir;
   use uuid::Uuid;
 

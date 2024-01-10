@@ -2,6 +2,7 @@ mod cluster;
 mod cron;
 mod info;
 mod integration;
+mod logs;
 mod ping;
 mod project;
 mod secret;
@@ -52,6 +53,14 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
     )
     .route("/info", routing::get(info::api_info))
     .route("/ping", routing::get(ping::api_ping))
+    .route(
+      "/deployments/:deployment_id/logs",
+      routing::get(logs::deployment_logs),
+    )
+    // .route(
+    //   "/deployments/:deployment_id/logs/stream",
+    //   routing::get(logs::deployment_logstream),
+    // )
     .layer(Extension(Arc::clone(&shared_pool)))
     .layer(Extension(config));
   let address = config.address.to_string();
