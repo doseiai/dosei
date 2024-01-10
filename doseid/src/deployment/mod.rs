@@ -11,7 +11,7 @@ use tracing::{error, info};
 use tracing_appender::rolling::RollingFileAppender;
 use uuid::Uuid;
 
-const DOSEI_LOGPATH: &str = ".dosei/doseid/data/deployments/logs";
+pub const DOSEI_LOGPATH: &str = ".dosei/doseid/data/deployments/logs";
 
 // build directly from github repo
 pub async fn build_from_github(

@@ -3,18 +3,15 @@ use axum::extract::Path;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use home::home_dir;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::path::PathBuf;
 use tokio_util::io::ReaderStream;
-use uuid::Uuid;
+
+use crate::deployment::DOSEI_LOGPATH;
 
 pub async fn deployment_logs(Path(params): Path<DeploymentLogParams>) -> impl IntoResponse {
-  // testing
   let mut path = home_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
-  path.push(format!(
-    ".dosei/doseid/data/deployments/logs/{}.logs",
-    params.deployment_id
-  ));
+  path.push(format!("{}/{}.logs", DOSEI_LOGPATH, params.deployment_id));
 
   let file = match tokio::fs::File::open(path).await {
     Ok(file) => file,
@@ -25,23 +22,7 @@ pub async fn deployment_logs(Path(params): Path<DeploymentLogParams>) -> impl In
   Ok(body)
 }
 
-// pub async fn deployment_logstream(
-//   ,
-// ) -> Result<Json<Info>, StatusCode> {
-//   let cluster_info = Arc::clone(&CLUSTER_INFO);
-//   Ok(Json(Info {
-//     server: Server {
-//       id: config.node_info.id,
-//       mode: if config.is_primary() && cluster_info.lock().await.replicas.is_empty() {
-//         Mode::STANDALONE
-//       } else {
-//         Mode::CLUSTER
-//       },
-//       address: config.address.clone(),
-//       version: VERSION.to_string(),
-//     },
-//   }))
-// }
+// pub async fn deployment_logstream()
 
 #[derive(Deserialize, Debug)]
 pub struct DeploymentLogParams {
