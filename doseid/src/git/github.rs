@@ -1,4 +1,4 @@
-use crate::git::git_clone;
+use crate::git::{git_clone, git_push};
 use anyhow::{anyhow, Context};
 use chrono::{Duration, Utc};
 use git2::Repository;
@@ -47,30 +47,34 @@ impl GithubIntegration {
     access_token: Option<&str>,
     installation_id: Option<i64>,
   ) -> anyhow::Result<Repository> {
-    let github_token = match access_token {
-      Some(token) => Some(token.to_string()),
-      None => match installation_id {
-        Some(id) => Some(self.get_installation_token(id).await?),
-        None => None,
-      },
-    };
-
-    let mut repo_link = format!("https://github.com/{}", repo_full_name);
-    if let Some(token) = &github_token {
-      repo_link = repo_link.replace("https://", &format!("https://x-access-token:{}@", token));
-    }
-    git_clone(&repo_link, to_path, branch).await
+    git_clone(
+      &self
+        .repo_auth_url(repo_full_name, access_token, installation_id)
+        .await?,
+      to_path,
+      branch,
+    )
+    .await
   }
 
-  pub fn verify_signature(&self, payload_body: &[u8], signature: &[u8]) -> anyhow::Result<()> {
-    let mut mac = HmacSha256::new_from_slice(self.webhook_secret.as_bytes())?;
-    mac.update(payload_body);
-
-    let signature_str = std::str::from_utf8(signature)?;
-    let signature_bytes = hex::decode(&signature_str["sha256=".len()..])?;
-    mac
-      .verify_slice(&signature_bytes)
-      .map_err(|_| anyhow!("invalid secret"))
+  pub async fn git_push(
+    &self,
+    repo_full_name: String,
+    from_path: &Path,
+    access_token: Option<&str>,
+    installation_id: Option<i64>,
+    name: &str,
+    email: &str,
+  ) -> anyhow::Result<()> {
+    git_push(
+      &self
+        .repo_auth_url(repo_full_name, access_token, installation_id)
+        .await?,
+      from_path,
+      name,
+      email,
+    )
+    .await
   }
 
   pub async fn new_individual_repository(
@@ -169,6 +173,26 @@ impl GithubIntegration {
     Ok(())
   }
 
+  async fn repo_auth_url(
+    &self,
+    repo_full_name: String,
+    access_token: Option<&str>,
+    installation_id: Option<i64>,
+  ) -> anyhow::Result<String> {
+    let github_token = match access_token {
+      Some(token) => Some(token.to_string()),
+      None => match installation_id {
+        Some(id) => Some(self.get_installation_token(id).await?),
+        None => None,
+      },
+    };
+    let mut repo_link = format!("https://github.com/{}", repo_full_name);
+    if let Some(token) = &github_token {
+      repo_link = repo_link.replace("https://", &format!("https://x-access-token:{}@", token));
+    }
+    Ok(repo_link)
+  }
+
   async fn get_installation_token(&self, installation_id: i64) -> anyhow::Result<String> {
     let url = format!(
       "https://api.github.com/app/installations/{}/access_tokens",
@@ -205,6 +229,17 @@ impl GithubIntegration {
       &claims,
       &encoding_key,
     )?)
+  }
+
+  pub fn verify_signature(&self, payload_body: &[u8], signature: &[u8]) -> anyhow::Result<()> {
+    let mut mac = HmacSha256::new_from_slice(self.webhook_secret.as_bytes())?;
+    mac.update(payload_body);
+
+    let signature_str = std::str::from_utf8(signature)?;
+    let signature_bytes = hex::decode(&signature_str["sha256=".len()..])?;
+    mac
+      .verify_slice(&signature_bytes)
+      .map_err(|_| anyhow!("invalid secret"))
   }
 }
 

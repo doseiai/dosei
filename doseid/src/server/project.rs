@@ -7,6 +7,7 @@ use serde::Deserialize;
 use sqlx::{Pool, Postgres};
 use std::collections::HashMap;
 use std::env;
+use std::path::Path;
 use std::sync::Arc;
 use tempfile::tempdir;
 use tracing::{error, info};
@@ -39,7 +40,13 @@ pub async fn api_new_project(
 
   let temp_dir = tempdir().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
   let temp_path = temp_dir.path();
-  let template_path = format!("{}/{}", temp_path.display(), &body.path.unwrap());
+  let template_path = match body.path {
+    None => temp_path.to_path_buf(),
+    Some(path) => {
+      let path_str = format!("{}/{}", temp_path.display(), path);
+      Path::new(&path_str).to_path_buf()
+    }
+  };
 
   github_integration
     .github_clone(
@@ -57,7 +64,7 @@ pub async fn api_new_project(
 
   let project = Project {
     id: Uuid::new_v4(),
-    name: body.name,
+    name: body.name.clone(),
     owner_id: body.owner_id,
     git_source: GitSource::Github,
     git_source_metadata: github_repo_response,
@@ -86,12 +93,23 @@ pub async fn api_new_project(
     }
   }
 
-  // TODO: Assign domain
-
-  // TODO: Save secrets / envs
-
-  // TODO: Git push
+  github_integration
+    .git_push(
+      format!("Alw3ys/{}", body.name),
+      &template_path,
+      Some(access_token),
+      None,
+      "Alw3ys",
+      "am@dosei.ai",
+    )
+    .await
+    .map_err(|err| {
+      error!("Error in creating project: {:?}", err);
+      StatusCode::INTERNAL_SERVER_ERROR
+    })?;
   drop(temp_dir);
+  // TODO: Save secrets / envs
+  // TODO: Assign domain
   Ok(StatusCode::OK)
 }
 
