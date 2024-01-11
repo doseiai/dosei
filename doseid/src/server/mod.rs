@@ -1,5 +1,7 @@
 mod cluster;
 mod cron;
+mod deployment;
+mod domain;
 mod info;
 mod integration;
 mod logs;
