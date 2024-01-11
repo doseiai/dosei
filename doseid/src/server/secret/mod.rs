@@ -1,4 +1,6 @@
-use crate::schema::Secret;
+mod schema;
+
+use crate::server::secret::schema::Secret;
 use axum::extract::Path;
 use axum::http::StatusCode;
 use axum::{Extension, Json};
