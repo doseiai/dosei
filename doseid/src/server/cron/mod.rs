@@ -1,6 +1,8 @@
+mod schema;
+
 use crate::config::Config;
 use crate::docker;
-use crate::schema::{CronJob, Job};
+use crate::server::cron::schema::{CronJob, Job};
 use axum::http::StatusCode;
 use axum::{Extension, Json};
 use bollard::container::{
