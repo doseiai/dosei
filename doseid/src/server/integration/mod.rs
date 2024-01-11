@@ -4,7 +4,7 @@ pub(crate) mod github;
 
 // TODO: Design concept of Git Source Integration trait
 pub trait GitSource {
-  fn new() -> anyhow::Result<()>;
+  fn new() -> anyhow::Result<&'static Self>;
 
   fn git_pull(from_url: &str, to_path: &Path, branch: Option<&str>) -> anyhow::Result<Repository>;
 
