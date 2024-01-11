@@ -1,6 +1,8 @@
+mod schema;
+
 use crate::config::Config;
 use crate::git::github::CreateRepoError;
-use crate::schema::{GitSource, Project};
+use crate::server::project::schema::{GitSource, Project};
 use axum::http::StatusCode;
 use axum::{Extension, Json};
 use serde::Deserialize;
@@ -73,7 +75,7 @@ pub async fn api_new_project(
   };
   match sqlx::query_as!(
       Project,
-      r#"INSERT INTO projects (id, name, owner_id, git_source, git_source_metadata, updated_at, created_at)
+      r#"INSERT INTO project (id, name, owner_id, git_source, git_source_metadata, updated_at, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id, name, owner_id, git_source AS "git_source!: GitSource", git_source_metadata, updated_at, created_at"#,
       project.id,

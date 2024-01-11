@@ -1,5 +1,7 @@
 mod cluster;
 mod cron;
+mod deployment;
+mod domain;
 mod info;
 mod integration;
 mod logs;
@@ -41,8 +43,8 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
       "/envs/:owner_id/:project_id",
       routing::get(secret::api_get_envs),
     )
-    .route("/cron-jobs", routing::post(cron::api_create_job))
-    .route("/cron-jobs", routing::get(cron::api_get_cron_jobs))
+    .route("/cron-jobs", routing::post(cron::route::api_create_job))
+    .route("/cron-jobs", routing::get(cron::route::api_get_cron_jobs))
     .route(
       "/unstable/integration/github/events",
       routing::post(integration::github::api_integration_github_events),
