@@ -18,7 +18,7 @@ pub async fn api_get_envs(
 ) -> Result<Json<Vec<Secret>>, StatusCode> {
   match sqlx::query_as!(
     Secret,
-    "SELECT * FROM envs WHERE project_id = $1::uuid and owner_id = $2::uuid",
+    "SELECT * FROM env WHERE project_id = $1::uuid and owner_id = $2::uuid",
     params.get_project_id(),
     params.owner_id
   )
@@ -43,7 +43,7 @@ pub async fn api_set_envs(
   for (name, value) in body {
     let query = sqlx::query_as!(
       Secret,
-      "INSERT INTO envs (id, name, value, owner_id, project_id, updated_at, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7)
+      "INSERT INTO env (id, name, value, owner_id, project_id, updated_at, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (owner_id, project_id, name) DO UPDATE
        SET value = EXCLUDED.value, updated_at = EXCLUDED.updated_at
        RETURNING *",

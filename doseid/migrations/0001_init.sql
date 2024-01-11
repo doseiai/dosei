@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS cron_jobs (
+CREATE TABLE IF NOT EXISTS cron_job (
    id UUID NOT NULL,
    schedule TEXT NOT NULL,
    entrypoint TEXT NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS cron_jobs (
    PRIMARY KEY (id)
 );
 
-CREATE TABLE IF NOT EXISTS envs (
+CREATE TABLE IF NOT EXISTS env (
    id UUID NOT NULL,
    name TEXT NOT NULL,
    value TEXT NOT NULL,
@@ -31,7 +31,7 @@ DO $$
     END
 $$;
 
-CREATE TABLE IF NOT EXISTS projects (
+CREATE TABLE IF NOT EXISTS project (
     id UUID NOT NULL,
     name TEXT NOT NULL,
     owner_id UUID NOT NULL,
@@ -51,7 +51,7 @@ DO $$
     END
 $$;
 
-CREATE TABLE IF NOT EXISTS deployments (
+CREATE TABLE IF NOT EXISTS deployment (
     id UUID NOT NULL,
     commit_id TEXT NOT NULL,
     commit_metadata jsonb NOT NULL,
@@ -72,7 +72,7 @@ DO $$
     END
 $$;
 
-CREATE TABLE IF NOT EXISTS domains (
+CREATE TABLE IF NOT EXISTS domain (
    id UUID NOT NULL,
    name TEXT NOT NULL,
    service_type service_type NOT NULL,

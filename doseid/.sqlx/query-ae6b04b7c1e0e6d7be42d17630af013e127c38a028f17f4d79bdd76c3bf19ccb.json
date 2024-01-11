@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * from cron_jobs",
+  "query": "SELECT * FROM cron_job",
   "describe": {
     "columns": [
       {
@@ -58,5 +58,5 @@
       false
     ]
   },
-  "hash": "8caa8f3290b9b4eab55b367c9998d1a29049ddf059e9e10b595985495512c1c6"
+  "hash": "ae6b04b7c1e0e6d7be42d17630af013e127c38a028f17f4d79bdd76c3bf19ccb"
 }

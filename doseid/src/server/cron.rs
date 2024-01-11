@@ -61,7 +61,7 @@ pub async fn api_create_job(
   match sqlx::query_as!(
     CronJob,
     "
-    INSERT INTO cron_jobs (id, schedule, entrypoint, owner_id, project_id, deployment_id, updated_at, created_at)
+    INSERT INTO cron_job (id, schedule, entrypoint, owner_id, project_id, deployment_id, updated_at, created_at)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     RETURNING *
     ",
@@ -96,7 +96,7 @@ pub async fn api_get_cron_jobs(
 }
 
 async fn get_cron_jobs(pool: Arc<Pool<Postgres>>) -> Result<Json<Vec<CronJob>>, sqlx::Error> {
-  match sqlx::query_as!(CronJob, "SELECT * from cron_jobs")
+  match sqlx::query_as!(CronJob, "SELECT * FROM cron_job")
     .fetch_all(&*pool)
     .await
   {

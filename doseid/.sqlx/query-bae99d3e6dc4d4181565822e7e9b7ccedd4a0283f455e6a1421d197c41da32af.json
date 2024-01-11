@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n    INSERT INTO cron_jobs (id, schedule, entrypoint, owner_id, project_id, deployment_id, updated_at, created_at)\n    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)\n    RETURNING *\n    ",
+  "query": "INSERT INTO env (id, name, value, owner_id, project_id, updated_at, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7)\n       ON CONFLICT (owner_id, project_id, name) DO UPDATE\n       SET value = EXCLUDED.value, updated_at = EXCLUDED.updated_at\n       RETURNING *",
   "describe": {
     "columns": [
       {
@@ -10,36 +10,31 @@
       },
       {
         "ordinal": 1,
-        "name": "schedule",
+        "name": "name",
         "type_info": "Text"
       },
       {
         "ordinal": 2,
-        "name": "entrypoint",
+        "name": "value",
         "type_info": "Text"
       },
       {
         "ordinal": 3,
-        "name": "owner_id",
-        "type_info": "Uuid"
-      },
-      {
-        "ordinal": 4,
         "name": "project_id",
         "type_info": "Uuid"
       },
       {
-        "ordinal": 5,
-        "name": "deployment_id",
-        "type_info": "Text"
+        "ordinal": 4,
+        "name": "owner_id",
+        "type_info": "Uuid"
       },
       {
-        "ordinal": 6,
+        "ordinal": 5,
         "name": "updated_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 7,
+        "ordinal": 6,
         "name": "created_at",
         "type_info": "Timestamptz"
       }
@@ -51,7 +46,6 @@
         "Text",
         "Uuid",
         "Uuid",
-        "Text",
         "Timestamptz",
         "Timestamptz"
       ]
@@ -63,9 +57,8 @@
       false,
       false,
       false,
-      false,
       false
     ]
   },
-  "hash": "c06cf6783379e7c0acb8698fad07645607ac3b53382a3f69a1997bdd63838b10"
+  "hash": "bae99d3e6dc4d4181565822e7e9b7ccedd4a0283f455e6a1421d197c41da32af"
 }
