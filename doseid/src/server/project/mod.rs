@@ -1,6 +1,8 @@
+mod schema;
+
 use crate::config::Config;
 use crate::git::github::CreateRepoError;
-use crate::schema::{GitSource, Project};
+use crate::server::project::schema::{GitSource, Project};
 use axum::http::StatusCode;
 use axum::{Extension, Json};
 use serde::Deserialize;
