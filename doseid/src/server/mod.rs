@@ -3,7 +3,7 @@ mod cron;
 mod deployment;
 mod domain;
 mod info;
-mod integration;
+pub(crate) mod integration;
 mod logs;
 mod ping;
 mod project;
@@ -47,7 +47,7 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
     .route("/cron-jobs", routing::get(cron::route::api_get_cron_jobs))
     .route(
       "/unstable/integration/github/events",
-      routing::post(integration::github::api_integration_github_events),
+      routing::post(integration::github::route::api_integration_github_events),
     )
     .route(
       "/projects/:owner_id/clone",

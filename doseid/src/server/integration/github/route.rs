@@ -1,6 +1,6 @@
 use crate::config::Config;
 use crate::deployment::build_from_github;
-use crate::git::github::GithubIntegration;
+use crate::server::integration::github::GithubIntegration;
 use axum::http::StatusCode;
 use axum::Extension;
 use serde::Deserialize;
