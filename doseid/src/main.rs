@@ -1,7 +1,6 @@
 mod config;
 mod deployment;
 mod docker;
-mod git;
 mod server;
 
 #[cfg(test)]

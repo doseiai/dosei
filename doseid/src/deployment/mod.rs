@@ -2,12 +2,12 @@ mod app;
 
 use crate::deployment::app::import_dosei_app;
 use crate::docker::build_image;
-use crate::git::github::GithubIntegration;
 use home::home_dir;
 use std::path::{Path, PathBuf};
 use tempfile::tempdir;
 use tracing::{error, info};
 
+use crate::server::integration::github::GithubIntegration;
 use tracing_appender::rolling::RollingFileAppender;
 use uuid::Uuid;
 
@@ -70,9 +70,8 @@ async fn build(owner_id: Uuid, project_id: Uuid, deployment_id: String, folder_p
 
 mod tests {
   use crate::deployment::build;
-  use crate::git::git_clone;
+  use crate::server::integration::git_clone;
   use git2::Repository;
-  use once_cell::sync::Lazy;
   use tempfile::tempdir;
   use uuid::Uuid;
 

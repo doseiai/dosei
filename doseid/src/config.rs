@@ -1,4 +1,4 @@
-use crate::git::github::GithubIntegration;
+use crate::server::integration::github::GithubIntegration;
 use anyhow::Context;
 use clap::Parser;
 use dosei_proto::ping::NodeType;
