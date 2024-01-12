@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM envs WHERE project_id = $1::uuid and owner_id = $2::uuid",
+  "query": "SELECT * FROM env WHERE project_id = $1::uuid and owner_id = $2::uuid",
   "describe": {
     "columns": [
       {
@@ -55,5 +55,5 @@
       false
     ]
   },
-  "hash": "661ced84b1ae0617676a4cc071fe843fe03ac18fe9a02409988a77c5d3b26b11"
+  "hash": "dd667561aed6771e18e0ec47305a0c1c1e923ebba7896595c04961f0e49c3ac2"
 }

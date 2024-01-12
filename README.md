@@ -4,7 +4,7 @@
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/doseiai/dosei.svg)](https://hub.docker.com/r/doseiai/dosei)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-white)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Twitter](https://img.shields.io/twitter/url/https/x.com/dosei.svg?style=social&label=Follow%20%40dosei)](https://x.com/dosei)
+[![Twitter](https://img.shields.io/twitter/url/https/x.com/dosei_ai.svg?style=social&label=Follow%20%40dosei_ai)](https://x.com/dosei_ai)
 [![](https://dcbadge.vercel.app/api/server/BP5aUkhcAh?compact=true&style=flat)](https://discord.com/invite/BP5aUkhcAh)
 
 ### Dosei Engine
@@ -13,17 +13,34 @@ The Dosei Engine is the system running under the Dosei Dashboard, enabling manag
 
 ## Getting started
 
-### Dosei Cloud (Recommended)
-
-The fastest and most reliable way to get started is with our Foundational plan on [Dosei Cloud](https://dosei.ai/), which includes free resource allowances and everything you need to test new ideas. We also offer plans for growing businesses and enterprises.
-
-
 ### Self-hosting
 
-For hobby projects and prototyping with minimal setup, we have published a pre-built image that you can download from [Docker Hub](https://hub.docker.com/r/doseiai/dosei).
-The Dosei engine depends on [PostgreSQL](https://github.com/postgres/postgres) and [Redis](https://github.com/redis/redis)
+Dosei is an open-source project under the [Apache-2.0 license](LICENSE). You can self-host Dosei with minimal setup using `docker-compose`.
 
-For more advanced setups on distributed systems or other requirements not listed, join our [Discord Server](https://discord.com/invite/BP5aUkhcAh). We are more than happy to help!
+#### Installation
+
+To install the Dosei engine, run the following commands:
+
+```bash
+./install.sh
+```
+
+#### Running Dosei
+
+Start Dosei using the following command:
+
+```bash
+docker compose -f docker-compose.hobby.yaml up
+```
+
+#### Need Help?
+
+For advanced setups, distributed systems, or other inquiries, please join our [Discord Server](https://discord.com/invite/BP5aUkhcAh). We are more than happy to help!
+
+### Dosei Cloud (Recommended)
+
+For a hassle-free experience, consider [Dosei Cloud](https://dosei.ai/). Our Foundational plan includes free resource allowances, perfect for testing new ideas. We also offer scalable plans suitable for growing businesses and enterprises.
+
 
 ## Contributors ✨
 

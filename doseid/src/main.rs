@@ -1,9 +1,11 @@
 mod config;
 mod deployment;
 mod docker;
-pub mod git;
-mod schema;
+mod git;
 mod server;
+
+#[cfg(test)]
+mod test;
 
 use config::Config;
 

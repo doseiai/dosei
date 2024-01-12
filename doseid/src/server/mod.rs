@@ -1,30 +1,35 @@
 mod cluster;
 mod cron;
+mod deployment;
+mod domain;
 mod info;
+mod integration;
+mod logs;
 mod ping;
+mod project;
 mod secret;
 
 use anyhow::Context;
 use sqlx::postgres::Postgres;
 use sqlx::Pool;
-use std::future::Future;
 use std::sync::Arc;
 
 use crate::config::Config;
 use axum::{routing, Extension, Router};
 use bollard::Docker;
-use futures_util::TryFutureExt;
 use tokio::net::TcpListener;
 use tracing::{error, info};
 
 pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
   check_docker_daemon_status().await;
+
   let pool = Pool::<Postgres>::connect(&config.database_url)
     .await
     .context("Failed to connect to Postgres")?;
-
+  sqlx::migrate!().run(&pool).await?;
   let shared_pool = Arc::new(pool);
   info!("Successfully connected to Postgres");
+
   cluster::start_cluster(config)?;
   cron::start_job_manager(config, Arc::clone(&shared_pool));
   let app = Router::new()
@@ -38,10 +43,26 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
       "/envs/:owner_id/:project_id",
       routing::get(secret::api_get_envs),
     )
-    .route("/cron-jobs", routing::post(cron::api_create_job))
-    .route("/cron-jobs", routing::get(cron::api_get_cron_jobs))
+    .route("/cron-jobs", routing::post(cron::route::api_create_job))
+    .route("/cron-jobs", routing::get(cron::route::api_get_cron_jobs))
+    .route(
+      "/unstable/integration/github/events",
+      routing::post(integration::github::api_integration_github_events),
+    )
+    .route(
+      "/projects/:owner_id/clone",
+      routing::post(project::api_new_project),
+    )
     .route("/info", routing::get(info::api_info))
     .route("/ping", routing::get(ping::api_ping))
+    .route(
+      "/deployments/:deployment_id/logs",
+      routing::get(logs::deployment_logs),
+    )
+    // .route(
+    //   "/deployments/:deployment_id/logs/stream",
+    //   routing::get(logs::deployment_logstream),
+    // )
     .layer(Extension(Arc::clone(&shared_pool)))
     .layer(Extension(config));
   let address = config.address.to_string();

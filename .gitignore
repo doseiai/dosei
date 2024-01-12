@@ -1,6 +1,7 @@
 data/
 target/
-.env.production
 .env
+.env*
 *doseid.toml
 .vscode/
+*.DS_Store

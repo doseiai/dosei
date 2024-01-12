@@ -6,14 +6,12 @@ use flate2::Compression;
 use futures_util::StreamExt;
 use gcp_auth::AuthenticationManager;
 use std::default::Default;
-use std::error::Error;
 use std::fs::File;
-use std::hash::Hasher;
-use std::io::prelude::*;
 use std::path::Path;
 use tar::Builder;
 use tokio::fs::remove_file;
 use tokio::task;
+use tracing::{error, info};
 
 pub async fn gcr_credentials() -> DockerCredentials {
   let authentication_manager = AuthenticationManager::new().await.unwrap();
@@ -43,10 +41,10 @@ pub async fn build_image(name: &str, tag: &str, folder_path: &Path) {
   while let Some(build_result) = stream.next().await {
     match build_result {
       Ok(build_info) => {
-        println!("Build info: {:?}", build_info);
+        info!("{:?}", build_info);
       }
       Err(e) => {
-        eprintln!("Build error: {:?}", e);
+        error!("{:?}", e);
         break;
       }
     }
@@ -63,9 +61,9 @@ pub async fn push_image(name: &str, tag: &str) {
   );
   while let Some(push_result) = stream.next().await {
     match push_result {
-      Ok(output) => println!("{:?}", output),
+      Ok(output) => info!("{:?}", output),
       Err(e) => {
-        eprintln!("Push error: {:?}", e);
+        error!("Push error: {:?}", e);
         break;
       }
     }

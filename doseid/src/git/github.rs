@@ -1,14 +1,18 @@
-use crate::git::git_clone;
-use anyhow::Context;
+use crate::git::{git_clone, git_push};
+use anyhow::{anyhow, Context};
 use chrono::{Duration, Utc};
 use git2::Repository;
+use hmac::{Hmac, Mac};
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
-use reqwest::{header, Client};
+use reqwest::{header, Client, Error, Response, StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use sha2::Sha256;
 use std::env;
 use std::path::Path;
 use tracing::warn;
+
+type HmacSha256 = Hmac<Sha256>;
 
 pub struct GithubIntegration {
   pub app_name: String,
@@ -16,6 +20,7 @@ pub struct GithubIntegration {
   pub client_id: String,
   pub client_secret: String,
   pub private_key: String,
+  pub webhook_secret: String,
 }
 
 impl GithubIntegration {
@@ -27,6 +32,8 @@ impl GithubIntegration {
       client_secret: env::var("GITHUB_CLIENT_SECRET")
         .context("GITHUB_CLIENT_SECRET is required.")?,
       private_key: env::var("GITHUB_PRIVATE_KEY").context("GITHUB_PRIVATE_KEY is required.")?,
+      webhook_secret: env::var("GITHUB_WEBHOOK_SECRET")
+        .context("GITHUB_WEBHOOK_SECRET is required.")?,
     };
     warn!("[Integrations] Enabling github.unstable");
     Ok(github_integration)
@@ -34,34 +41,103 @@ impl GithubIntegration {
 
   pub async fn github_clone(
     &self,
-    from_url: &str,
+    repo_full_name: String,
     to_path: &Path,
     branch: Option<&str>,
     access_token: Option<&str>,
-    installation_id: Option<&str>,
+    installation_id: Option<i64>,
   ) -> anyhow::Result<Repository> {
-    let github_token = match access_token {
-      Some(token) => Some(token.to_string()),
-      None => match installation_id {
-        Some(id) => Some(self.get_installation_token(id).await?),
-        None => None,
-      },
-    };
+    git_clone(
+      &self
+        .repo_auth_url(repo_full_name, access_token, installation_id)
+        .await?,
+      to_path,
+      branch,
+    )
+    .await
+  }
 
-    let mut repo_link = from_url.to_string();
-    if let Some(token) = &github_token {
-      repo_link = repo_link.replace("https://", &format!("https://x-access-token:{}@", token));
+  pub async fn git_push(
+    &self,
+    repo_full_name: String,
+    from_path: &Path,
+    access_token: Option<&str>,
+    installation_id: Option<i64>,
+    name: &str,
+    email: &str,
+  ) -> anyhow::Result<()> {
+    git_push(
+      &self
+        .repo_auth_url(repo_full_name, access_token, installation_id)
+        .await?,
+      from_path,
+      name,
+      email,
+    )
+    .await
+  }
+
+  pub async fn new_individual_repository(
+    &self,
+    name: &str,
+    private: Option<bool>,
+    access_token: &str,
+  ) -> Result<Value, CreateRepoError> {
+    let response = Client::new()
+      .post("https://api.github.com/user/repos")
+      .bearer_auth(access_token)
+      .json(&json!({"name": name, "private": private.unwrap_or(true) }))
+      .header("Accept", "application/vnd.github.v3+json")
+      .header("User-Agent", "Dosei")
+      .send()
+      .await?;
+
+    let status_code = response.status();
+    if status_code.is_success() {
+      let body = response.json::<Value>().await?;
+      return Ok(body);
     }
-    git_clone(&repo_link, to_path, branch).await
+
+    let error_result = response.error_for_status_ref().err().unwrap(); // safe to unwrap after checking success
+    if status_code == StatusCode::UNPROCESSABLE_ENTITY {
+      let body = response.json::<Value>().await;
+      if let Err(e) = body {
+        return Err(CreateRepoError::RequestError(e));
+      }
+      let json_result = body.unwrap();
+      if let Some(errors) = json_result["errors"].as_array() {
+        for error in errors {
+          if error["message"] == "name already exists on this account" {
+            return Err(CreateRepoError::RepoExists);
+          }
+        }
+      }
+    }
+    Err(CreateRepoError::RequestError(error_result))
+  }
+
+  async fn delete_repository(
+    &self,
+    repo_full_name: &str,
+    access_token: &str,
+  ) -> Result<Response, Error> {
+    Client::new()
+      .delete(format!("https://api.github.com/repos/{}", repo_full_name))
+      .bearer_auth(access_token)
+      .header("Accept", "application/vnd.github.v3+json")
+      .header("User-Agent", "Dosei")
+      .send()
+      .await?
+      .error_for_status()
   }
 
   async fn update_deployment_status(
     &self,
     status: GithubDeploymentStatus,
     repo_full_name: &str,
-    installation_id: &str,
+    installation_id: i64,
     commit_id: &str,
-  ) -> Result<(), reqwest::Error> {
+  ) -> Result<(), Error> {
     let github_token = self.get_installation_token(installation_id).await;
     let github_api_repo_url = format!("https://api.github.com/repos/{}", repo_full_name);
     let client = Client::new();
@@ -97,7 +173,27 @@ impl GithubIntegration {
     Ok(())
   }
 
-  async fn get_installation_token(&self, installation_id: &str) -> anyhow::Result<String> {
+  async fn repo_auth_url(
+    &self,
+    repo_full_name: String,
+    access_token: Option<&str>,
+    installation_id: Option<i64>,
+  ) -> anyhow::Result<String> {
+    let github_token = match access_token {
+      Some(token) => Some(token.to_string()),
+      None => match installation_id {
+        Some(id) => Some(self.get_installation_token(id).await?),
+        None => None,
+      },
+    };
+    let mut repo_link = format!("https://github.com/{}", repo_full_name);
+    if let Some(token) = &github_token {
+      repo_link = repo_link.replace("https://", &format!("https://x-access-token:{}@", token));
+    }
+    Ok(repo_link)
+  }
+
+  async fn get_installation_token(&self, installation_id: i64) -> anyhow::Result<String> {
     let url = format!(
       "https://api.github.com/app/installations/{}/access_tokens",
       installation_id
@@ -108,6 +204,7 @@ impl GithubIntegration {
       .post(&url)
       .bearer_auth(jwt)
       .header("Accept", "application/vnd.github.v3+json")
+      .header("User-Agent", "Dosei")
       .send()
       .await?;
 
@@ -133,6 +230,28 @@ impl GithubIntegration {
       &encoding_key,
     )?)
   }
+
+  pub fn verify_signature(&self, payload_body: &[u8], signature: &[u8]) -> anyhow::Result<()> {
+    let mut mac = HmacSha256::new_from_slice(self.webhook_secret.as_bytes())?;
+    mac.update(payload_body);
+
+    let signature_str = std::str::from_utf8(signature)?;
+    let signature_bytes = hex::decode(&signature_str["sha256=".len()..])?;
+    mac
+      .verify_slice(&signature_bytes)
+      .map_err(|_| anyhow!("invalid secret"))
+  }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum CreateRepoError {
+  #[error("Request failed")]
+  RequestError(#[from] Error),
+
+  #[error(
+    "The specified name is already used for a different Git repository. Please enter a new one."
+  )]
+  RepoExists,
 }
 
 #[derive(PartialEq)]
@@ -165,13 +284,8 @@ impl GithubDeploymentStatus {
 // TODO: Support passing settings to run github tests
 #[cfg(test)]
 mod tests {
-  use crate::config::Config;
-  use crate::git::git_clone;
-  use git2::Repository;
-  use once_cell::sync::Lazy;
-  use tempfile::tempdir;
-
-  static CONFIG: Lazy<Config> = Lazy::new(|| Config::new().unwrap());
+  use crate::test::CONFIG;
+  use std::env;
 
   #[test]
   fn test_create_github_app_jwt() {
@@ -185,28 +299,18 @@ mod tests {
     }
   }
 
-  async fn test_clone() {
-    let temp_dir = tempdir().expect("Failed to create a temp dir");
-    let repo_path = temp_dir.path();
-
-    let repo: anyhow::Result<Repository> =
-      git_clone("https://github.com/Alw3ys/dosei-bot.git", repo_path, None).await;
-    drop(temp_dir);
-    assert!(repo.is_ok())
-  }
-
   #[tokio::test]
-  async fn test_clone_repos() {
-    use futures::future::join_all;
-
-    let tests: Vec<_> = (0..10)
-      .map(|_| {
-        tokio::spawn(async {
-          test_clone().await;
-        })
-      })
-      .collect();
-
-    join_all(tests).await;
+  async fn test_create_repo() {
+    let result = CONFIG
+      .github_integration
+      .as_ref()
+      .unwrap()
+      .new_individual_repository(
+        "rust-tests-create",
+        None,
+        &env::var("GITHUB_TEST_ACCESS_TOKEN").unwrap(),
+      )
+      .await;
+    assert!(result.is_ok(), "Failed to create repository: {:?}", result);
   }
 }
