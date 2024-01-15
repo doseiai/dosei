@@ -22,7 +22,7 @@ Dosei is an open-source project under the [Apache-2.0 license](LICENSE). You can
 To install the Dosei engine, run the following commands:
 
 ```bash
-./install.sh
+make install
 ```
 
 #### Running Dosei
