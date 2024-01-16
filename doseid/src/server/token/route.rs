@@ -1,7 +1,9 @@
 use crate::server::token::schema::Token;
 use axum::http::StatusCode;
 use axum::{Extension, Json};
+use serde::Deserialize;
 use sqlx::{Pool, Postgres};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::error;
 use uuid::Uuid;
@@ -23,4 +25,19 @@ pub async fn api_get_tokens(
       Err(StatusCode::INTERNAL_SERVER_ERROR)
     }
   }
+}
+
+pub async fn api_set_token(
+  pool: Extension<Arc<Pool<Postgres>>>,
+  Json(body): Json<TokenBody>,
+) -> Result<Json<Token>, StatusCode> {
+  let token = Token::new(body.name, body.days_until_expiration, Uuid::new_v4())
+    .map_err(|_| StatusCode::BAD_REQUEST)?;
+  Ok(Json(token))
+}
+
+#[derive(Deserialize)]
+pub struct TokenBody {
+  name: String,
+  days_until_expiration: i32,
 }

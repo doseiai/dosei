@@ -17,7 +17,11 @@ pub struct Token {
 }
 
 impl Token {
-  pub fn new(name: String, days_until_expiration: i32) -> Result<Token, Box<dyn Error>> {
+  pub fn new(
+    name: String,
+    days_until_expiration: i32,
+    owner_id: Uuid,
+  ) -> Result<Token, Box<dyn Error>> {
     if days_until_expiration < -1 || days_until_expiration == 0 {
       return Err(Box::new(std::io::Error::new(
         std::io::ErrorKind::InvalidInput,
@@ -33,7 +37,7 @@ impl Token {
         .take(24)
         .map(char::from)
         .collect(),
-      owner_id: Default::default(),
+      owner_id,
       expires_in: if days_until_expiration == -1 {
         DateTime::<Utc>::MAX_UTC
       } else {
@@ -48,17 +52,18 @@ impl Token {
 #[cfg(test)]
 mod tests {
   use crate::server::token::schema::Token;
+  use uuid::Uuid;
 
   #[test]
   fn test_tokens() {
     for n in [-1, 1, 7, 30, 60, 180, 365] {
-      let token = Token::new("example".to_string(), n);
+      let token = Token::new("example".to_string(), n, Uuid::default());
       assert!(token.is_ok());
     }
-    let result = Token::new("wrong_example".to_string(), 0);
+    let result = Token::new("wrong_example".to_string(), 0, Uuid::default());
     assert!(result.is_err());
 
-    let result = Token::new("wrong_example".to_string(), -2);
+    let result = Token::new("wrong_example".to_string(), -2, Uuid::default());
     assert!(result.is_err())
   }
 }

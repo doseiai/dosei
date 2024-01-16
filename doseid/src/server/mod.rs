@@ -35,7 +35,8 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
   cluster::start_cluster(config)?;
   cron::start_job_manager(config, Arc::clone(&shared_pool));
   let app = Router::new()
-    .route("/tokens", routing::post(token::route::api_get_tokens))
+    .route("/tokens", routing::get(token::route::api_get_tokens))
+    .route("/tokens", routing::post(token::route::api_set_token))
     .route("/envs/:owner_id", routing::post(secret::api_set_envs))
     .route(
       "/envs/:owner_id/:project_id",
