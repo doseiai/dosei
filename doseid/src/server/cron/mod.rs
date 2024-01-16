@@ -15,7 +15,6 @@ use bollard::Docker;
 use chrono::Utc;
 use cron::Schedule;
 use futures_util::stream::StreamExt;
-use serde::Deserialize;
 use sqlx::{Pool, Postgres};
 use std::collections::HashMap;
 use std::str::FromStr;

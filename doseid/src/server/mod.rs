@@ -8,6 +8,8 @@ mod logs;
 mod ping;
 mod project;
 mod secret;
+mod token;
+mod user;
 
 use anyhow::Context;
 use sqlx::postgres::Postgres;
