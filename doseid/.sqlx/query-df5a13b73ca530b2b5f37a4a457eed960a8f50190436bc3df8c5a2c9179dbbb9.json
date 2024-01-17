@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM token WHERE id = $1::uuid and owner_id = $2::uuid",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "df5a13b73ca530b2b5f37a4a457eed960a8f50190436bc3df8c5a2c9179dbbb9"
+}
