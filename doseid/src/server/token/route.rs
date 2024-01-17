@@ -40,7 +40,31 @@ pub async fn api_set_token(
     )
       .into_response()
   })?;
-  Ok(Json(token))
+
+  match sqlx::query_as!(
+    Token,
+    "
+    INSERT INTO token (id, name, value, owner_id, expires_in, updated_at, created_at)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    RETURNING *
+    ",
+    token.id,
+    token.name,
+    token.value,
+    token.owner_id,
+    token.expires_in,
+    token.updated_at,
+    token.created_at
+  )
+  .fetch_one(&**pool)
+  .await
+  {
+    Ok(recs) => Ok(Json(recs)),
+    Err(err) => {
+      error!("Error in creating job: {:?}", err);
+      Err(StatusCode::INTERNAL_SERVER_ERROR.into_response())
+    }
+  }
 }
 
 #[derive(Deserialize)]
