@@ -1,8 +1,10 @@
 use crate::server::token::schema::Token;
 use axum::extract::Path;
 use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
 use axum::{Extension, Json};
 use serde::Deserialize;
+use serde_json::json;
 use sqlx::{Pool, Postgres};
 use std::sync::Arc;
 use tracing::error;
@@ -30,9 +32,14 @@ pub async fn api_get_tokens(
 pub async fn api_set_token(
   pool: Extension<Arc<Pool<Postgres>>>,
   Json(body): Json<TokenBody>,
-) -> Result<Json<Token>, StatusCode> {
-  let token = Token::new(body.name, body.days_until_expiration, Uuid::new_v4())
-    .map_err(|_| StatusCode::BAD_REQUEST)?;
+) -> Result<Json<Token>, Response> {
+  let token = Token::new(body.name, body.days_until_expiration, Uuid::new_v4()).map_err(|e| {
+    (
+      StatusCode::BAD_REQUEST,
+      Json(json!({"message": e.to_string()})),
+    )
+      .into_response()
+  })?;
   Ok(Json(token))
 }
 
