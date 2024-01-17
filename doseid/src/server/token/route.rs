@@ -1,9 +1,9 @@
 use crate::server::token::schema::Token;
+use axum::extract::Path;
 use axum::http::StatusCode;
 use axum::{Extension, Json};
 use serde::Deserialize;
 use sqlx::{Pool, Postgres};
-use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::error;
 use uuid::Uuid;
@@ -40,4 +40,30 @@ pub async fn api_set_token(
 pub struct TokenBody {
   name: String,
   days_until_expiration: i32,
+}
+
+pub async fn api_delete_token(
+  pool: Extension<Arc<Pool<Postgres>>>,
+  Path(token_id): Path<Uuid>,
+) -> Result<StatusCode, StatusCode> {
+  match sqlx::query!(
+    "DELETE FROM token WHERE id = $1::uuid and owner_id = $2::uuid",
+    token_id,
+    Uuid::new_v4()
+  )
+  .execute(&**pool)
+  .await
+  {
+    Ok(res) => {
+      if res.rows_affected() == 0 {
+        Err(StatusCode::NOT_FOUND)
+      } else {
+        Ok(StatusCode::OK)
+      }
+    }
+    Err(err) => {
+      error!("Error in deleting token: {:?}", err);
+      Err(StatusCode::INTERNAL_SERVER_ERROR)
+    }
+  }
 }
