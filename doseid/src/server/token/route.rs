@@ -49,7 +49,7 @@ pub async fn api_delete_token(
   match sqlx::query!(
     "DELETE FROM token WHERE id = $1::uuid and owner_id = $2::uuid",
     token_id,
-    Uuid::new_v4()
+    token_id
   )
   .execute(&**pool)
   .await
