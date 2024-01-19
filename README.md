@@ -2,10 +2,10 @@
 
 [Dosei](https://dosei.ai) is the developer-first and AI-native platform.
 
-[![Docker Pulls](https://img.shields.io/docker/pulls/doseiai/dosei.svg)](https://hub.docker.com/r/doseiai/dosei)
+[![Docker Pulls](https://img.shields.io/docker/pulls/doseiai/dosei?logo=docker)](https://hub.docker.com/r/doseiai/dosei)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-white)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Twitter](https://img.shields.io/twitter/url/https/x.com/dosei_ai.svg?style=social&label=Follow%20%40dosei_ai)](https://x.com/dosei_ai)
-[![](https://dcbadge.vercel.app/api/server/BP5aUkhcAh?compact=true&style=flat)](https://discord.com/invite/BP5aUkhcAh)
+[![Twitter](https://img.shields.io/twitter/follow/dosei_ai?style=flat&logo=x)](https://x.com/dosei_ai)
+[![](https://img.shields.io/discord/1144175748559683615?logo=discord&logoColor=7289DA&label=Discord)](https://discord.com/invite/BP5aUkhcAh)
 
 ### Dosei Engine
 The Dosei Engine is the system running under the Dosei Dashboard, enabling management and scheduling of application workloads across multiple hosts.
