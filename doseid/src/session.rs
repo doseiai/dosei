@@ -38,7 +38,6 @@ pub async fn validate_session(
     return Ok(token_message.claims);
   } else {
     // TODO: Look for access token on db
-    println!("look for token: {}", token);
   }
   Err(StatusCode::FORBIDDEN)
 }
