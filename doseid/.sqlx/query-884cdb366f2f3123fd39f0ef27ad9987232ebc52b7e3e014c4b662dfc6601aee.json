@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n    INSERT INTO token (id, name, value, owner_id, expires_in, updated_at, created_at)\n    VALUES ($1, $2, $3, $4, $5, $6, $7)\n    RETURNING *\n    ",
+  "query": "\n    INSERT INTO token (id, name, value, owner_id, expires_at, updated_at, created_at)\n    VALUES ($1, $2, $3, $4, $5, $6, $7)\n    RETURNING *\n    ",
   "describe": {
     "columns": [
       {
@@ -25,7 +25,7 @@
       },
       {
         "ordinal": 4,
-        "name": "expires_in",
+        "name": "expires_at",
         "type_info": "Timestamptz"
       },
       {
@@ -60,5 +60,5 @@
       false
     ]
   },
-  "hash": "3b16a6c9d5217682e7f58e5fd803eb9a8a3b14e1b0c09030f4877cde4e0520ec"
+  "hash": "884cdb366f2f3123fd39f0ef27ad9987232ebc52b7e3e014c4b662dfc6601aee"
 }

@@ -54,7 +54,7 @@ pub async fn api_set_token(
   match sqlx::query_as!(
     Token,
     "
-    INSERT INTO token (id, name, value, owner_id, expires_in, updated_at, created_at)
+    INSERT INTO token (id, name, value, owner_id, expires_at, updated_at, created_at)
     VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING *
     ",
@@ -62,7 +62,7 @@ pub async fn api_set_token(
     token.name,
     token.value,
     token.owner_id,
-    token.expires_in,
+    token.expires_at,
     token.updated_at,
     token.created_at
   )

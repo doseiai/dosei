@@ -11,7 +11,7 @@ pub struct Token {
   pub name: String,
   pub value: String,
   pub owner_id: Uuid,
-  pub expires_in: DateTime<Utc>,
+  pub expires_at: DateTime<Utc>,
   pub updated_at: DateTime<Utc>,
   pub created_at: DateTime<Utc>,
 }
@@ -38,7 +38,7 @@ impl Token {
         .map(char::from)
         .collect(),
       owner_id,
-      expires_in: if days_until_expiration == -1 {
+      expires_at: if days_until_expiration == -1 {
         DateTime::<Utc>::MAX_UTC
       } else {
         now + Duration::days(i64::from(days_until_expiration))

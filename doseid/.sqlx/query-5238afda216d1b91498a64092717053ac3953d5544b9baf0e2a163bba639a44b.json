@@ -25,7 +25,7 @@
       },
       {
         "ordinal": 4,
-        "name": "expires_in",
+        "name": "expires_at",
         "type_info": "Timestamptz"
       },
       {
