@@ -1,13 +1,13 @@
+mod schema;
+
 use crate::config::Config;
+use crate::server::session::schema::Session;
 use crate::server::token::schema::Token;
-use axum::http::header;
-use axum::http::StatusCode;
+use axum::http::{header, StatusCode};
 use jsonwebtoken::{Algorithm, DecodingKey, Validation};
-use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
 use std::collections::HashSet;
 use std::sync::Arc;
-use uuid::Uuid;
 
 const BEARER: &str = "Bearer ";
 
@@ -49,9 +49,4 @@ pub async fn validate_session(
   Ok(Session {
     owner_id: token.owner_id,
   })
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Session {
-  pub owner_id: Uuid,
 }

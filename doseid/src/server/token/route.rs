@@ -1,6 +1,6 @@
 use crate::config::Config;
+use crate::server::session::validate_session;
 use crate::server::token::schema::Token;
-use crate::session::validate_session;
 use axum::extract::Path;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
