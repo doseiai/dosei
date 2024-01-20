@@ -1,4 +1,6 @@
+use crate::config::Config;
 use crate::server::token::schema::Token;
+use crate::session::validate_session;
 use axum::extract::Path;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
@@ -12,7 +14,10 @@ use uuid::Uuid;
 
 pub async fn api_get_tokens(
   pool: Extension<Arc<Pool<Postgres>>>,
+  config: Extension<&'static Config>,
+  headers: axum::http::HeaderMap,
 ) -> Result<Json<Vec<Token>>, StatusCode> {
+  let _ = validate_session(&config, headers).await?;
   match sqlx::query_as!(
     Token,
     "SELECT * FROM token WHERE owner_id = $1::uuid",
@@ -31,8 +36,13 @@ pub async fn api_get_tokens(
 
 pub async fn api_set_token(
   pool: Extension<Arc<Pool<Postgres>>>,
+  config: Extension<&'static Config>,
+  headers: axum::http::HeaderMap,
   Json(body): Json<TokenBody>,
 ) -> Result<Json<Token>, Response> {
+  let _ = validate_session(&config, headers)
+    .await
+    .map_err(|e| e.into_response())?;
   let token = Token::new(body.name, body.days_until_expiration, Uuid::new_v4()).map_err(|e| {
     (
       StatusCode::BAD_REQUEST,
@@ -75,8 +85,11 @@ pub struct TokenBody {
 
 pub async fn api_delete_token(
   pool: Extension<Arc<Pool<Postgres>>>,
+  config: Extension<&'static Config>,
+  headers: axum::http::HeaderMap,
   Path(token_id): Path<Uuid>,
 ) -> Result<StatusCode, StatusCode> {
+  let _ = validate_session(&config, headers).await?;
   match sqlx::query!(
     "DELETE FROM token WHERE id = $1::uuid and owner_id = $2::uuid",
     token_id,

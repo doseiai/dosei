@@ -1,6 +1,9 @@
 build:
 	cargo build --release
 
+dev:
+	cargo run --bin doseid
+
 install:
 	./install.sh
 
