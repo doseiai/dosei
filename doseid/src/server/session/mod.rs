@@ -1,3 +1,4 @@
+pub(crate) mod route;
 mod schema;
 
 use crate::config::Config;

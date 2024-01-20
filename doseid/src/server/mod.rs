@@ -59,6 +59,14 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
       routing::post(integration::github::route::api_integration_github_events),
     )
     .route(
+      "/unstable/integration/github/auth/cli",
+      routing::get(session::route::api_auth_github_cli),
+    )
+    .route(
+      "/session/logout",
+      routing::delete(session::route::api_logout),
+    )
+    .route(
       "/projects/:owner_id/clone",
       routing::post(project::api_new_project),
     )
