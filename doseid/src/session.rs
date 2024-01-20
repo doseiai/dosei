@@ -25,13 +25,13 @@ pub async fn validate_session(
   if !authorization.starts_with(BEARER) {
     return Err(StatusCode::UNAUTHORIZED);
   }
-  let token = authorization.trim_start_matches(BEARER);
-  if token.starts_with("eyJhbGciOiJ") {
+  let bearer_token = authorization.trim_start_matches(BEARER);
+  if bearer_token.starts_with("eyJhbGciOiJ") {
     let mut validation = Validation::new(Algorithm::HS256);
     validation.required_spec_claims = HashSet::with_capacity(0);
     validation.validate_exp = false;
     let token_message = jsonwebtoken::decode::<Session>(
-      token,
+      bearer_token,
       &DecodingKey::from_secret(config.jwt_secret.as_ref()),
       &validation,
     )
@@ -41,7 +41,7 @@ pub async fn validate_session(
   let token = sqlx::query_as!(
     Token,
     "SELECT * FROM token WHERE value = $1::text and expires_at >= CURRENT_TIMESTAMP",
-    token
+    bearer_token
   )
   .fetch_one(&*pool)
   .await
