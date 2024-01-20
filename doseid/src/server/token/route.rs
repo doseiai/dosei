@@ -17,7 +17,7 @@ pub async fn api_get_tokens(
   config: Extension<&'static Config>,
   headers: axum::http::HeaderMap,
 ) -> Result<Json<Vec<Token>>, StatusCode> {
-  let session = validate_session(&pool.0, &config, headers).await?;
+  let session = validate_session(Arc::clone(&pool), &config, headers).await?;
   match sqlx::query_as!(
     Token,
     "SELECT * FROM token WHERE owner_id = $1::uuid",
@@ -40,7 +40,7 @@ pub async fn api_set_token(
   headers: axum::http::HeaderMap,
   Json(body): Json<TokenBody>,
 ) -> Result<Json<Token>, Response> {
-  let session = validate_session(pool.0, &config, headers)
+  let session = validate_session(Arc::clone(&pool), &config, headers)
     .await
     .map_err(|e| e.into_response())?;
   let token = Token::new(body.name, body.days_until_expiration, session.owner_id).map_err(|e| {
@@ -89,7 +89,7 @@ pub async fn api_delete_token(
   headers: axum::http::HeaderMap,
   Path(token_id): Path<Uuid>,
 ) -> Result<StatusCode, StatusCode> {
-  let session = validate_session(pool.0, &config, headers).await?;
+  let session = validate_session(Arc::clone(&pool), &config, headers).await?;
   match sqlx::query!(
     "DELETE FROM token WHERE id = $1::uuid and owner_id = $2::uuid",
     token_id,
