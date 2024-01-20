@@ -68,6 +68,7 @@ async fn build(owner_id: Uuid, project_id: Uuid, deployment_id: String, folder_p
   build_image(image_name, image_tag, folder_path).await;
 }
 
+#[cfg(test)]
 mod tests {
   use crate::deployment::build;
   use crate::server::integration::git_clone;
