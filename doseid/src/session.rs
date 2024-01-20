@@ -41,5 +41,5 @@ pub async fn validate_session(
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Session {
-  owner_id: Uuid,
+  pub owner_id: Uuid,
 }

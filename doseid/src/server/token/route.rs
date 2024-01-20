@@ -17,11 +17,11 @@ pub async fn api_get_tokens(
   config: Extension<&'static Config>,
   headers: axum::http::HeaderMap,
 ) -> Result<Json<Vec<Token>>, StatusCode> {
-  let _ = validate_session(&config, headers).await?;
+  let session = validate_session(&config, headers).await?;
   match sqlx::query_as!(
     Token,
     "SELECT * FROM token WHERE owner_id = $1::uuid",
-    Uuid::new_v4()
+    session.owner_id
   )
   .fetch_all(&**pool)
   .await
@@ -40,10 +40,10 @@ pub async fn api_set_token(
   headers: axum::http::HeaderMap,
   Json(body): Json<TokenBody>,
 ) -> Result<Json<Token>, Response> {
-  let _ = validate_session(&config, headers)
+  let session = validate_session(&config, headers)
     .await
     .map_err(|e| e.into_response())?;
-  let token = Token::new(body.name, body.days_until_expiration, Uuid::new_v4()).map_err(|e| {
+  let token = Token::new(body.name, body.days_until_expiration, session.owner_id).map_err(|e| {
     (
       StatusCode::BAD_REQUEST,
       Json(json!({"message": e.to_string()})),
@@ -89,11 +89,11 @@ pub async fn api_delete_token(
   headers: axum::http::HeaderMap,
   Path(token_id): Path<Uuid>,
 ) -> Result<StatusCode, StatusCode> {
-  let _ = validate_session(&config, headers).await?;
+  let session = validate_session(&config, headers).await?;
   match sqlx::query!(
     "DELETE FROM token WHERE id = $1::uuid and owner_id = $2::uuid",
     token_id,
-    token_id
+    session.owner_id
   )
   .execute(&**pool)
   .await
