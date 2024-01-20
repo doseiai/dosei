@@ -71,7 +71,7 @@ pub async fn api_set_token(
   {
     Ok(recs) => Ok(Json(recs)),
     Err(err) => {
-      error!("Error in creating job: {:?}", err);
+      error!("Error in creating token: {:?}", err);
       Err(StatusCode::INTERNAL_SERVER_ERROR.into_response())
     }
   }
