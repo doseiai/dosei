@@ -37,22 +37,18 @@ pub async fn validate_session(
     )
     .map_err(|_| StatusCode::UNAUTHORIZED)?;
     return Ok(token_message.claims);
-  } else {
-    match sqlx::query_as!(
-      Token,
-      "SELECT * FROM token WHERE value = $1::text and expires_at >= CURRENT_TIMESTAMP",
-      token
-    )
-    .fetch_one(&*pool)
-    .await
-    {
-      Ok(rec) => Ok(Session {
-        owner_id: rec.owner_id,
-      }),
-      Err(err) => Err(StatusCode::UNAUTHORIZED),
-    }?
-  };
-  Err(StatusCode::FORBIDDEN)
+  }
+  let token = sqlx::query_as!(
+    Token,
+    "SELECT * FROM token WHERE value = $1::text and expires_at >= CURRENT_TIMESTAMP",
+    token
+  )
+  .fetch_one(&*pool)
+  .await
+  .map_err(|_| StatusCode::UNAUTHORIZED)?;
+  Ok(Session {
+    owner_id: token.owner_id,
+  })
 }
 
 #[derive(Debug, Serialize, Deserialize)]
