@@ -2,6 +2,7 @@ mod config;
 mod deployment;
 mod docker;
 mod server;
+mod session;
 
 #[cfg(test)]
 mod test;

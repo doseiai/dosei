@@ -747,6 +747,7 @@ dependencies = [
  "jsonwebtoken",
  "once_cell",
  "prost",
+ "rand",
  "regex",
  "reqwest",
  "serde",

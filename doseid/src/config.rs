@@ -40,6 +40,7 @@ pub struct Config {
   pub node_info: NodeInfo,
   pub primary_address: Option<String>,
   pub database_url: String,
+  pub jwt_secret: String,
   pub container_registry_url: String,
   pub telemetry: Telemetry,
   pub github_integration: Option<GithubIntegration>,
@@ -95,6 +96,7 @@ impl Config {
       },
       primary_address: args.connect,
       database_url: env::var("DATABASE_URL").context("DATABASE_URL is required.")?,
+      jwt_secret: env::var("JWT_SECRET").context("JWT_SECRET is required.")?,
       container_registry_url: env::var("CONTAINER_REGISTRY_URL")
         .context("CONTAINER_REGISTRY_URL is required.")?,
       telemetry: Telemetry::new()
