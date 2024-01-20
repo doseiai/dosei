@@ -1,2 +1,2 @@
 pub(crate) mod route;
-mod schema;
+pub(crate) mod schema;

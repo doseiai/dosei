@@ -8,7 +8,7 @@ mod logs;
 mod ping;
 mod project;
 mod secret;
-mod token;
+pub(crate) mod token;
 mod user;
 
 use anyhow::Context;
