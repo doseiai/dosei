@@ -12,18 +12,15 @@ pub async fn validate_session(
   config: &'static Config,
   headers: axum::http::HeaderMap,
 ) -> Result<Session, StatusCode> {
-  let authorization_header = match headers.get(header::AUTHORIZATION) {
-    Some(v) => v,
-    None => return Err(StatusCode::UNAUTHORIZED),
-  };
-  let authorization = match authorization_header.to_str() {
-    Ok(v) => v,
-    Err(_) => return Err(StatusCode::UNAUTHORIZED),
-  };
+  let authorization_header = headers
+    .get(header::AUTHORIZATION)
+    .ok_or(StatusCode::UNAUTHORIZED)?;
+  let authorization = authorization_header
+    .to_str()
+    .map_err(|_| StatusCode::UNAUTHORIZED)?;
   if !authorization.starts_with(BEARER) {
     return Err(StatusCode::UNAUTHORIZED);
   }
-
   let token = authorization.trim_start_matches(BEARER);
   if token.starts_with("eyJhbGciOiJ") {
     let mut validation = Validation::new(Algorithm::HS256);
