@@ -62,10 +62,7 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
       "/auth/github/cli",
       routing::get(session::route::api_auth_github_cli),
     )
-    .route(
-      "/auth/logout",
-      routing::delete(session::route::api_logout),
-    )
+    .route("/auth/logout", routing::delete(session::route::api_logout))
     .route(
       "/projects/:owner_id/clone",
       routing::post(project::api_new_project),
