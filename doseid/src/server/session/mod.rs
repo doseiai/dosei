@@ -27,7 +27,7 @@ pub async fn validate_session(
     return Err(StatusCode::UNAUTHORIZED);
   }
   let bearer_token = authorization.trim_start_matches(BEARER);
-  if bearer_token.starts_with("eyJhbGciOiJ") {
+  if jsonwebtoken::decode_header(bearer_token).is_ok() {
     let mut validation = Validation::new(Algorithm::HS256);
     validation.required_spec_claims = HashSet::with_capacity(0);
     validation.validate_exp = false;
