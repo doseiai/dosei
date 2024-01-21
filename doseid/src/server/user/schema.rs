@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(sqlx::FromRow, Serialize, Deserialize, Debug)]
 pub struct User {
   pub id: Uuid,
   pub username: String,

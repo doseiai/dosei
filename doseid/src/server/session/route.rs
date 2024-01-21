@@ -2,10 +2,12 @@ use crate::config::Config;
 use crate::server::integration::github::AccessTokenError;
 use crate::server::session::schema::SessionCredentials;
 use crate::server::session::validate_session;
+use crate::server::user::schema::User;
 use axum::extract::Query;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::{Extension, Json};
+use chrono::Utc;
 use serde::Deserialize;
 use serde_json::json;
 use sqlx::{Pool, Postgres};
@@ -39,17 +41,36 @@ pub async fn api_auth_github_cli(
       error!("{}", e);
       StatusCode::INTERNAL_SERVER_ERROR
     })?;
-
-  // TODO: maybe also handle not verified but make them verify on our platform or something
-  let verified_emails: Vec<String> = user
-    .emails
-    .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?
-    .iter()
-    .filter(|email| email.verified)
-    .map(|email| email.email.clone())
-    .collect();
-
-  info!("{:?}", verified_emails);
+  match sqlx::query!(
+    "SELECT * FROM \"user\" WHERE (github ->> 'id')::bigint = $1",
+    user.id
+  )
+  .fetch_one(&**pool)
+  .await
+  {
+    Ok(rec) => {
+      info!("{:?}", rec);
+    }
+    Err(err) => {
+      sqlx::query!(
+        "
+        INSERT INTO \"user\" (id, username, email, github, updated_at, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING *
+        ",
+        Uuid::new_v4(),
+        user.login,
+        user.email,
+        json!(user),
+        Utc::now(),
+        Utc::now()
+      )
+      .fetch_one(&**pool)
+      .await
+      .unwrap();
+      error!("{}", err);
+    }
+  }
   let owner_id = Uuid::new_v4();
   let credentials =
     SessionCredentials::new(&config, owner_id).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
