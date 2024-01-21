@@ -49,6 +49,15 @@ pub async fn api_auth_github_cli(
   .await
   {
     Ok(rec) => {
+      sqlx::query!(
+        "UPDATE \"user\" SET github = $1, updated_at = $2  WHERE (github ->> 'id')::bigint = $3 RETURNING *",
+        json!(user),
+        Utc::now(),
+        user.id,
+      )
+        .fetch_one(&**pool)
+        .await
+        .unwrap();
       info!("{:?}", rec);
     }
     Err(err) => {
