@@ -9,7 +9,7 @@ use axum::{Extension, Json};
 use chrono::Utc;
 use serde::Deserialize;
 use serde_json::json;
-use sqlx::{Pool, Postgres};
+use sqlx::{Error, Pool, Postgres};
 use std::sync::Arc;
 use tracing::{error, info};
 use uuid::Uuid;
@@ -108,16 +108,32 @@ pub async fn api_logout(
   Query(query): Query<LogoutQuery>,
 ) -> Result<Response, StatusCode> {
   let session = validate_session(Arc::clone(&pool), &config, headers).await?;
-  // TODO: Find matching session otherwise return error 404
-  // return Ok(
-  //   (
-  //     StatusCode::NOT_FOUND,
-  //     Json(json!({"message": "Session not found."})),
-  //   )
-  //     .into_response(),
-  // );
+
+  if let Err(e) = sqlx::query_as!(
+    Session,
+    "SELECT * FROM session WHERE id = $1::uuid and owner_id = $2::uuid",
+    query.session_id,
+    session.owner_id
+  )
+  .fetch_one(&**pool)
+  .await
+  {
+    return Ok(
+      (
+        StatusCode::NOT_FOUND,
+        Json(json!({"message": "Session not found."})),
+      )
+        .into_response(),
+    );
+  }
   if let Some(true) = query.revoke_all_sessions {
-    // TODO: Call db and remove sessions
+    sqlx::query!(
+      "DELETE FROM session WHERE owner_id = $1::uuid",
+      session.owner_id
+    )
+    .fetch_one(&**pool)
+    .await
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     return Ok(
       (
         StatusCode::OK,
@@ -126,7 +142,14 @@ pub async fn api_logout(
         .into_response(),
     );
   }
-  // TODO: Call db and remove session
+  sqlx::query!(
+    "DELETE FROM session WHERE id = $1::uuid and owner_id = $2::uuid",
+    query.session_id,
+    session.owner_id
+  )
+  .fetch_one(&**pool)
+  .await
+  .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
   Ok(
     (
       StatusCode::OK,
