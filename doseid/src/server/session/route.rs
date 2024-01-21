@@ -39,14 +39,7 @@ pub async fn api_auth_github_cli(
       error!("{}", e);
       StatusCode::INTERNAL_SERVER_ERROR
     })?;
-  let emails = github_integration
-    .get_user_emails(&access_token)
-    .await
-    .map_err(|e| {
-      error!("{}", e);
-      StatusCode::INTERNAL_SERVER_ERROR
-    })?;
-  info!("{:?}", emails);
+  info!("{:?}", user);
   let owner_id = Uuid::new_v4();
   let credentials =
     SessionCredentials::new(&config, owner_id).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;

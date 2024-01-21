@@ -1,6 +1,7 @@
 pub(crate) mod route;
 pub(crate) mod schema;
 
+use crate::server::integration::github::schema::{UserGithub, UserGithubEmail};
 use crate::server::integration::{git_clone, git_push};
 use anyhow::{anyhow, Context};
 use chrono::{Duration, Utc};
@@ -14,7 +15,6 @@ use sha2::Sha256;
 use std::env;
 use std::path::Path;
 use tracing::{error, warn};
-use crate::server::integration::github::schema::UserGithubEmail;
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -133,7 +133,7 @@ impl GithubIntegration {
       .error_for_status()
   }
 
-  pub async fn get_user(&self, access_token: &str) -> Result<Value, Error> {
+  pub async fn get_user(&self, access_token: &str) -> Result<UserGithub, Error> {
     let response = self
       .github_client()?
       .get("https://api.github.com/user")
@@ -142,8 +142,10 @@ impl GithubIntegration {
       .await?;
     let status_code = response.status();
     if status_code.is_success() {
-      let body = response.json::<Value>().await?;
-      return Ok(body);
+      let mut user = response.json::<UserGithub>().await?;
+      user.access_token = Some(access_token.to_string());
+      user.emails = Some(self.get_user_emails(access_token).await?);
+      return Ok(user);
     }
     Err(response.error_for_status_ref().err().unwrap())
   }

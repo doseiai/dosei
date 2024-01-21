@@ -4,8 +4,9 @@ use serde::{Deserialize, Serialize};
 pub struct UserGithub {
   login: String,
   id: i64,
-  access_token: Option<String>,
-  emails: Vec<UserGithubEmail>,
+  email: String,
+  pub emails: Option<Vec<UserGithubEmail>>,
+  pub access_token: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
