@@ -11,8 +11,8 @@ pub struct UserGithub {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UserGithubEmail {
-  email: String,
-  primary: bool,
-  verified: bool,
-  visibility: Option<String>,
+  pub email: String,
+  pub primary: bool,
+  pub verified: bool,
+  pub visibility: Option<String>,
 }

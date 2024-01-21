@@ -39,7 +39,17 @@ pub async fn api_auth_github_cli(
       error!("{}", e);
       StatusCode::INTERNAL_SERVER_ERROR
     })?;
-  info!("{:?}", user);
+
+  // TODO: maybe also handle not verified but make them verify on our platform or something
+  let verified_emails: Vec<String> = user
+    .emails
+    .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?
+    .iter()
+    .filter(|email| email.verified)
+    .map(|email| email.email.clone())
+    .collect();
+
+  info!("{:?}", verified_emails);
   let owner_id = Uuid::new_v4();
   let credentials =
     SessionCredentials::new(&config, owner_id).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
