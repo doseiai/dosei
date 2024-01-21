@@ -110,4 +110,14 @@ CREATE TABLE IF NOT EXISTS "user" (
     PRIMARY KEY (id),
     UNIQUE (username),
     UNIQUE (email)
-)
+);
+
+CREATE TABLE IF NOT EXISTS session (
+    id UUID NOT NULL,
+    token TEXT NOT NULL,
+    refresh_token TEXT NOT NULL,
+    owner_id UUID NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (id)
+);

@@ -1,8 +1,7 @@
 use crate::config::Config;
 use crate::server::integration::github::AccessTokenError;
-use crate::server::session::schema::SessionCredentials;
+use crate::server::session::schema::{Session, SessionCredentials};
 use crate::server::session::validate_session;
-use crate::server::user::schema::User;
 use axum::extract::Query;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
@@ -82,8 +81,8 @@ pub async fn api_auth_github_cli(
   }
   let owner_id = Uuid::new_v4();
   let credentials =
-    SessionCredentials::new(&config, owner_id).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-  Ok(Json(credentials))
+    Session::new(&config, owner_id).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+  Ok(Json(credentials.session_credentials()))
 }
 
 pub async fn api_logout(
