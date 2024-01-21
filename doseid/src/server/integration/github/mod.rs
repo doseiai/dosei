@@ -298,7 +298,6 @@ pub enum AccessTokenError {
   BadVerificationCode,
 }
 
-// TODO: Support passing settings to run github tests
 #[cfg(test)]
 mod tests {
   use crate::test::CONFIG;
