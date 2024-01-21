@@ -150,7 +150,7 @@ impl GithubIntegration {
     Err(response.error_for_status_ref().err().unwrap())
   }
 
-  pub async fn get_user_emails(&self, access_token: &str) -> Result<Vec<UserGithubEmail>, Error> {
+  async fn get_user_emails(&self, access_token: &str) -> Result<Vec<UserGithubEmail>, Error> {
     let response = self
       .github_client()?
       .get("https://api.github.com/user/emails")
