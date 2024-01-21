@@ -1,20 +1,45 @@
 use crate::config::Config;
+use crate::server::integration::github::AccessTokenError;
 use crate::server::session::schema::SessionCredentials;
 use crate::server::session::validate_session;
 use axum::extract::Query;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::{Extension, Json};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::json;
 use sqlx::{Pool, Postgres};
 use std::sync::Arc;
+use tracing::{error, info};
 use uuid::Uuid;
 
 pub async fn api_auth_github_cli(
   pool: Extension<Arc<Pool<Postgres>>>,
   config: Extension<&'static Config>,
+  Query(query): Query<LoginQuery>,
 ) -> Result<Json<SessionCredentials>, StatusCode> {
+  let github_integration = match config.github_integration.as_ref() {
+    Some(github) => github,
+    None => {
+      error!("Github integration not enabled");
+      return Err(StatusCode::SERVICE_UNAVAILABLE);
+    }
+  };
+  let access_token = github_integration
+    .get_user_access_token(query.code)
+    .await
+    .map_err(|e| match e {
+      AccessTokenError::BadVerificationCode => StatusCode::UNAUTHORIZED,
+      _ => StatusCode::INTERNAL_SERVER_ERROR,
+    })?;
+  let user = github_integration
+    .get_user(&access_token)
+    .await
+    .map_err(|e| {
+      error!("{}", e);
+      StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+  info!("{:?}", user);
   let owner_id = Uuid::new_v4();
   let credentials =
     SessionCredentials::new(&config, owner_id).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -54,6 +79,11 @@ pub async fn api_logout(
     )
       .into_response(),
   )
+}
+
+#[derive(Deserialize)]
+pub struct LoginQuery {
+  code: String,
 }
 
 #[derive(Deserialize)]

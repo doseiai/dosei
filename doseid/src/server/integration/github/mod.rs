@@ -10,9 +10,10 @@ use reqwest::{header, Client, Error, Response, StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::Sha256;
+use std::collections::HashMap;
 use std::env;
 use std::path::Path;
-use tracing::warn;
+use tracing::{error, info, warn};
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -133,6 +134,22 @@ impl GithubIntegration {
       .error_for_status()
   }
 
+  pub async fn get_user(&self, access_token: &str) -> Result<Value, Error> {
+    let response = Client::new()
+      .get("https://api.github.com/user")
+      .bearer_auth(access_token)
+      .header("Accept", "application/vnd.github.v3+json")
+      .header("User-Agent", "Dosei")
+      .send()
+      .await?;
+    let status_code = response.status();
+    if status_code.is_success() {
+      let body = response.json::<Value>().await?;
+      return Ok(body);
+    }
+    Err(response.error_for_status_ref().err().unwrap())
+  }
+
   async fn update_deployment_status(
     &self,
     status: GithubDeploymentStatus,
@@ -173,6 +190,39 @@ impl GithubIntegration {
         .await?;
     }
     Ok(())
+  }
+
+  pub async fn get_user_access_token(&self, code: String) -> Result<String, AccessTokenError> {
+    let response = Client::new()
+      .post("https://github.com/login/oauth/access_token")
+      .json(&json!({
+        "client_id": self.client_id,
+        "client_secret": self.client_secret,
+        "code": code
+      }))
+      .header("Accept", "application/vnd.github.v3+json")
+      .header("User-Agent", "Dosei")
+      .send()
+      .await?;
+
+    let status_code = response.status();
+    if status_code.is_success() {
+      let body = response.json::<Value>().await?;
+      if let Some(access_token) = body.get("access_token").and_then(|v| v.as_str()) {
+        return Ok(access_token.to_string());
+      }
+      if body
+        .get("error")
+        .map_or(false, |e| e == "bad_verification_code")
+      {
+        return Err(AccessTokenError::BadVerificationCode);
+      }
+      error!("AccessTokenError Unhandled Error {:?}", body);
+      return Err(AccessTokenError::Unhandled);
+    }
+    Err(AccessTokenError::Request(
+      response.error_for_status_ref().err().unwrap(),
+    ))
   }
 
   async fn repo_auth_url(
@@ -254,6 +304,18 @@ pub enum CreateRepoError {
     "The specified name is already used for a different Git repository. Please enter a new one."
   )]
   RepoExists,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum AccessTokenError {
+  #[error("Request failed")]
+  Request(#[from] Error),
+
+  #[error("Unhandled")]
+  Unhandled,
+
+  #[error("The code passed is incorrect or expired.")]
+  BadVerificationCode,
 }
 
 #[derive(PartialEq)]
