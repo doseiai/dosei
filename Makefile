@@ -2,7 +2,7 @@ build:
 	cargo build --release
 
 dev:
-	cargo run --bin doseid
+	cargo run --bin doseid -- --config-path dev.doseid.toml
 
 install:
 	./install.sh

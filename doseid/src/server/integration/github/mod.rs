@@ -1,18 +1,20 @@
 pub(crate) mod route;
+pub(crate) mod schema;
 
+use crate::server::integration::github::schema::{UserGithub, UserGithubEmail};
 use crate::server::integration::{git_clone, git_push};
 use anyhow::{anyhow, Context};
 use chrono::{Duration, Utc};
 use git2::Repository;
 use hmac::{Hmac, Mac};
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
+use reqwest::header::HeaderMap;
 use reqwest::{header, Client, Error, Response, StatusCode};
-use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::Sha256;
 use std::env;
 use std::path::Path;
-use tracing::warn;
+use tracing::{error, warn};
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -85,12 +87,11 @@ impl GithubIntegration {
     private: Option<bool>,
     access_token: &str,
   ) -> Result<Value, CreateRepoError> {
-    let response = Client::new()
+    let response = self
+      .github_client()?
       .post("https://api.github.com/user/repos")
       .bearer_auth(access_token)
       .json(&json!({"name": name, "private": private.unwrap_or(true) }))
-      .header("Accept", "application/vnd.github.v3+json")
-      .header("User-Agent", "Dosei")
       .send()
       .await?;
 
@@ -123,56 +124,77 @@ impl GithubIntegration {
     repo_full_name: &str,
     access_token: &str,
   ) -> Result<Response, Error> {
-    Client::new()
+    self
+      .github_client()?
       .delete(format!("https://api.github.com/repos/{}", repo_full_name))
       .bearer_auth(access_token)
-      .header("Accept", "application/vnd.github.v3+json")
-      .header("User-Agent", "Dosei")
       .send()
       .await?
       .error_for_status()
   }
 
-  async fn update_deployment_status(
-    &self,
-    status: GithubDeploymentStatus,
-    repo_full_name: &str,
-    installation_id: i64,
-    commit_id: &str,
-  ) -> Result<(), Error> {
-    let github_token = self.get_installation_token(installation_id).await;
-    let github_api_repo_url = format!("https://api.github.com/repos/{}", repo_full_name);
-    let client = Client::new();
-    let headers = header::HeaderMap::new();
+  pub async fn get_user(&self, access_token: &str) -> Result<UserGithub, Error> {
+    let response = self
+      .github_client()?
+      .get("https://api.github.com/user")
+      .bearer_auth(access_token)
+      .send()
+      .await?;
+    let status_code = response.status();
+    if status_code.is_success() {
+      let mut user = response.json::<UserGithub>().await?;
+      user.access_token = Some(access_token.to_string());
+      user.emails = Some(self.get_user_emails(access_token).await?);
+      return Ok(user);
+    }
+    Err(response.error_for_status_ref().err().unwrap())
+  }
 
-    let status_info = status.info();
+  async fn get_user_emails(&self, access_token: &str) -> Result<Vec<UserGithubEmail>, Error> {
+    let response = self
+      .github_client()?
+      .get("https://api.github.com/user/emails")
+      .bearer_auth(access_token)
+      .send()
+      .await?;
+    let status_code = response.status();
+    if status_code.is_success() {
+      let body = response.json::<Vec<UserGithubEmail>>().await?;
+      return Ok(body);
+    }
+    Err(response.error_for_status_ref().err().unwrap())
+  }
 
-    client
-      .post(format!("{}/statuses/{}", github_api_repo_url, commit_id))
+  pub async fn get_user_access_token(&self, code: String) -> Result<String, AccessTokenError> {
+    let response = self
+      .github_client()?
+      .post("https://github.com/login/oauth/access_token")
       .json(&json!({
-          "state": status_info.state,
-          "description": status_info.message,
-          "target_url": format!("{}/{}/deployments/{}", "app_base_url", repo_full_name, commit_id),
-          "context": self.app_name
+        "client_id": self.client_id,
+        "client_secret": self.client_secret,
+        "code": code
       }))
-      .headers(headers.clone())
       .send()
       .await?;
 
-    if status == GithubDeploymentStatus::Succeeded {
-      client
-        .post(format!(
-          "{}/commits/{}/comments",
-          github_api_repo_url, commit_id
-        ))
-        .json(&json!({
-            "body": "Successfully deployed in production."
-        }))
-        .headers(headers)
-        .send()
-        .await?;
+    let status_code = response.status();
+    if status_code.is_success() {
+      let body = response.json::<Value>().await?;
+      if let Some(access_token) = body.get("access_token").and_then(|v| v.as_str()) {
+        return Ok(access_token.to_string());
+      }
+      if body
+        .get("error")
+        .map_or(false, |e| e == "bad_verification_code")
+      {
+        return Err(AccessTokenError::BadVerificationCode);
+      }
+      error!("AccessTokenError Unhandled Error {:?}", body);
+      return Err(AccessTokenError::Unhandled);
     }
-    Ok(())
+    Err(AccessTokenError::Request(
+      response.error_for_status_ref().err().unwrap(),
+    ))
   }
 
   async fn repo_auth_url(
@@ -201,12 +223,10 @@ impl GithubIntegration {
       installation_id
     );
     let jwt = self.create_github_app_jwt()?;
-
-    let response = Client::new()
+    let response = self
+      .github_client()?
       .post(&url)
       .bearer_auth(jwt)
-      .header("Accept", "application/vnd.github.v3+json")
-      .header("User-Agent", "Dosei")
       .send()
       .await?;
 
@@ -243,6 +263,20 @@ impl GithubIntegration {
       .verify_slice(&signature_bytes)
       .map_err(|_| anyhow!("invalid secret"))
   }
+
+  pub fn github_client(&self) -> Result<Client, Error> {
+    let mut headers = HeaderMap::new();
+    headers.insert(
+      header::ACCEPT,
+      header::HeaderValue::from_static("application/vnd.github.v3+json"),
+    );
+    headers.insert(
+      header::USER_AGENT,
+      header::HeaderValue::from_static("Dosei"),
+    );
+    let client = Client::builder().default_headers(headers).build()?;
+    Ok(client)
+  }
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -256,34 +290,18 @@ pub enum CreateRepoError {
   RepoExists,
 }
 
-#[derive(PartialEq)]
-enum GithubDeploymentStatus {
-  Deploying,
-  Succeeded,
+#[derive(Debug, thiserror::Error)]
+pub enum AccessTokenError {
+  #[error("Request failed")]
+  Request(#[from] Error),
+
+  #[error("Unhandled")]
+  Unhandled,
+
+  #[error("The code passed is incorrect or expired.")]
+  BadVerificationCode,
 }
 
-#[derive(Serialize, Deserialize, PartialEq)]
-struct DeploymentInfo {
-  state: String,
-  message: String,
-}
-
-impl GithubDeploymentStatus {
-  fn info(&self) -> DeploymentInfo {
-    match self {
-      GithubDeploymentStatus::Deploying => DeploymentInfo {
-        state: "pending".to_string(),
-        message: "Deploying...".to_string(),
-      },
-      GithubDeploymentStatus::Succeeded => DeploymentInfo {
-        state: "success".to_string(),
-        message: "Deployment succeeded".to_string(),
-      },
-    }
-  }
-}
-
-// TODO: Support passing settings to run github tests
 #[cfg(test)]
 mod tests {
   use crate::test::CONFIG;

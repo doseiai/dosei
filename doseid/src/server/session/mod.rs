@@ -1,7 +1,8 @@
+pub(crate) mod route;
 mod schema;
 
 use crate::config::Config;
-use crate::server::session::schema::Session;
+use crate::server::session::schema::SessionToken;
 use crate::server::token::schema::Token;
 use axum::http::{header, StatusCode};
 use jsonwebtoken::{Algorithm, DecodingKey, Validation};
@@ -15,7 +16,7 @@ pub async fn validate_session(
   pool: Arc<Pool<Postgres>>,
   config: &'static Config,
   headers: axum::http::HeaderMap,
-) -> Result<Session, StatusCode> {
+) -> Result<SessionToken, StatusCode> {
   let authorization_header = headers
     .get(header::AUTHORIZATION)
     .ok_or(StatusCode::UNAUTHORIZED)?;
@@ -30,7 +31,7 @@ pub async fn validate_session(
     let mut validation = Validation::new(Algorithm::HS256);
     validation.required_spec_claims = HashSet::with_capacity(0);
     validation.validate_exp = false;
-    let token_message = jsonwebtoken::decode::<Session>(
+    let token_message = jsonwebtoken::decode::<SessionToken>(
       bearer_token,
       &DecodingKey::from_secret(config.jwt_secret.as_ref()),
       &validation,
@@ -46,7 +47,7 @@ pub async fn validate_session(
   .fetch_one(&*pool)
   .await
   .map_err(|_| StatusCode::UNAUTHORIZED)?;
-  Ok(Session {
+  Ok(SessionToken {
     owner_id: token.owner_id,
   })
 }
