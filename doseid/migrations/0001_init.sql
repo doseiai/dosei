@@ -96,3 +96,18 @@ CREATE TABLE IF NOT EXISTS token (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     PRIMARY KEY (id)
 );
+
+CREATE TABLE IF NOT EXISTS "user" (
+    id UUID NOT NULL,
+    username TEXT NOT NULL,
+    email TEXT NOT NULL,
+    name TEXT,
+    github jsonb,
+    gitlab jsonb,
+    bitbucket jsonb,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE (username),
+    UNIQUE (email)
+)
