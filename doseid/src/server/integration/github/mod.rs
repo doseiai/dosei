@@ -1,4 +1,5 @@
 pub(crate) mod route;
+pub(crate) mod schema;
 
 use crate::server::integration::{git_clone, git_push};
 use anyhow::{anyhow, Context};
