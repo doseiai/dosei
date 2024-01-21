@@ -9,7 +9,7 @@ pub struct UserGithub {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct UserGithubEmail {
+pub struct UserGithubEmail {
   email: String,
   primary: bool,
   verified: bool,

@@ -14,6 +14,7 @@ use sha2::Sha256;
 use std::env;
 use std::path::Path;
 use tracing::{error, warn};
+use crate::server::integration::github::schema::UserGithubEmail;
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -147,7 +148,7 @@ impl GithubIntegration {
     Err(response.error_for_status_ref().err().unwrap())
   }
 
-  pub async fn get_user_emails(&self, access_token: &str) -> Result<Value, Error> {
+  pub async fn get_user_emails(&self, access_token: &str) -> Result<Vec<UserGithubEmail>, Error> {
     let response = self
       .github_client()?
       .get("https://api.github.com/user/emails")
@@ -156,7 +157,7 @@ impl GithubIntegration {
       .await?;
     let status_code = response.status();
     if status_code.is_success() {
-      let body = response.json::<Value>().await?;
+      let body = response.json::<Vec<UserGithubEmail>>().await?;
       return Ok(body);
     }
     Err(response.error_for_status_ref().err().unwrap())
