@@ -82,6 +82,22 @@ pub async fn api_auth_github_cli(
   let owner_id = Uuid::new_v4();
   let credentials =
     Session::new(&config, owner_id).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+  sqlx::query!(
+    "
+    INSERT INTO session (id, token, refresh_token, owner_id, updated_at, created_at)
+    VALUES ($1, $2, $3, $4, $5, $6)
+    RETURNING *
+    ",
+    credentials.id,
+    credentials.token,
+    credentials.refresh_token,
+    credentials.owner_id,
+    credentials.updated_at,
+    credentials.created_at,
+  )
+  .fetch_one(&**pool)
+  .await
+  .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
   Ok(Json(credentials.session_credentials()))
 }
 
