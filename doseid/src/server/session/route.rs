@@ -56,7 +56,7 @@ pub async fn api_auth_github_cli(
       )
         .fetch_one(&**pool)
         .await
-        .unwrap();
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
       info!("{:?}", rec);
     }
     Err(err) => {
@@ -75,7 +75,7 @@ pub async fn api_auth_github_cli(
       )
       .fetch_one(&**pool)
       .await
-      .unwrap();
+      .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
       error!("{}", err);
     }
   }
