@@ -9,7 +9,7 @@ use axum::{Extension, Json};
 use chrono::Utc;
 use serde::Deserialize;
 use serde_json::json;
-use sqlx::{Error, Pool, Postgres};
+use sqlx::{Pool, Postgres};
 use std::sync::Arc;
 use tracing::{error, info};
 use uuid::Uuid;
