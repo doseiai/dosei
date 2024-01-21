@@ -6,14 +6,14 @@ use chrono::{Duration, Utc};
 use git2::Repository;
 use hmac::{Hmac, Mac};
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
+use reqwest::header::HeaderMap;
 use reqwest::{header, Client, Error, Response, StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::Sha256;
-use std::collections::HashMap;
 use std::env;
 use std::path::Path;
-use tracing::{error, info, warn};
+use tracing::{error, warn};
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -86,12 +86,11 @@ impl GithubIntegration {
     private: Option<bool>,
     access_token: &str,
   ) -> Result<Value, CreateRepoError> {
-    let response = Client::new()
+    let response = self
+      .github_client()?
       .post("https://api.github.com/user/repos")
       .bearer_auth(access_token)
       .json(&json!({"name": name, "private": private.unwrap_or(true) }))
-      .header("Accept", "application/vnd.github.v3+json")
-      .header("User-Agent", "Dosei")
       .send()
       .await?;
 
@@ -124,22 +123,35 @@ impl GithubIntegration {
     repo_full_name: &str,
     access_token: &str,
   ) -> Result<Response, Error> {
-    Client::new()
+    self
+      .github_client()?
       .delete(format!("https://api.github.com/repos/{}", repo_full_name))
       .bearer_auth(access_token)
-      .header("Accept", "application/vnd.github.v3+json")
-      .header("User-Agent", "Dosei")
       .send()
       .await?
       .error_for_status()
   }
 
   pub async fn get_user(&self, access_token: &str) -> Result<Value, Error> {
-    let response = Client::new()
+    let response = self
+      .github_client()?
       .get("https://api.github.com/user")
       .bearer_auth(access_token)
-      .header("Accept", "application/vnd.github.v3+json")
-      .header("User-Agent", "Dosei")
+      .send()
+      .await?;
+    let status_code = response.status();
+    if status_code.is_success() {
+      let body = response.json::<Value>().await?;
+      return Ok(body);
+    }
+    Err(response.error_for_status_ref().err().unwrap())
+  }
+
+  pub async fn get_user_emails(&self, access_token: &str) -> Result<Value, Error> {
+    let response = self
+      .github_client()?
+      .get("https://api.github.com/user/emails")
+      .bearer_auth(access_token)
       .send()
       .await?;
     let status_code = response.status();
@@ -160,7 +172,7 @@ impl GithubIntegration {
     let github_token = self.get_installation_token(installation_id).await;
     let github_api_repo_url = format!("https://api.github.com/repos/{}", repo_full_name);
     let client = Client::new();
-    let headers = header::HeaderMap::new();
+    let headers = HeaderMap::new();
 
     let status_info = status.info();
 
@@ -193,15 +205,14 @@ impl GithubIntegration {
   }
 
   pub async fn get_user_access_token(&self, code: String) -> Result<String, AccessTokenError> {
-    let response = Client::new()
+    let response = self
+      .github_client()?
       .post("https://github.com/login/oauth/access_token")
       .json(&json!({
         "client_id": self.client_id,
         "client_secret": self.client_secret,
         "code": code
       }))
-      .header("Accept", "application/vnd.github.v3+json")
-      .header("User-Agent", "Dosei")
       .send()
       .await?;
 
@@ -251,12 +262,10 @@ impl GithubIntegration {
       installation_id
     );
     let jwt = self.create_github_app_jwt()?;
-
-    let response = Client::new()
+    let response = self
+      .github_client()?
       .post(&url)
       .bearer_auth(jwt)
-      .header("Accept", "application/vnd.github.v3+json")
-      .header("User-Agent", "Dosei")
       .send()
       .await?;
 
@@ -292,6 +301,20 @@ impl GithubIntegration {
     mac
       .verify_slice(&signature_bytes)
       .map_err(|_| anyhow!("invalid secret"))
+  }
+
+  pub fn github_client(&self) -> Result<Client, Error> {
+    let mut headers = HeaderMap::new();
+    headers.insert(
+      header::ACCEPT,
+      header::HeaderValue::from_static("application/vnd.github.v3+json"),
+    );
+    headers.insert(
+      header::USER_AGENT,
+      header::HeaderValue::from_static("Dosei"),
+    );
+    let client = Client::builder().default_headers(headers).build()?;
+    Ok(client)
   }
 }
 
