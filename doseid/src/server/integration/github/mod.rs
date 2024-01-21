@@ -8,7 +8,6 @@ use hmac::{Hmac, Mac};
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
 use reqwest::header::HeaderMap;
 use reqwest::{header, Client, Error, Response, StatusCode};
-use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::Sha256;
 use std::env;
@@ -162,48 +161,6 @@ impl GithubIntegration {
     Err(response.error_for_status_ref().err().unwrap())
   }
 
-  async fn update_deployment_status(
-    &self,
-    status: GithubDeploymentStatus,
-    repo_full_name: &str,
-    installation_id: i64,
-    commit_id: &str,
-  ) -> Result<(), Error> {
-    let github_token = self.get_installation_token(installation_id).await;
-    let github_api_repo_url = format!("https://api.github.com/repos/{}", repo_full_name);
-    let client = Client::new();
-    let headers = HeaderMap::new();
-
-    let status_info = status.info();
-
-    client
-      .post(format!("{}/statuses/{}", github_api_repo_url, commit_id))
-      .json(&json!({
-          "state": status_info.state,
-          "description": status_info.message,
-          "target_url": format!("{}/{}/deployments/{}", "app_base_url", repo_full_name, commit_id),
-          "context": self.app_name
-      }))
-      .headers(headers.clone())
-      .send()
-      .await?;
-
-    if status == GithubDeploymentStatus::Succeeded {
-      client
-        .post(format!(
-          "{}/commits/{}/comments",
-          github_api_repo_url, commit_id
-        ))
-        .json(&json!({
-            "body": "Successfully deployed in production."
-        }))
-        .headers(headers)
-        .send()
-        .await?;
-    }
-    Ok(())
-  }
-
   pub async fn get_user_access_token(&self, code: String) -> Result<String, AccessTokenError> {
     let response = self
       .github_client()?
@@ -339,33 +296,6 @@ pub enum AccessTokenError {
 
   #[error("The code passed is incorrect or expired.")]
   BadVerificationCode,
-}
-
-#[derive(PartialEq)]
-enum GithubDeploymentStatus {
-  Deploying,
-  Succeeded,
-}
-
-#[derive(Serialize, Deserialize, PartialEq)]
-struct DeploymentInfo {
-  state: String,
-  message: String,
-}
-
-impl GithubDeploymentStatus {
-  fn info(&self) -> DeploymentInfo {
-    match self {
-      GithubDeploymentStatus::Deploying => DeploymentInfo {
-        state: "pending".to_string(),
-        message: "Deploying...".to_string(),
-      },
-      GithubDeploymentStatus::Succeeded => DeploymentInfo {
-        state: "success".to_string(),
-        message: "Deployment succeeded".to_string(),
-      },
-    }
-  }
 }
 
 // TODO: Support passing settings to run github tests
