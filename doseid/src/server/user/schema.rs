@@ -9,9 +9,25 @@ pub struct User {
   pub username: String,
   pub name: Option<String>,
   pub email: String,
-  pub github: Option<Value>,
+  pub github: Option<UserGithub>,
   pub gitlab: Option<Value>,
   pub bitbucket: Option<Value>,
   pub updated_at: DateTime<Utc>,
   pub created_at: DateTime<Utc>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct UserGithub {
+  login: String,
+  id: i64,
+  access_token: Option<String>,
+  emails: Vec<UserGithubEmail>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct UserGithubEmail {
+  email: String,
+  primary: bool,
+  verified: bool,
+  visibility: Option<String>,
 }
