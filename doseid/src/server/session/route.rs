@@ -110,7 +110,7 @@ pub async fn api_logout(
 ) -> Result<Response, StatusCode> {
   let session = validate_session(Arc::clone(&pool), &config, headers).await?;
 
-  if let Err(e) = sqlx::query_as!(
+  if sqlx::query_as!(
     Session,
     "SELECT * FROM session WHERE id = $1::uuid and owner_id = $2::uuid",
     query.session_id,
@@ -118,6 +118,7 @@ pub async fn api_logout(
   )
   .fetch_one(&**pool)
   .await
+  .is_err()
   {
     return Ok(
       (
@@ -132,7 +133,7 @@ pub async fn api_logout(
       "DELETE FROM session WHERE owner_id = $1::uuid",
       session.owner_id
     )
-    .fetch_one(&**pool)
+    .execute(&**pool)
     .await
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     return Ok(
@@ -148,7 +149,7 @@ pub async fn api_logout(
     query.session_id,
     session.owner_id
   )
-  .fetch_one(&**pool)
+  .execute(&**pool)
   .await
   .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
   Ok(
