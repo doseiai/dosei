@@ -10,9 +10,20 @@ pub struct User {
   pub username: String,
   pub name: Option<String>,
   pub email: String,
-  pub github: Option<UserGithub>,
+  pub github: Option<Value>,
   pub gitlab: Option<Value>,
   pub bitbucket: Option<Value>,
   pub updated_at: DateTime<Utc>,
   pub created_at: DateTime<Utc>,
+}
+
+impl User {
+  pub fn deserialize_github(&self) -> Result<Option<UserGithub>, serde_json::Error> {
+    if let Some(github_json) = &self.github {
+      let github_data: UserGithub = serde_json::from_value(github_json.clone())?;
+      Ok(Some(github_data))
+    } else {
+      Ok(None)
+    }
+  }
 }

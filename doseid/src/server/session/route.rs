@@ -2,6 +2,7 @@ use crate::config::Config;
 use crate::server::integration::github::AccessTokenError;
 use crate::server::session::schema::{Session, SessionCredentials};
 use crate::server::session::validate_session;
+use crate::server::user::schema::User;
 use axum::extract::Query;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
@@ -11,7 +12,7 @@ use serde::Deserialize;
 use serde_json::json;
 use sqlx::{Pool, Postgres};
 use std::sync::Arc;
-use tracing::{error, info};
+use tracing::error;
 use uuid::Uuid;
 
 pub async fn api_auth_github_cli(
@@ -40,7 +41,8 @@ pub async fn api_auth_github_cli(
       error!("{}", e);
       StatusCode::INTERNAL_SERVER_ERROR
     })?;
-  match sqlx::query!(
+  let user = match sqlx::query_as!(
+    User,
     "SELECT * FROM \"user\" WHERE (github ->> 'id')::bigint = $1",
     user.id
   )
@@ -48,7 +50,8 @@ pub async fn api_auth_github_cli(
   .await
   {
     Ok(rec) => {
-      sqlx::query!(
+      sqlx::query_as!(
+        User,
         "UPDATE \"user\" SET github = $1, updated_at = $2  WHERE (github ->> 'id')::bigint = $3 RETURNING *",
         json!(user),
         Utc::now(),
@@ -56,11 +59,11 @@ pub async fn api_auth_github_cli(
       )
         .fetch_one(&**pool)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-      info!("{:?}", rec);
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
     }
     Err(err) => {
-      sqlx::query!(
+      sqlx::query_as!(
+        User,
         "
         INSERT INTO \"user\" (id, username, email, github, updated_at, created_at)
         VALUES ($1, $2, $3, $4, $5, $6)
@@ -75,13 +78,11 @@ pub async fn api_auth_github_cli(
       )
       .fetch_one(&**pool)
       .await
-      .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-      error!("{}", err);
+      .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
     }
-  }
-  let owner_id = Uuid::new_v4();
+  };
   let credentials =
-    Session::new(&config, owner_id).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    Session::new(&config, user.id).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
   sqlx::query!(
     "
     INSERT INTO session (id, token, refresh_token, owner_id, updated_at, created_at)

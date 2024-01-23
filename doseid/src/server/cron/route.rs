@@ -2,6 +2,7 @@ use crate::server::cron::get_cron_jobs;
 use crate::server::cron::schema::CronJob;
 use axum::http::StatusCode;
 use axum::{Extension, Json};
+use chrono::Utc;
 use serde::Deserialize;
 use sqlx::{Pool, Postgres};
 use std::sync::Arc;
@@ -19,8 +20,8 @@ pub async fn api_create_job(
     owner_id: body.owner_id,
     project_id: body.project_id,
     deployment_id: body.deployment_id,
-    updated_at: Default::default(),
-    created_at: Default::default(),
+    updated_at: Utc::now(),
+    created_at: Utc::now(),
   };
   match sqlx::query_as!(
     CronJob,

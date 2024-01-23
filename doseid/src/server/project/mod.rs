@@ -3,12 +3,14 @@ mod schema;
 use crate::config::Config;
 use crate::server::integration::github::CreateRepoError;
 use crate::server::project::schema::{GitSource, Project};
+use crate::server::session::validate_session;
+use crate::server::user::get_user;
 use axum::http::StatusCode;
 use axum::{Extension, Json};
+use chrono::Utc;
 use serde::Deserialize;
 use sqlx::{Pool, Postgres};
 use std::collections::HashMap;
-use std::env;
 use std::path::Path;
 use std::sync::Arc;
 use tempfile::tempdir;
@@ -18,8 +20,10 @@ use uuid::Uuid;
 pub async fn api_new_project(
   config: Extension<&'static Config>,
   pool: Extension<Arc<Pool<Postgres>>>,
+  headers: axum::http::HeaderMap,
   Json(body): Json<NewProjectFromClone>,
 ) -> Result<StatusCode, StatusCode> {
+  let session = validate_session(Arc::clone(&pool), &config, headers).await?;
   let github_integration = match config.github_integration.as_ref() {
     Some(github) => github,
     None => {
@@ -27,10 +31,20 @@ pub async fn api_new_project(
       return Err(StatusCode::SERVICE_UNAVAILABLE);
     }
   };
-  // TODO: Find on db
-  let access_token = &env::var("GITHUB_TEST_ACCESS_TOKEN").unwrap();
+  println!("{:?}", session);
+  let user = get_user(session.owner_id, Arc::clone(&pool))
+    .await
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+  println!("{:?}", user);
+  let user_github = user
+    .deserialize_github()
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+    .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+  let access_token = user_github
+    .access_token
+    .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
   let github_repo_response = github_integration
-    .new_individual_repository(&body.name, None, access_token)
+    .new_individual_repository(&body.name, None, &access_token)
     .await
     .map_err(|e| match e {
       CreateRepoError::RequestError(_) => {
@@ -55,7 +69,7 @@ pub async fn api_new_project(
       body.source_full_name,
       temp_path,
       body.branch.as_deref(),
-      Some(access_token),
+      Some(&access_token),
       None,
     )
     .await
@@ -67,11 +81,11 @@ pub async fn api_new_project(
   let project = Project {
     id: Uuid::new_v4(),
     name: body.name.clone(),
-    owner_id: body.owner_id,
+    owner_id: session.owner_id,
     git_source: GitSource::Github,
     git_source_metadata: github_repo_response,
-    updated_at: Default::default(),
-    created_at: Default::default(),
+    updated_at: Utc::now(),
+    created_at: Utc::now(),
   };
   match sqlx::query_as!(
       Project,
@@ -97,12 +111,12 @@ pub async fn api_new_project(
 
   github_integration
     .git_push(
-      format!("Alw3ys/{}", body.name),
+      format!("{}/{}", user_github.login, body.name),
       &template_path,
-      Some(access_token),
+      Some(&access_token),
       None,
-      "Alw3ys",
-      "am@dosei.ai",
+      &user_github.login,
+      &user_github.email,
     )
     .await
     .map_err(|err| {
@@ -121,7 +135,6 @@ pub struct NewProjectFromClone {
   branch: Option<String>,
   path: Option<String>,
   private: Option<bool>,
-  owner_id: Uuid,
   name: String,
   envs: Option<HashMap<String, String>>,
 }
