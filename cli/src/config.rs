@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs::{self, File};
 use std::io::{Read, Write};
-use std::path::{PathBuf};
+use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
 // TODO: Get this from the API directly
@@ -13,24 +13,26 @@ pub const GITHUB_CLIENT_ID: &str = "Iv1.0d2388105db85287";
 pub struct Config {
   api_base_url: String,
   token: Option<String>,
+  credentials_path: PathBuf,
 }
 
 impl Config {
   pub fn new() -> anyhow::Result<Config> {
     Ok(Config {
-      api_base_url: env::var("API_BASE_URL").unwrap_or_else(|_| DEFAULT_API_BASE_URL.to_string()),
+      api_base_url: env::var("API_BASE_URL").unwrap_or_else(|_| "https://api.dosei.ai".to_string()),
       token: env::var("DOSEI_TOKEN").ok(),
+      credentials_path: home_dir()
+        .unwrap_or_else(|| PathBuf::from("/tmp"))
+        .join(".dosei/credentials.json"),
     })
   }
 
   pub fn store_token_from_session(&self, session: &SessionCredentials) -> anyhow::Result<()> {
-    let mut path = home_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
-    path.push(CREDENTIALS_PATH);
-    if let Some(parent) = path.parent() {
+    if let Some(parent) = self.credentials_path.parent() {
       fs::create_dir_all(parent).expect("Failed to create directories");
     }
 
-    let mut file = File::create(path).expect("Failed to create file");
+    let mut file = File::create(&self.credentials_path).expect("Failed to create file");
     file
       .write_all(
         serde_json::to_string_pretty(session)
@@ -42,20 +44,16 @@ impl Config {
   }
 
   pub fn remove_stored_credentials(&self) -> anyhow::Result<()> {
-    let mut path = home_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
-    path.push(CREDENTIALS_PATH);
-    fs::remove_file(path).expect("Failed to remove file");
+    fs::remove_file(&self.credentials_path).expect("Failed to remove file");
     Ok(())
   }
 
   pub fn session(&self) -> Option<SessionCredentials> {
-    let mut path = home_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
-    path.push(CREDENTIALS_PATH);
-    if !path.exists() {
+    if !self.credentials_path.exists() {
       return None;
     }
 
-    let mut file = File::open(path).expect("Failed to open file");
+    let mut file = File::open(&self.credentials_path).expect("Failed to open file");
     let mut contents = String::new();
     file
       .read_to_string(&mut contents)
@@ -69,13 +67,11 @@ impl Config {
       return Some(token.clone());
     }
 
-    let mut path = home_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
-    path.push(CREDENTIALS_PATH);
-    if !path.exists() {
+    if !self.credentials_path.exists() {
       return None;
     }
 
-    let mut file = File::open(path).expect("Failed to open file");
+    let mut file = File::open(&self.credentials_path).expect("Failed to open file");
     let mut contents = String::new();
     file
       .read_to_string(&mut contents)
@@ -86,9 +82,6 @@ impl Config {
     Some(credentials.token)
   }
 }
-
-const CREDENTIALS_PATH: &str = ".dosei/credentials.json";
-const DEFAULT_API_BASE_URL: &str = "https://api.dosei.ai";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SessionCredentials {
