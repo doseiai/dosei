@@ -64,6 +64,7 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
     )
     .route("/auth/logout", routing::delete(session::route::api_logout))
     .route("/projects/clone", routing::post(project::api_new_project))
+    .route("/user", routing::get(user::route::api_get_user))
     .route("/info", routing::get(info::api_info))
     .route("/ping", routing::get(ping::api_ping))
     .route(
