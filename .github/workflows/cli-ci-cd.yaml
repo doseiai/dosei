@@ -38,6 +38,12 @@ jobs:
       - name: Zip
         run: zip -r dosei-${{ matrix.target }}-unknown-linux-gnu.zip target/${{ matrix.target }}-unknown-linux-gnu/release/cli
 
+      - name: Upload Zip
+        uses: actions/upload-artifact@v3
+        with:
+          name: dosei
+          path: dosei-${{ matrix.target }}-unknown-linux-gnu.zip
+
   macos:
     runs-on: macos-latest
     strategy:
@@ -64,6 +70,12 @@ jobs:
       - name: Zip
         run: zip -r dosei-${{ matrix.target }}-apple-darwin.zip target/${{ matrix.target }}-apple-darwin/release/cli
 
+      - name: Upload Zip
+        uses: actions/upload-artifact@v3
+        with:
+          name: dosei
+          path: dosei-${{ matrix.target }}-apple-darwin.zip
+
   windows:
     runs-on: windows-latest
     strategy:
@@ -89,3 +101,9 @@ jobs:
 
       - name: Zip
         run: zip -r dosei-${{ matrix.target }}-pc-windows-msvc.zip target/${{ matrix.target }}-pc-windows-msvc/release/cli
+
+      - name: Upload Zip
+        uses: actions/upload-artifact@v3
+        with:
+          name: dosei
+          path: dosei-${{ matrix.target }}-pc-windows-msvc.zip
