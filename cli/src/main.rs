@@ -6,9 +6,9 @@ mod test;
 
 use crate::command::login::login;
 use crate::command::logout::logout;
+use crate::command::session::session;
 use crate::config::{Config, VERSION};
 use clap::Command;
-use crate::command::session::session;
 
 fn cli() -> Command {
   Command::new("dctl")

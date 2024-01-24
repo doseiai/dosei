@@ -1,6 +1,6 @@
+use crate::config::Config;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use crate::config::Config;
 
 pub fn session(config: &'static Config) {
   println!("Cluster Host: {}", config.api_base_url);
@@ -24,5 +24,5 @@ pub fn session(config: &'static Config) {
 struct User {
   id: Uuid,
   username: String,
-  email: String
+  email: String,
 }
