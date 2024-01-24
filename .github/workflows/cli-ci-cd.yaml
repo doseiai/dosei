@@ -52,11 +52,15 @@ jobs:
 
       - name: Zip (Linux/MacOS)
         if: matrix.os != 'windows-latest'
-        run: zip -j dosei-${{ matrix.target }}.zip target/${{ matrix.target }}/release/cli
+        run: |
+          mv target/${{ matrix.target }}/release/cli target/${{ matrix.target }}/release/dosei
+          zip -j dosei-${{ matrix.target }}.zip target/${{ matrix.target }}/release/cli
 
       - name: Zip (Windows)
         if: matrix.os == 'windows-latest'
-        run: Compress-Archive -CompressionLevel Optimal -Force -Path target/${{ matrix.target }}/release/cli.exe -DestinationPath dosei-${{ matrix.target }}.zip
+        run: |
+          Move-Item -Path target/${{ matrix.target }}/release/cli.exe -Destination target/${{ matrix.target }}/release/dosei.exe
+          Compress-Archive -CompressionLevel Optimal -Force -Path target/${{ matrix.target }}/release/cli.exe -DestinationPath dosei-${{ matrix.target }}.zip
 
       - name: Upload Zip
         uses: actions/upload-artifact@v3
