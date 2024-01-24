@@ -14,8 +14,8 @@ pub fn session(config: &'static Config) {
       .send()
       .unwrap();
     if response.status().is_success() {
-      let body = response.json::<User>().unwrap();
-      println!("User: {} ({})", body.username, body.email);
+      let user = response.json::<User>().unwrap();
+      println!("User: {} ({})", user.username, user.email);
     }
   }
 }
