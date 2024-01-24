@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 // TODO: Get this from the API directly
-pub const GITHUB_CLIENT_ID: &str = "Iv1.0d2388105db85287";
+pub const GITHUB_CLIENT_ID: &str = "Iv1.261badedf2d43fd5";
 
 #[derive(Debug)]
 pub struct Config {
