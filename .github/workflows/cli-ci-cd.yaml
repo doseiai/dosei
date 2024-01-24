@@ -19,8 +19,9 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-          - os: ubuntu-latest
-            target: aarch64-unknown-linux-gnu
+#          TODO: Implement
+#          - os: ubuntu-latest
+#            target: aarch64-unknown-linux-gnu
           - os: macos-latest
             target: x86_64-apple-darwin
           - os: macos-latest
@@ -63,107 +64,6 @@ jobs:
           name: dosei
           path: dosei-${{ matrix.target }}.zip
 
-#jobs:
-#  linux:
-#    runs-on: ubuntu-latest
-#    strategy:
-#      matrix:
-#        target: [x86_64]
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v3
-#
-#      - name: Install Rust
-#        uses: dsherret/rust-toolchain-file@v1
-#
-#      - name: Rust Cache
-#        uses: Swatinem/rust-cache@v2
-#
-#      - name: Install Protoc
-#        uses: arduino/setup-protoc@v2
-#        with:
-#          repo-token: ${{ secrets.GITHUB_TOKEN }}
-##
-#      - name: Build Release
-#        run: cargo build --package cli --target ${{ matrix.target }}-unknown-linux-gnu --release
-#
-#      - name: Zip
-#        run: zip -r dosei-${{ matrix.target }}-unknown-linux-gnu.zip target/${{ matrix.target }}-unknown-linux-gnu/release/cli
-#
-#      - name: Upload Zip
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: dosei
-#          path: dosei-${{ matrix.target }}-unknown-linux-gnu.zip
-#
-#  macos:
-#    runs-on: macos-latest
-#    strategy:
-#      matrix:
-#        target: [x86_64, aarch64]
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v3
-#
-#      - name: Install Rust
-#        uses: dsherret/rust-toolchain-file@v1
-#
-#      - name: Install aarch64
-#        if: matrix.target == 'aarch64'
-#        run: rustup target add aarch64-apple-darwin
-#
-#      - name: Rust Cache
-#        uses: Swatinem/rust-cache@v2
-#
-#      - name: Install Protoc
-#        uses: arduino/setup-protoc@v2
-#        with:
-#          repo-token: ${{ secrets.GITHUB_TOKEN }}
-#
-#      - name: Build Release
-#        run: cargo build --package cli --target ${{ matrix.target }}-apple-darwin --release
-#
-#      - name: Zip
-#        run: zip -r dosei-${{ matrix.target }}-apple-darwin.zip target/${{ matrix.target }}-apple-darwin/release/cli
-#
-#      - name: Upload Zip
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: dosei
-#          path: dosei-${{ matrix.target }}-apple-darwin.zip
-#
-#  windows:
-#    runs-on: windows-latest
-#    strategy:
-#      matrix:
-#        target: [x86_64]
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v3
-#
-#      - name: Install Rust
-#        uses: dsherret/rust-toolchain-file@v1
-#
-#      - name: Rust Cache
-#        uses: Swatinem/rust-cache@v2
-#
-#      - name: Install Protoc
-#        uses: arduino/setup-protoc@v2
-#        with:
-#          repo-token: ${{ secrets.GITHUB_TOKEN }}
-#
-#      - name: Build Release
-#        run: cargo build --package cli --target ${{ matrix.target }}-pc-windows-msvc --release
-#
-#      - name: Zip
-#        run: Compress-Archive -CompressionLevel Optimal -Force -Path target/${{ matrix.target }}-pc-windows-msvc/release/cli.exe -DestinationPath dosei-${{ matrix.target }}-pc-windows-msvc.zip
-#
-#      - name: Upload Zip
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: dosei
-#          path: dosei-${{ matrix.target }}-pc-windows-msvc.zip
-#
   release:
     name: Release
     runs-on: ubuntu-latest
@@ -178,7 +78,7 @@ jobs:
         with:
           files: |
             dosei-x86_64-unknown-linux-gnu.zip
-            dosei-aarch64-unknown-linux-gnu.zip
+#            dosei-aarch64-unknown-linux-gnu.zip
             dosei-x86_64-apple-darwin.zip
             dosei-aarch64-apple-darwin.zip
             dosei-x86_64-pc-windows-msvc.zip
