@@ -10,10 +10,12 @@ RUN apt-get update && apt-get install -y build-essential protobuf-compiler pytho
 COPY Cargo.toml Cargo.lock ./
 
 # Mock workspace members
-RUN cargo new proto --lib && cargo new util --lib && cargo new doseid --bin && cargo new proxy --bin
+RUN cargo new proto --lib && cargo new util --lib && cargo new doseid --bin && cargo new proxy --bin && cargo new cli --bin
 COPY proto/Cargo.toml ./proto/
 COPY doseid/Cargo.toml ./doseid/
 COPY proxy/Cargo.toml ./proxy/
+COPY cli/Cargo.toml ./cli/
+
 # Exception, for some reason doesn't work with this stuff
 COPY util/ ./util/
 

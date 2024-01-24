@@ -4,34 +4,27 @@ mod config;
 #[cfg(test)]
 mod test;
 
-use crate::config::Config;
-use clap::{arg, Command};
+use crate::command::login::login;
+use crate::command::logout::logout;
+use crate::config::{Config, VERSION};
+use clap::Command;
 
 fn cli() -> Command {
   Command::new("dctl")
-    .about("A fictional versioning CLI")
+    .version(VERSION)
     .subcommand_required(true)
     .arg_required_else_help(true)
     .allow_external_subcommands(true)
-    .subcommand(
-      Command::new("login")
-        .about("Clones repos")
-        .arg(arg!(<REMOTE> "The remote to clone"))
-        .arg_required_else_help(true),
-    )
+    .subcommand(Command::new("login").about("Log in to a cluster"))
+    .subcommand(Command::new("logout").about("Log out from a cluster"))
 }
 
 fn main() -> anyhow::Result<()> {
   let config: &'static Config = Box::leak(Box::new(Config::new()?));
-  println!("{:?}", config);
   let matches = cli().get_matches();
   match matches.subcommand() {
-    Some(("clone", sub_matches)) => {
-      println!(
-        "Cloning {}",
-        sub_matches.get_one::<String>("REMOTE").expect("required")
-      );
-    }
+    Some(("login", _)) => login(config),
+    Some(("logout", _)) => logout(config),
     _ => unreachable!(),
   }
   Ok(())

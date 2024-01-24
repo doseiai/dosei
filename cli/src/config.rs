@@ -1,17 +1,21 @@
 use home::home_dir;
+use reqwest::blocking::Client;
+use reqwest::header::HeaderMap;
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs::{self, File};
 use std::io::{Read, Write};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
+use sysinfo::System;
 use uuid::Uuid;
 
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 // TODO: Get this from the API directly
 pub const GITHUB_CLIENT_ID: &str = "Iv1.0d2388105db85287";
 
 #[derive(Debug)]
 pub struct Config {
-  api_base_url: String,
+  pub api_base_url: String,
   token: Option<String>,
   credentials_path: PathBuf,
 }
@@ -48,6 +52,22 @@ impl Config {
     Ok(())
   }
 
+  pub fn cluster_api_client(&self) -> Result<Client, reqwest::Error> {
+    let mut headers = HeaderMap::new();
+    let user_agent_value = format!(
+      "Dosei/{} ({} {}) CLI",
+      VERSION,
+      System::name().unwrap(),
+      System::os_version().unwrap()
+    );
+    headers.insert(
+      reqwest::header::USER_AGENT,
+      reqwest::header::HeaderValue::from_str(&user_agent_value).unwrap(),
+    );
+    let client = Client::builder().default_headers(headers).build()?;
+    Ok(client)
+  }
+
   pub fn session(&self) -> Option<SessionCredentials> {
     if !self.credentials_path.exists() {
       return None;
@@ -60,6 +80,15 @@ impl Config {
       .expect("Failed to read file");
 
     Some(serde_json::from_str(&contents).expect("Failed to deserialize"))
+  }
+
+  pub fn bearer_token(&self) -> String {
+    self.session_token().expect(
+      "
+      To get started with Dosei CLI, please run: dosei login\n\
+      Alternatively, populate the DOSEI_TOKEN environment variable with a Dosei API authentication token\
+      "
+    )
   }
 
   pub fn session_token(&self) -> Option<String> {
