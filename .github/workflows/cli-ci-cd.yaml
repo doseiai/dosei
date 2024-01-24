@@ -112,7 +112,7 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
 #    if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
-    needs: [linux]
+    needs: [linux, windows]
     steps:
       - uses: actions/download-artifact@v3
         with:
