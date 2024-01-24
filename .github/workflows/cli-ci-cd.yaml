@@ -35,6 +35,9 @@ jobs:
       - name: Install Rust
         uses: dsherret/rust-toolchain-file@v1
 
+      - name: Install ${{ matrix.target }}
+        run: rustup target add ${{ matrix.target }}
+
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
 
