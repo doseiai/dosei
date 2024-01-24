@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   build:
-    name: 'build ${{ matrix.os_display_name }}'
+    name: 'build ${{ matrix.target }}'
     strategy:
       matrix:
         os: [ubuntu-latest, ubuntu-latest, macos-latest, macos-latest, windows-latest]
