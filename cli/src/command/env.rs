@@ -28,6 +28,6 @@ struct Env {
   value: String,
 }
 
-pub fn set_env(config: &'static Config) {
+pub fn set_env(_config: &'static Config) {
   todo!();
 }
