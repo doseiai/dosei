@@ -4,10 +4,12 @@ use axum::http::StatusCode;
 use axum::{Extension, Json};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use tracing::error;
 use uuid::Uuid;
 
 pub async fn api_info(config: Extension<&'static Config>) -> Result<Json<Info>, StatusCode> {
   let cluster_info = Arc::clone(&CLUSTER_INFO);
+
   Ok(Json(Info {
     server: Server {
       id: config.node_info.id,
@@ -18,6 +20,16 @@ pub async fn api_info(config: Extension<&'static Config>) -> Result<Json<Info>, 
       },
       address: config.address.clone(),
       version: VERSION.to_string(),
+      integration: Integration {
+        github: config
+          .github_integration
+          .as_ref()
+          .map(|github| GithubIntegration {
+            app_name: github.app_name.clone(),
+            app_id: github.app_id.clone(),
+            client_id: github.client_id.clone(),
+          }),
+      },
     },
   }))
 }
@@ -33,6 +45,19 @@ pub struct Server {
   mode: Mode,
   address: Address,
   version: String,
+  integration: Integration,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Integration {
+  github: Option<GithubIntegration>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GithubIntegration {
+  pub app_name: String,
+  pub app_id: String,
+  pub client_id: String,
 }
 
 #[allow(clippy::upper_case_acronyms)]
