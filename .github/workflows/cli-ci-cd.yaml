@@ -57,7 +57,7 @@ jobs:
         uses: dsherret/rust-toolchain-file@v1
 
       - name: Install aarch64
-        if: ${{ matrix.target }} == "aarch64"
+        if: matrix.target == 'aarch64'
         run: rustup target add aarch64-apple-darwin
 
       - name: Rust Cache
