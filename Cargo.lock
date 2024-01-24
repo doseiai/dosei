@@ -475,7 +475,7 @@ checksum = "702fc72eb24e5a1e48ce58027a675bc24edd52096d5397d4aea7c6dd9eca0bd1"
 
 [[package]]
 name = "cli"
-version = "0.0.7"
+version = "0.0.8"
 dependencies = [
  "anyhow",
  "clap",
@@ -770,7 +770,7 @@ dependencies = [
 
 [[package]]
 name = "dosei_proto"
-version = "0.0.7"
+version = "0.0.8"
 dependencies = [
  "prost",
  "prost-build",
@@ -778,7 +778,7 @@ dependencies = [
 
 [[package]]
 name = "dosei_util"
-version = "0.0.7"
+version = "0.0.8"
 dependencies = [
  "pyo3",
  "regex",
@@ -789,7 +789,7 @@ dependencies = [
 
 [[package]]
 name = "doseid"
-version = "0.0.7"
+version = "0.0.8"
 dependencies = [
  "anyhow",
  "axum",
@@ -2312,7 +2312,7 @@ dependencies = [
 
 [[package]]
 name = "proxy"
-version = "0.0.7"
+version = "0.0.8"
 dependencies = [
  "anyhow",
  "axum",
