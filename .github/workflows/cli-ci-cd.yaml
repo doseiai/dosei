@@ -78,7 +78,6 @@ jobs:
         with:
           files: |
             dosei-x86_64-unknown-linux-gnu.zip
-#            dosei-aarch64-unknown-linux-gnu.zip
             dosei-x86_64-apple-darwin.zip
             dosei-aarch64-apple-darwin.zip
             dosei-x86_64-pc-windows-msvc.zip
