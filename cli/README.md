@@ -6,7 +6,7 @@
 
 #### Installation
 
-To install the Dosei engine, run the following commands:
+To install the Dosei CLI, run the following command:
 
 Shell (Mac, Linux):
 
