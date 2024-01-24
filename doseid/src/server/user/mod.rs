@@ -4,6 +4,7 @@ use std::error::Error;
 use std::sync::Arc;
 use uuid::Uuid;
 
+pub(crate) mod route;
 pub(crate) mod schema;
 
 pub async fn get_user(id: Uuid, pool: Arc<Pool<Postgres>>) -> Result<User, Box<dyn Error>> {
