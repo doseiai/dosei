@@ -42,7 +42,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        target: [x86_64]
+        target: [x86_64, aarch64]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -63,3 +63,29 @@ jobs:
 
       - name: Zip
         run: zip -r dosei-${{ matrix.target }}-apple-darwin.zip target/${{ matrix.target }}-apple-darwin/release/cli
+
+  windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        target: [x86_64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: dsherret/rust-toolchain-file@v1
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Release
+        run: cargo build --package cli --target ${{ matrix.target }}-pc-windows-msvc --release
+
+      - name: Zip
+        run: zip -r dosei-${{ matrix.target }}-pc-windows-msvc.zip target/${{ matrix.target }}-pc-windows-msvc/release/cli
