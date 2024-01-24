@@ -1,4 +1,5 @@
-use crate::config::{Config, SessionCredentials, GITHUB_CLIENT_ID};
+use crate::cluster::get_cluster_info;
+use crate::config::{Config, SessionCredentials};
 use reqwest::Url;
 use tiny_http::{Header, Response, Server};
 
@@ -6,9 +7,10 @@ pub fn login(config: &'static Config) {
   let host = "localhost:8085";
   let base_url = format!("http://{}", host);
   let server = Server::http(host).unwrap();
+  let cluster_info = get_cluster_info(config).expect("Couldn't fetch cluster info");
   let auth_url = format!(
     "https://github.com/login/oauth/authorize?client_id={}&redirect_uri={}/auth/github/cli&scope=read:user,user:email",
-    GITHUB_CLIENT_ID,
+    cluster_info.server.integration.github.expect("Github Integration disabled").client_id,
     base_url
   );
 

@@ -2,6 +2,7 @@ mod command;
 mod config;
 mod session;
 
+mod cluster;
 #[cfg(test)]
 mod test;
 
