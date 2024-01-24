@@ -10,14 +10,19 @@ use crate::command::login::login;
 use crate::command::logout::logout;
 use crate::command::session::session;
 use crate::config::{Config, VERSION};
-use clap::{ArgMatches, Command};
+use clap::Command;
 
 fn cli() -> Command {
-  let env_command = Command::new("env")
+  let env_subcommand = Command::new("env")
     .about("Environment variables commands")
     .subcommand_required(true)
     .subcommand(Command::new("list").about("List environment variables"))
     .subcommand(Command::new("set").about("Set environment variables"));
+
+  let token_subcommand = Command::new("token")
+    .about("Tokens commands")
+    .subcommand_required(true)
+    .subcommand(Command::new("list").about("List tokens"));
 
   Command::new("dctl")
     .version(VERSION)
@@ -27,7 +32,8 @@ fn cli() -> Command {
     .subcommand(Command::new("login").about("Log in to a cluster"))
     .subcommand(Command::new("logout").about("Log out from a cluster"))
     .subcommand(Command::new("session").about("Print active cluster session"))
-    .subcommand(env_command)
+    .subcommand(env_subcommand)
+    .subcommand(token_subcommand)
 }
 
 fn main() -> anyhow::Result<()> {
@@ -40,6 +46,10 @@ fn main() -> anyhow::Result<()> {
     Some(("env", params)) => match params.subcommand() {
       Some(("list", _)) => list_env(config),
       Some(("set", _)) => set_env(config),
+      _ => unreachable!(),
+    },
+    Some(("token", params)) => match params.subcommand() {
+      Some(("list", _)) => list_env(config),
       _ => unreachable!(),
     },
     _ => unreachable!(),
