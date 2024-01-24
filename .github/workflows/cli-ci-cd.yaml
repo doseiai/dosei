@@ -54,13 +54,13 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: |
           mv target/${{ matrix.target }}/release/cli target/${{ matrix.target }}/release/dosei
-          zip -j dosei-${{ matrix.target }}.zip target/${{ matrix.target }}/release/cli
+          zip -j dosei-${{ matrix.target }}.zip target/${{ matrix.target }}/release/dosei
 
       - name: Zip (Windows)
         if: matrix.os == 'windows-latest'
         run: |
           Move-Item -Path target/${{ matrix.target }}/release/cli.exe -Destination target/${{ matrix.target }}/release/dosei.exe
-          Compress-Archive -CompressionLevel Optimal -Force -Path target/${{ matrix.target }}/release/cli.exe -DestinationPath dosei-${{ matrix.target }}.zip
+          Compress-Archive -CompressionLevel Optimal -Force -Path target/${{ matrix.target }}/release/dosei.exe -DestinationPath dosei-${{ matrix.target }}.zip
 
       - name: Upload Zip
         uses: actions/upload-artifact@v3
