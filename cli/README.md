@@ -1,6 +1,15 @@
 > :warning: Unstable Release!
 > This is a work in progress for the migration of dctl (Python) to dctl (Rust)
+> Stick to https://github.com/doseiai/dctl
 
-# Dosei CLI
+# Dosei CLI (Unreleased)
 
-Stick to https://github.com/doseiai/dctl
+#### Installation
+
+To install the Dosei engine, run the following commands:
+
+Shell (Mac, Linux):
+
+```bash
+curl -fsSL https://dosei.ai/install.sh | sh
+```
