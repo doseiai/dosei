@@ -38,7 +38,7 @@ fn cli() -> Command {
     )
     .arg(Arg::new("name").index(1).required(true));
 
-  Command::new("dosei")
+  Command::new("dctl")
     .version(VERSION)
     .subcommand_required(true)
     .arg_required_else_help(true)

@@ -474,23 +474,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "702fc72eb24e5a1e48ce58027a675bc24edd52096d5397d4aea7c6dd9eca0bd1"
 
 [[package]]
-name = "cli"
-version = "0.0.8"
-dependencies = [
- "anyhow",
- "clap",
- "home",
- "once_cell",
- "reqwest",
- "serde",
- "serde_json",
- "sysinfo",
- "tiny_http",
- "uuid",
- "webbrowser",
-]
-
-[[package]]
 name = "colorchoice"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -710,6 +693,23 @@ name = "data-encoding"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7e962a19be5cfc3f3bf6dd8f61eb50107f356ad6270fbb3ed41476571db78be5"
+
+[[package]]
+name = "dctl"
+version = "0.0.8"
+dependencies = [
+ "anyhow",
+ "clap",
+ "home",
+ "once_cell",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sysinfo",
+ "tiny_http",
+ "uuid",
+ "webbrowser",
+]
 
 [[package]]
 name = "der"
