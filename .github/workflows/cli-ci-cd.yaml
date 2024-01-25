@@ -48,7 +48,7 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Release
-        run: cargo build --package cli --target ${{ matrix.target }} --release
+        run: cargo build --package dctl --target ${{ matrix.target }} --release
 
       - name: Zip (Linux/MacOS)
         if: matrix.os != 'windows-latest'
