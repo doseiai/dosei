@@ -13,3 +13,9 @@ Shell (Mac, Linux):
 ```bash
 curl -fsSL https://dosei.ai/install.sh | sh
 ```
+
+PowerShell (Windows):
+
+```powershell
+irm https://dosei.ai/install.ps1 | iex
+```
