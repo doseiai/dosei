@@ -15,8 +15,4 @@ Dosei is an open-source project under the [Apache-2.0 license](LICENSE).
 
 ## Join the community
 
-If you have questions about Dosei, reach out to Dosei community members and developers on our [Discord Server](https://discord.com/invite/BP5aUkhcAh)
-<!-- markdownlint-disable -->
-<a href="https://github.com/doseiai/engine/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=doseiai/engine" />
-</a>
+If you have questions about Dosei, reach out to Dosei community members and developers on our [Discord Server](https://discord.com/invite/BP5aUkhcAh).
