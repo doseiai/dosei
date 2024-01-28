@@ -4,7 +4,6 @@ use axum::http::StatusCode;
 use axum::{Extension, Json};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use tracing::error;
 use uuid::Uuid;
 
 pub async fn api_info(config: Extension<&'static Config>) -> Result<Json<Info>, StatusCode> {
