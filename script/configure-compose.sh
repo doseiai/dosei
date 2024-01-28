@@ -9,7 +9,7 @@ echo "
 /____/\____/___/___/___/
 "
 if ! [ -f .env ]; then
-    cp .env.example .env
+    cp .env.template .env
 
     JWT_SECRET=$(openssl rand -hex 8)
     NEW_POSTGRES_PASSWORD=$(openssl rand -hex 8)
