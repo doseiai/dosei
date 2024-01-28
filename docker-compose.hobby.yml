@@ -1,8 +1,8 @@
 version: "3.9"
 
 services:
-  doseid:
-    container_name: doseid
+  dosei:
+    container_name: dosei
     restart: always
     image: doseiai/dosei:0.0.10
     platform: linux/amd64
@@ -20,7 +20,7 @@ services:
       - net
   postgres:
     extends:
-      file: docker-compose.yaml
+      file: docker-compose.base.yml
       service: postgres
     networks:
       - net

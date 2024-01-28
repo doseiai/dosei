@@ -4,8 +4,11 @@ build:
 dev:
 	cargo run --bin doseid -- --config-path dev.doseid.toml
 
-install:
-	./install.sh
+dev-compose:
+	docker compose -f docker-compose.base.yml up
+
+configure-compose:
+	./script/configure-compose.sh
 
 lint:
 	cargo fmt
