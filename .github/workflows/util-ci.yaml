@@ -1,4 +1,4 @@
-name: util-ci-cd
+name: util-ci
 
 on:
   push:

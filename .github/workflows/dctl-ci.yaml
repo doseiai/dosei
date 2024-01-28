@@ -1,4 +1,4 @@
-name: dctl-ci-cd
+name: dctl-ci
 
 on:
   push:
