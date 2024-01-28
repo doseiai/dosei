@@ -4,7 +4,7 @@ services:
   dosei:
     container_name: dosei
     restart: always
-    image: doseiai/dosei:0.0.11
+    image: doseiai/dosei:0.0.12
     platform: linux/amd64
     command: /bin/doseid --host 0.0.0.0
     volumes:
