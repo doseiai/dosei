@@ -81,3 +81,10 @@ jobs:
             dctl-x86_64-apple-darwin.zip
             dctl-aarch64-apple-darwin.zip
             dctl-x86_64-pc-windows-msvc.zip
+      - name: Print files sha256
+        run: |
+          shasum -a 256 \
+          dctl-x86_64-unknown-linux-gnu.zip \
+          dctl-x86_64-apple-darwin.zip \
+          dctl-aarch64-apple-darwin.zip \
+          dctl-x86_64-pc-windows-msvc.zip
