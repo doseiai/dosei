@@ -1,4 +1,4 @@
-name: cli-ci-cd
+name: dctl-ci-cd
 
 on:
   push:
