@@ -18,6 +18,10 @@ use uuid::Uuid;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+pub const DEPLOYMENT_LOG_PATH: &str = ".dosei/doseid/data/deployments/logs";
+
+const TELEMETRY_ID_PATH: &str = ".dosei/doseid/data/id";
+
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None, disable_help_flag = true)]
 struct Args {
@@ -178,7 +182,7 @@ impl Telemetry {
       true => None,
       false => {
         let mut path = home_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
-        path.push(".dosei/doseid/data/id");
+        path.push(TELEMETRY_ID_PATH);
         let dir = path.parent().unwrap();
         if !dir.exists() {
           let _ = fs::create_dir_all(dir);

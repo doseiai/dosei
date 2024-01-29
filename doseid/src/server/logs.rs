@@ -1,3 +1,4 @@
+use crate::config::DEPLOYMENT_LOG_PATH;
 use axum::body::Body;
 use axum::extract::Path;
 use axum::http::StatusCode;
@@ -7,11 +8,12 @@ use serde::Deserialize;
 use std::path::PathBuf;
 use tokio_util::io::ReaderStream;
 
-use crate::deployment::DOSEI_LOGPATH;
-
 pub async fn deployment_logs(Path(params): Path<DeploymentLogParams>) -> impl IntoResponse {
   let mut path = home_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
-  path.push(format!("{}/{}.logs", DOSEI_LOGPATH, params.deployment_id));
+  path.push(format!(
+    "{}/{}.logs",
+    DEPLOYMENT_LOG_PATH, params.deployment_id
+  ));
 
   let file = match tokio::fs::File::open(path).await {
     Ok(file) => file,

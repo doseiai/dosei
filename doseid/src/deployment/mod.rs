@@ -7,11 +7,10 @@ use std::path::{Path, PathBuf};
 use tempfile::tempdir;
 use tracing::{error, info};
 
+use crate::config::DEPLOYMENT_LOG_PATH;
 use crate::server::integration::github::GithubIntegration;
 use tracing_appender::rolling::RollingFileAppender;
 use uuid::Uuid;
-
-pub const DOSEI_LOGPATH: &str = ".dosei/doseid/data/deployments/logs";
 
 // build directly from github repo
 pub async fn build_from_github(
@@ -22,7 +21,7 @@ pub async fn build_from_github(
 ) {
   // aggregate deployment logs
   let mut path = home_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
-  path.push(DOSEI_LOGPATH);
+  path.push(DEPLOYMENT_LOG_PATH);
   let dir = path.parent().unwrap();
   if !dir.exists() {
     let _ = std::fs::create_dir_all(dir);
