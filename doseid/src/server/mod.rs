@@ -1,3 +1,4 @@
+mod certificate;
 mod cluster;
 mod cron;
 mod deployment;
@@ -51,6 +52,14 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
     .route(
       "/envs/:owner_id/:project_id",
       routing::get(secret::api_get_envs),
+    )
+    .route(
+      "/certificate",
+      routing::post(certificate::route::api_new_certificate),
+    )
+    .route(
+      "/.well-known/acme-challenge/:token",
+      routing::get(certificate::route::api_http01_challenge),
     )
     .route("/cron-jobs", routing::post(cron::route::api_create_job))
     .route("/cron-jobs", routing::get(cron::route::api_get_cron_jobs))

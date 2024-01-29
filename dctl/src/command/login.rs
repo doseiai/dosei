@@ -32,7 +32,6 @@ pub fn login(config: &'static Config) {
         .expect("Client connection failed")
         .get(format!("{}/auth/github/cli", config.api_base_url))
         .query(&[("code", code)])
-        .bearer_auth(config.bearer_token())
         .send()
         .unwrap();
       let status_code = response.status();

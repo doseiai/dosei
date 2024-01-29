@@ -6,6 +6,7 @@ mod cluster;
 #[cfg(test)]
 mod test;
 
+use crate::command::certificate::new_certificate;
 use crate::command::env::{list_env, set_env};
 use crate::command::login::login;
 use crate::command::logout::logout;
@@ -26,6 +27,15 @@ fn cli() -> Command {
     .about("Tokens commands")
     .subcommand_required(true)
     .subcommand(Command::new("list").about("List tokens"));
+
+  let certificate_subcommand = Command::new("certificate")
+    .about("Certificates commands")
+    .subcommand_required(true)
+    .subcommand(
+      Command::new("new")
+        .about("New certificate")
+        .arg(Arg::new("name").index(1).required(true)),
+    );
 
   let new_subcommand = Command::new("new")
     .about("New resource commands")
@@ -49,6 +59,7 @@ fn cli() -> Command {
     .subcommand(env_subcommand)
     .subcommand(token_subcommand)
     .subcommand(new_subcommand)
+    .subcommand(certificate_subcommand)
 }
 
 fn main() -> anyhow::Result<()> {
@@ -62,6 +73,10 @@ fn main() -> anyhow::Result<()> {
     Some(("env", params)) => match params.subcommand() {
       Some(("list", _)) => list_env(config),
       Some(("set", _)) => set_env(config),
+      _ => unreachable!(),
+    },
+    Some(("certificate", params)) => match params.subcommand() {
+      Some(("new", arg_matches)) => new_certificate(config, arg_matches),
       _ => unreachable!(),
     },
     Some(("token", params)) => match params.subcommand() {

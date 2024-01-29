@@ -796,6 +796,7 @@ dependencies = [
  "anyhow",
  "axum",
  "bollard",
+ "cached",
  "chrono",
  "clap",
  "cron",
@@ -810,6 +811,7 @@ dependencies = [
  "hex",
  "hmac",
  "home",
+ "instant-acme",
  "jsonwebtoken",
  "once_cell",
  "prost",
@@ -1543,6 +1545,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a5bbe824c507c5da5956355e86a746d82e0e1464f65d862cc5e71da70e94b2c"
 dependencies = [
  "cfg-if",
+]
+
+[[package]]
+name = "instant-acme"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2769c8a853df349759ba7f0f4666447467ea8b677a37bb6b2b477e791a0dc8e"
+dependencies = [
+ "base64 0.21.5",
+ "hyper 0.14.28",
+ "hyper-rustls",
+ "ring",
+ "rustls-pki-types",
+ "serde",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]
@@ -2668,6 +2686,12 @@ checksum = "1c74cae0a4cf6ccbbf5f359f08efdf8ee7e1dc532573bf0db71968cb56b1448c"
 dependencies = [
  "base64 0.21.5",
 ]
+
+[[package]]
+name = "rustls-pki-types"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9e9d979b3ce68192e42760c7810125eb6cf2ea10efae545a156063e61f314e2a"
 
 [[package]]
 name = "rustls-webpki"

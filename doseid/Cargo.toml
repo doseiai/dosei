@@ -49,6 +49,8 @@ hmac = "0.12.1"
 sha2 = "0.10.8"
 tracing-appender = "0.2.3"
 rand = "0.8.5"
+instant-acme = "0.4.2"
+cached = "0.46.1"
 
 [dev-dependencies]
 futures = "0.3.30"
