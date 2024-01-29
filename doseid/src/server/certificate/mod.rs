@@ -3,12 +3,57 @@ pub(crate) mod schema;
 
 use cached::{Cached, TimedCache};
 use instant_acme::{
-  Account, AccountCredentials, ChallengeType, Identifier, LetsEncrypt, NewAccount, NewOrder,
+  Account, AccountCredentials, ChallengeType, Identifier, LetsEncrypt, NewAccount, NewOrder, Order,
+  OrderStatus,
 };
 use once_cell::sync::Lazy;
+use sqlx::testing::TestTermination;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::sync::Mutex;
-use tracing::info;
+use tokio::time::sleep;
+use tracing::error;
+
+const CACHE_LIFESPAN: u64 = 600;
+const INTERNAL_CHECK_SPAN: u64 = 5;
+
+pub fn internal_check(domain_name: &str, token: &str, order: Arc<Mutex<Order>>) {
+  let domain_name = domain_name.to_string();
+  let token = token.to_string();
+  let order = Arc::clone(&order);
+
+  let mut attempts = 0;
+  tokio::spawn(async move {
+    loop {
+      sleep(Duration::from_secs(INTERNAL_CHECK_SPAN)).await;
+
+      let response = reqwest::Client::new()
+        .get(format!(
+          "http://{}/.well-known/acme-challenge/{}",
+          domain_name, token
+        ))
+        .send()
+        .await;
+
+      if response.is_success() {
+        let mut order = order.lock().await;
+        let order_state = order.refresh().await.unwrap();
+        match order_state.status {
+          OrderStatus::Ready => {}
+          _ => {
+            error!("Give up, It's you not me");
+            break;
+          }
+        }
+      }
+      if CACHE_LIFESPAN <= attempts {
+        error!("Too many tries, giving up");
+        break;
+      }
+      attempts += INTERNAL_CHECK_SPAN;
+    }
+  });
+}
 
 pub async fn create_acme_account(email: &str) -> anyhow::Result<AccountCredentials> {
   let server_url = LetsEncrypt::Staging.url().to_string();
@@ -52,6 +97,7 @@ pub async fn create_acme_certificate(
       order.key_authorization(challenge).as_str().to_string(),
     );
   }
+  internal_check(domain_name, &challenge.token, Arc::new(Mutex::new(order)));
   Ok(challenge.token.clone())
 }
 
@@ -68,6 +114,6 @@ async fn get_certificate_order(token: String) -> Option<String> {
 }
 
 static CERTIFICATE_ORDER_CACHE: Lazy<Arc<Mutex<TimedCache<String, String>>>> = Lazy::new(|| {
-  let cache = TimedCache::with_lifespan(600);
+  let cache = TimedCache::with_lifespan(CACHE_LIFESPAN);
   Arc::new(Mutex::new(cache))
 });
