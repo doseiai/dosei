@@ -196,9 +196,8 @@ async fn provision_certification(
 
   let mut expires_at = Utc::now();
   if let Ok(cert) = openssl::x509::X509::from_pem(certificates[0].as_bytes()) {
-    let not_after_str = cert.not_after().to_string();
-    info!("{}", not_after_str);
-    if let Ok(not_after) = DateTime::parse_from_str(&not_after_str, "%b %d %H:%M:%S %Y GMT") {
+    let not_after_str = cert.not_after().to_string().replace("GMT", "+0000");
+    if let Ok(not_after) = DateTime::parse_from_str(&not_after_str, "%b %d %H:%M:%S %Y %z") {
       expires_at = not_after.with_timezone(&Utc);
     }
   }
