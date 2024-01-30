@@ -14,7 +14,7 @@ use tokio::sync::Mutex;
 use tokio::time::sleep;
 use tracing::{error, info};
 use trust_dns_resolver::config::{ResolverConfig, ResolverOpts};
-use trust_dns_resolver::Resolver;
+use trust_dns_resolver::TokioAsyncResolver;
 
 const CACHE_LIFESPAN: u64 = 600;
 const INTERNAL_CHECK_SPAN: u64 = 5;
@@ -29,9 +29,8 @@ pub fn internal_check(domain_name: &str, token: &str, token_value: &str, order: 
   tokio::spawn(async move {
     loop {
       sleep(Duration::from_secs(INTERNAL_CHECK_SPAN)).await;
-      let resolver = Resolver::new(ResolverConfig::default(), ResolverOpts::default()).unwrap();
-      resolver.clear_cache();
-      let response = resolver.lookup_ip(&domain_name).unwrap();
+      let resolver = TokioAsyncResolver::tokio(ResolverConfig::default(), ResolverOpts::default());
+      let response = resolver.lookup_ip(&domain_name).await.unwrap();
       let address = response.iter().next().expect("no addresses returned!");
       let url = format!("http://{}/.well-known/acme-challenge/{}", address, token);
       let client = reqwest::Client::builder().no_proxy().build().unwrap();
