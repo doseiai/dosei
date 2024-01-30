@@ -140,7 +140,7 @@ async fn create_certification(
 pub async fn create_acme_certificate(
   domain_name: &str,
   credentials: AccountCredentials,
-) -> anyhow::Result<String> {
+) -> anyhow::Result<()> {
   let mut order = Account::from_credentials(credentials)
     .await?
     .new_order(&NewOrder {
@@ -172,7 +172,7 @@ pub async fn create_acme_certificate(
     order.key_authorization(challenge).as_str(),
     Arc::new(Mutex::new(order)),
   );
-  Ok(challenge.token.clone())
+  Ok(())
 }
 
 async fn get_http01_challenge_token_value(token: String) -> Option<String> {
