@@ -18,6 +18,7 @@ use tokio::time::sleep;
 use tracing::{error, info};
 use trust_dns_resolver::config::{ResolverConfig, ResolverOpts};
 use trust_dns_resolver::TokioAsyncResolver;
+use uuid::Uuid;
 
 const CACHE_LIFESPAN: u64 = 600;
 const INTERNAL_CHECK_SPAN: u64 = 5;
@@ -37,6 +38,7 @@ pub async fn create_acme_account(email: &str) -> anyhow::Result<AccountCredentia
 }
 
 pub async fn create_acme_certificate(
+  owner_id: Uuid,
   domain_name: &str,
   credentials: AccountCredentials,
   pool: Arc<Pool<Postgres>>,
@@ -67,6 +69,7 @@ pub async fn create_acme_certificate(
     );
   }
   internal_check(
+    owner_id,
     domain_name,
     &challenge.token,
     order.key_authorization(challenge).as_str(),
@@ -77,6 +80,7 @@ pub async fn create_acme_certificate(
 }
 
 pub fn internal_check(
+  owner_id: Uuid,
   domain_name: &str,
   token: &str,
   token_value: &str,
@@ -102,7 +106,7 @@ pub fn internal_check(
           if response.is_success() {
             if let Ok(response_text) = response.unwrap().text().await {
               if response_text == token_value {
-                external_check(&domain_name, order, pool);
+                external_check(owner_id, &domain_name, order, pool);
                 break;
               }
             }
@@ -119,7 +123,12 @@ pub fn internal_check(
   });
 }
 
-pub fn external_check(domain_name: &str, order: Arc<Mutex<Order>>, pool: Arc<Pool<Postgres>>) {
+pub fn external_check(
+  owner_id: Uuid,
+  domain_name: &str,
+  order: Arc<Mutex<Order>>,
+  pool: Arc<Pool<Postgres>>,
+) {
   let domain_name = domain_name.to_string();
   let order = Arc::clone(&order);
 
@@ -133,7 +142,7 @@ pub fn external_check(domain_name: &str, order: Arc<Mutex<Order>>, pool: Arc<Poo
       match order_state.status {
         OrderStatus::Ready => {
           drop(order_guard);
-          match provision_certification(&domain_name, order, pool).await {
+          match provision_certification(owner_id, &domain_name, order, pool).await {
             Ok(_) => {}
             Err(_) => {
               error!("Something went wrong when generating CERT");
@@ -158,6 +167,7 @@ pub fn external_check(domain_name: &str, order: Arc<Mutex<Order>>, pool: Arc<Poo
 }
 
 async fn provision_certification(
+  owner_id: Uuid,
   domain_name: &str,
   order: Arc<Mutex<Order>>,
   pool: Arc<Pool<Postgres>>,
@@ -189,7 +199,7 @@ async fn provision_certification(
     certificate: certificates[0].to_string(),
     private_key: certificate.serialize_private_key_pem(),
     expires_at: Default::default(),
-    owner_id: Default::default(),
+    owner_id,
     updated_at: Utc::now(),
     created_at: Utc::now(),
   };

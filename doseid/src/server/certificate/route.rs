@@ -1,5 +1,4 @@
 use crate::config::Config;
-use crate::server::certificate::schema::Certificate;
 use crate::server::certificate::{
   create_acme_account, create_acme_certificate, get_http01_challenge_token_value,
 };
@@ -9,11 +8,9 @@ use axum::extract::Path;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::{Extension, Json};
-use chrono::Utc;
 use serde::Deserialize;
 use sqlx::{Pool, Postgres};
 use std::sync::Arc;
-use uuid::Uuid;
 
 pub async fn api_new_certificate(
   pool: Extension<Arc<Pool<Postgres>>>,
@@ -31,6 +28,7 @@ pub async fn api_new_certificate(
     .await
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())?;
   create_acme_certificate(
+    user.id,
     &body.domain_name,
     acme_account_credentials,
     Arc::clone(&pool),
