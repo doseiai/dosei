@@ -194,7 +194,7 @@ async fn provision_certification(
     .collect();
 
   let certificate = schema::Certificate {
-    id: Default::default(),
+    id: Uuid::new_v4(),
     domain_name: domain_name.to_string(),
     certificate: certificates[0].to_string(),
     private_key: certificate.serialize_private_key_pem(),
