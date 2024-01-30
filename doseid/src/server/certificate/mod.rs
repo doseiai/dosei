@@ -9,6 +9,7 @@ use instant_acme::{
 use once_cell::sync::Lazy;
 use rcgen::{Certificate, CertificateParams, DistinguishedName};
 use sqlx::testing::TestTermination;
+use sqlx::{Pool, Postgres};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
@@ -37,6 +38,7 @@ pub async fn create_acme_account(email: &str) -> anyhow::Result<AccountCredentia
 pub async fn create_acme_certificate(
   domain_name: &str,
   credentials: AccountCredentials,
+  pool: Arc<Pool<Postgres>>,
 ) -> anyhow::Result<()> {
   let mut order = Account::from_credentials(credentials)
     .await?
@@ -68,11 +70,18 @@ pub async fn create_acme_certificate(
     &challenge.token,
     order.key_authorization(challenge).as_str(),
     Arc::new(Mutex::new(order)),
+    pool,
   );
   Ok(())
 }
 
-pub fn internal_check(domain_name: &str, token: &str, token_value: &str, order: Arc<Mutex<Order>>) {
+pub fn internal_check(
+  domain_name: &str,
+  token: &str,
+  token_value: &str,
+  order: Arc<Mutex<Order>>,
+  pool: Arc<Pool<Postgres>>,
+) {
   let domain_name = domain_name.to_string();
   let token = token.to_string();
   let token_value = token_value.to_string();
@@ -92,7 +101,7 @@ pub fn internal_check(domain_name: &str, token: &str, token_value: &str, order: 
           if response.is_success() {
             if let Ok(response_text) = response.unwrap().text().await {
               if response_text == token_value {
-                external_check(&domain_name, order);
+                external_check(&domain_name, order, pool);
                 break;
               }
             }
@@ -109,7 +118,7 @@ pub fn internal_check(domain_name: &str, token: &str, token_value: &str, order: 
   });
 }
 
-pub fn external_check(domain_name: &str, order: Arc<Mutex<Order>>) {
+pub fn external_check(domain_name: &str, order: Arc<Mutex<Order>>, pool: Arc<Pool<Postgres>>) {
   let domain_name = domain_name.to_string();
   let order = Arc::clone(&order);
 
@@ -123,7 +132,7 @@ pub fn external_check(domain_name: &str, order: Arc<Mutex<Order>>) {
       match order_state.status {
         OrderStatus::Ready => {
           drop(order_guard);
-          match provision_certification(&domain_name, order).await {
+          match provision_certification(&domain_name, order, pool).await {
             Ok((certificate, private_key)) => {
               info!(certificate);
               info!(private_key);
@@ -153,6 +162,7 @@ pub fn external_check(domain_name: &str, order: Arc<Mutex<Order>>) {
 async fn provision_certification(
   domain_name: &str,
   order: Arc<Mutex<Order>>,
+  pool: Arc<Pool<Postgres>>,
 ) -> anyhow::Result<(String, String)> {
   let certificate = {
     let mut params = CertificateParams::new(vec![domain_name.to_owned()]);
@@ -169,6 +179,7 @@ async fn provision_certification(
       None => sleep(Duration::from_secs(1)).await,
     }
   };
+  // TODO: Send email and notify.
   Ok((
     cert_chain_pem.to_string(),
     certificate.serialize_private_key_pem(),

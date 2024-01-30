@@ -30,9 +30,13 @@ pub async fn api_new_certificate(
   let acme_account_credentials = create_acme_account(&user.email)
     .await
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())?;
-  create_acme_certificate(&body.domain_name, acme_account_credentials)
-    .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())?;
+  create_acme_certificate(
+    &body.domain_name,
+    acme_account_credentials,
+    Arc::clone(&pool),
+  )
+  .await
+  .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())?;
   Ok(Json(Certificate {
     id: Uuid::new_v4(),
     domain_name: body.domain_name,
