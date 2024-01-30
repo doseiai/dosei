@@ -20,9 +20,6 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub const DEPLOYMENT_LOG_PATH: &str = ".dosei/doseid/data/deployments/logs";
 
-pub const MAIN_CERTIFICATE_CERT_PATH: &str = ".dosei/doseid/data/certificate/main/cert.pem";
-pub const MAIN_CERTIFICATE_KEY_PATH: &str = ".dosei/doseid/data/certificate/main/key.pem";
-
 const TELEMETRY_ID_PATH: &str = ".dosei/doseid/data/id";
 
 #[derive(Parser, Debug)]
