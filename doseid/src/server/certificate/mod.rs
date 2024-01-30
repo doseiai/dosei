@@ -50,6 +50,7 @@ pub fn internal_check(domain_name: &str, token: &str, token_value: &str, order: 
           }
         }
       }
+      error!("Failed to get fetch {}, trying again", &domain_name);
       if CACHE_LIFESPAN <= attempts {
         error!("Too many tries, giving up");
         break;
