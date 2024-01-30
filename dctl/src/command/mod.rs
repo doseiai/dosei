@@ -1,3 +1,4 @@
+pub(crate) mod certificate;
 pub(crate) mod env;
 pub(crate) mod login;
 pub(crate) mod logout;

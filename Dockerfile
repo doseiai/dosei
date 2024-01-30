@@ -4,18 +4,22 @@ ENV SQLX_OFFLINE=true
 
 WORKDIR /usr/src/dosei
 
-RUN apt-get update && \
-    apt-get install -y build-essential protobuf-compiler python3.11-dev
+RUN apt-get update && apt-get install -y build-essential protobuf-compiler python3.11-dev
 
 COPY . .
 
-RUN cargo build --release
+RUN --mount=type=cache,target=target cargo build --release
+
+RUN mkdir release
+RUN --mount=type=cache,target=target cp target/release/doseid release/doseid
+RUN --mount=type=cache,target=target cp target/release/dctl release/dctl
+RUN --mount=type=cache,target=target cp target/release/proxy release/proxy
 
 FROM rust:1.74.1
 
 RUN apt-get update && apt-get install -y python3.11-dev
 
-ARG RELEASE_PATH=/usr/src/dosei/target/release
+ARG RELEASE_PATH=/usr/src/dosei/release
 ARG DOSEID_INSTALL=/bin/doseid
 ARG DOSEI_CLI_INSTALL=/bin/dctl
 ARG DOSEI_PROXY_INSTALL=/bin/dosei-proxy
