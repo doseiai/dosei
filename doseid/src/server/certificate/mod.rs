@@ -26,27 +26,30 @@ pub fn internal_check(domain_name: &str, token: &str, order: Arc<Mutex<Order>>) 
   tokio::spawn(async move {
     loop {
       sleep(Duration::from_secs(INTERNAL_CHECK_SPAN)).await;
-
-      let response = reqwest::Client::new()
-        .get(format!(
-          "http://{}/.well-known/acme-challenge/{}",
-          domain_name, token
-        ))
-        .send()
-        .await;
+      let url = format!(
+        "http://{}/.well-known/acme-challenge/{}",
+        domain_name, token
+      );
+      let response = reqwest::Client::new().get(&url).send().await;
 
       if response.is_success() {
-        let mut order = order.lock().await;
-        let order_state = order.refresh().await.unwrap();
-        match order_state.status {
-          OrderStatus::Ready => {
-            info!("Order Status Ready, TODO, genete cert");
-          }
-          _ => {
-            error!("Give up, It's you not me");
-            break;
-          }
-        }
+        info!(
+          "Test Got it: {}: {}",
+          &url,
+          response.unwrap().text().await.unwrap()
+        );
+        break;
+        // let mut order = order.lock().await;
+        // let order_state = order.refresh().await.unwrap();
+        // match order_state.status {
+        //   OrderStatus::Ready => {
+        //     info!("Order Status Ready, TODO, genete cert");
+        //   }
+        //   _ => {
+        //     error!("Give up, It's you not me");
+        //     break;
+        //   }
+        // }
       }
       if CACHE_LIFESPAN <= attempts {
         error!("Too many tries, giving up");
