@@ -126,10 +126,12 @@ async fn create_certification(
 
   info!("here");
   let signing_request = certificate.serialize_request_der()?;
+  info!("here2");
   let mut order = order.lock().await;
+  info!("here3");
   order.finalize(&signing_request).await?;
 
-  info!("here2");
+  info!("here4");
   let cert_chain_pem = loop {
     match order.certificate().await? {
       Some(cert_chain_pem) => break cert_chain_pem,
