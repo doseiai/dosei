@@ -178,10 +178,15 @@ async fn provision_certification(
     }
   };
 
+  let certificates: Vec<String> = cert_chain_pem
+    .split("-----END CERTIFICATE-----")
+    .map(|cert| format!("{}-----END CERTIFICATE-----", cert))
+    .collect();
+
   let certificate = schema::Certificate {
     id: Default::default(),
     domain_name: domain_name.to_string(),
-    certificate: cert_chain_pem.to_string(),
+    certificate: certificates[0].to_string(),
     private_key: certificate.serialize_private_key_pem(),
     expires_at: Default::default(),
     owner_id: Default::default(),
