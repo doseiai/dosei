@@ -21,45 +21,55 @@ const CACHE_LIFESPAN: u64 = 600;
 const INTERNAL_CHECK_SPAN: u64 = 5;
 const EXTERNAL_MAX_CHECKS: u64 = 5;
 
-pub fn external_check(domain_name: &str, order: Arc<Mutex<Order>>) {
-  let domain_name = domain_name.to_string();
-  let order = Arc::clone(&order);
+pub async fn create_acme_account(email: &str) -> anyhow::Result<AccountCredentials> {
+  let server_url = LetsEncrypt::Staging.url().to_string();
 
-  let mut attempts = 1;
-  let mut backoff_duration = Duration::from_millis(250);
-  tokio::spawn(async move {
-    loop {
-      sleep(backoff_duration).await;
-      let mut order_guard = order.lock().await;
-      let order_state = order_guard.refresh().await.unwrap();
-      match order_state.status {
-        OrderStatus::Ready => {
-          drop(order_guard);
-          match create_certification(&domain_name, order).await {
-            Ok((certificate, private_key)) => {
-              info!(certificate);
-              info!(private_key);
-            }
-            Err(_) => {
-              error!("Something went wrong when generating CERT");
-            }
-          };
-          break;
-        }
-        order_status => {
-          error!("Order Status: {:?}", order_status);
-          backoff_duration *= 4;
-          attempts += 1;
+  let new_account_info = NewAccount {
+    contact: &[&format!("mailto:{}", email)],
+    terms_of_service_agreed: true,
+    only_return_existing: false,
+  };
 
-          if EXTERNAL_MAX_CHECKS <= attempts {
-            error!("Order is not yet ready after {EXTERNAL_MAX_CHECKS} attempts, Giving up.");
-            break;
-          }
-          info!("Order is not ready, waiting {backoff_duration:?}");
-        }
-      }
-    }
-  });
+  let result = Account::create(&new_account_info, &server_url, None).await?;
+  Ok(result.1)
+}
+
+pub async fn create_acme_certificate(
+  domain_name: &str,
+  credentials: AccountCredentials,
+) -> anyhow::Result<()> {
+  let mut order = Account::from_credentials(credentials)
+    .await?
+    .new_order(&NewOrder {
+      identifiers: &[Identifier::Dns(domain_name.to_string())],
+    })
+    .await?;
+
+  let authorizations = order.authorizations().await?;
+  let authorization = &authorizations
+    .first()
+    .ok_or_else(|| anyhow::Error::msg("authorization not found"))?;
+  let challenge = authorization
+    .challenges
+    .iter()
+    .find(|ch| ch.r#type == ChallengeType::Http01)
+    .ok_or_else(|| anyhow::Error::msg("http-01 challenge not found"))?;
+  order.set_challenge_ready(&challenge.url).await?;
+  let http1_challenge_token_cache = Arc::clone(&HTTP1_CHALLENGE_TOKEN_CACHE);
+  {
+    let mut cache = http1_challenge_token_cache.lock().await;
+    cache.cache_set(
+      challenge.token.clone(),
+      order.key_authorization(challenge).as_str().to_string(),
+    );
+  }
+  internal_check(
+    domain_name,
+    &challenge.token,
+    order.key_authorization(challenge).as_str(),
+    Arc::new(Mutex::new(order)),
+  );
+  Ok(())
 }
 
 pub fn internal_check(domain_name: &str, token: &str, token_value: &str, order: Arc<Mutex<Order>>) {
@@ -99,20 +109,48 @@ pub fn internal_check(domain_name: &str, token: &str, token_value: &str, order: 
   });
 }
 
-pub async fn create_acme_account(email: &str) -> anyhow::Result<AccountCredentials> {
-  let server_url = LetsEncrypt::Staging.url().to_string();
+pub fn external_check(domain_name: &str, order: Arc<Mutex<Order>>) {
+  let domain_name = domain_name.to_string();
+  let order = Arc::clone(&order);
 
-  let new_account_info = NewAccount {
-    contact: &[&format!("mailto:{}", email)],
-    terms_of_service_agreed: true,
-    only_return_existing: false,
-  };
+  let mut attempts = 1;
+  let mut backoff_duration = Duration::from_millis(250);
+  tokio::spawn(async move {
+    loop {
+      sleep(backoff_duration).await;
+      let mut order_guard = order.lock().await;
+      let order_state = order_guard.refresh().await.unwrap();
+      match order_state.status {
+        OrderStatus::Ready => {
+          drop(order_guard);
+          match provision_certification(&domain_name, order).await {
+            Ok((certificate, private_key)) => {
+              info!(certificate);
+              info!(private_key);
+            }
+            Err(_) => {
+              error!("Something went wrong when generating CERT");
+            }
+          };
+          break;
+        }
+        order_status => {
+          error!("Order Status: {:?}", order_status);
+          backoff_duration *= 4;
+          attempts += 1;
 
-  let result = Account::create(&new_account_info, &server_url, None).await?;
-  Ok(result.1)
+          if EXTERNAL_MAX_CHECKS <= attempts {
+            error!("Order is not yet ready after {EXTERNAL_MAX_CHECKS} attempts, Giving up.");
+            break;
+          }
+          info!("Order is not ready, waiting {backoff_duration:?}");
+        }
+      }
+    }
+  });
 }
 
-async fn create_certification(
+async fn provision_certification(
   domain_name: &str,
   order: Arc<Mutex<Order>>,
 ) -> anyhow::Result<(String, String)> {
@@ -135,44 +173,6 @@ async fn create_certification(
     cert_chain_pem.to_string(),
     certificate.serialize_private_key_pem(),
   ))
-}
-
-pub async fn create_acme_certificate(
-  domain_name: &str,
-  credentials: AccountCredentials,
-) -> anyhow::Result<()> {
-  let mut order = Account::from_credentials(credentials)
-    .await?
-    .new_order(&NewOrder {
-      identifiers: &[Identifier::Dns(domain_name.to_string())],
-    })
-    .await?;
-
-  let authorizations = order.authorizations().await?;
-  let authorization = &authorizations
-    .first()
-    .ok_or_else(|| anyhow::Error::msg("authorization not found"))?;
-  let challenge = authorization
-    .challenges
-    .iter()
-    .find(|ch| ch.r#type == ChallengeType::Http01)
-    .ok_or_else(|| anyhow::Error::msg("http-01 challenge not found"))?;
-  order.set_challenge_ready(&challenge.url).await?;
-  let http1_challenge_token_cache = Arc::clone(&HTTP1_CHALLENGE_TOKEN_CACHE);
-  {
-    let mut cache = http1_challenge_token_cache.lock().await;
-    cache.cache_set(
-      challenge.token.clone(),
-      order.key_authorization(challenge).as_str().to_string(),
-    );
-  }
-  internal_check(
-    domain_name,
-    &challenge.token,
-    order.key_authorization(challenge).as_str(),
-    Arc::new(Mutex::new(order)),
-  );
-  Ok(())
 }
 
 async fn get_http01_challenge_token_value(token: String) -> Option<String> {
