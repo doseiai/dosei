@@ -45,8 +45,8 @@ pub fn internal_check(domain_name: &str, token: &str, token_value: &str, order: 
                   OrderStatus::Ready => {
                     info!("Order Status Ready, TODO, genete cert");
                   }
-                  _ => {
-                    error!("Give up, It's you not me");
+                  order_status => {
+                    error!("Give up, It's you not me: {:?}", order_status);
                   }
                 }
                 break;
