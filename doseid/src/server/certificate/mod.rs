@@ -19,6 +19,37 @@ use trust_dns_resolver::TokioAsyncResolver;
 const CACHE_LIFESPAN: u64 = 600;
 const INTERNAL_CHECK_SPAN: u64 = 5;
 
+pub fn external_check(order: Arc<Mutex<Order>>) {
+  let order = Arc::clone(&order);
+
+  let mut attempts = 1;
+  let mut backoff_duration = Duration::from_millis(250);
+  tokio::spawn(async move {
+    loop {
+      sleep(backoff_duration).await;
+      let mut order = order.lock().await;
+      let order_state = order.refresh().await.unwrap();
+      match order_state.status {
+        OrderStatus::Ready => {
+          info!("Order Status Ready, TODO, generate cert");
+        }
+        order_status => {
+          error!("Order Status: {:?}", order_status);
+          backoff_duration *= 4;
+          attempts += 1;
+
+          if attempts < 10 {
+            info!("Order is not ready, waiting {backoff_duration:?}");
+          } else {
+            error!("Order is not yet ready after 10 attempts, Giving up.");
+            break;
+          }
+        }
+      }
+    }
+  });
+}
+
 pub fn internal_check(domain_name: &str, token: &str, token_value: &str, order: Arc<Mutex<Order>>) {
   let domain_name = domain_name.to_string();
   let token = token.to_string();
@@ -39,16 +70,7 @@ pub fn internal_check(domain_name: &str, token: &str, token_value: &str, order: 
           if response.is_success() {
             if let Ok(response_text) = response.unwrap().text().await {
               if response_text == token_value {
-                let mut order = order.lock().await;
-                let order_state = order.refresh().await.unwrap();
-                match order_state.status {
-                  OrderStatus::Ready => {
-                    info!("Order Status Ready, TODO, genete cert");
-                  }
-                  order_status => {
-                    error!("Give up, It's you not me: {:?}", order_status);
-                  }
-                }
+                external_check(order);
                 break;
               }
             }
