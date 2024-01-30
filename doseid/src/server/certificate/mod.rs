@@ -17,9 +17,10 @@ use tracing::{error, info};
 const CACHE_LIFESPAN: u64 = 600;
 const INTERNAL_CHECK_SPAN: u64 = 5;
 
-pub fn internal_check(domain_name: &str, token: &str, order: Arc<Mutex<Order>>) {
+pub fn internal_check(domain_name: &str, token: &str, token_value: &str, order: Arc<Mutex<Order>>) {
   let domain_name = domain_name.to_string();
   let token = token.to_string();
+  let token_value = token_value.to_string();
   let order = Arc::clone(&order);
 
   let mut attempts = 0;
@@ -33,23 +34,21 @@ pub fn internal_check(domain_name: &str, token: &str, order: Arc<Mutex<Order>>) 
       let response = reqwest::Client::new().get(&url).send().await;
 
       if response.is_success() {
-        info!(
-          "Test Got it: {}: {}",
-          &url,
-          response.unwrap().text().await.unwrap()
-        );
-        break;
-        // let mut order = order.lock().await;
-        // let order_state = order.refresh().await.unwrap();
-        // match order_state.status {
-        //   OrderStatus::Ready => {
-        //     info!("Order Status Ready, TODO, genete cert");
-        //   }
-        //   _ => {
-        //     error!("Give up, It's you not me");
-        //     break;
-        //   }
-        // }
+        if let Ok(response_text) = response.unwrap().text().await {
+          if response_text == token_value {
+            let mut order = order.lock().await;
+            let order_state = order.refresh().await.unwrap();
+            match order_state.status {
+              OrderStatus::Ready => {
+                info!("Order Status Ready, TODO, genete cert");
+              }
+              _ => {
+                error!("Give up, It's you not me");
+                break;
+              }
+            }
+          }
+        }
       }
       if CACHE_LIFESPAN <= attempts {
         error!("Too many tries, giving up");
@@ -102,7 +101,12 @@ pub async fn create_acme_certificate(
       order.key_authorization(challenge).as_str().to_string(),
     );
   }
-  internal_check(domain_name, &challenge.token, Arc::new(Mutex::new(order)));
+  internal_check(
+    domain_name,
+    &challenge.token,
+    order.key_authorization(challenge).as_str(),
+    Arc::new(Mutex::new(order)),
+  );
   Ok(challenge.token.clone())
 }
 

@@ -9,7 +9,7 @@ RUN apt-get update && \
 
 COPY . .
 
-RUN cargo build --release
+RUN --mount=type=cache,target=target cargo build --release
 
 FROM rust:1.74.1
 
