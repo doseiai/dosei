@@ -4,8 +4,7 @@ services:
   dosei:
     container_name: dosei
     restart: always
-    image: doseiai/dosei:0.0.12
-    platform: linux/amd64
+    build: .
     command: /bin/doseid --host 0.0.0.0
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
