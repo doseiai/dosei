@@ -7,6 +7,9 @@ dev:
 dev-compose:
 	docker compose -f docker-compose.base.yml up
 
+test-compose:
+	docker compose -f docker-compose.test.yml up
+
 configure-compose:
 	./script/configure-compose.sh
 
