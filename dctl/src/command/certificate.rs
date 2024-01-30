@@ -1,6 +1,6 @@
 use crate::config::Config;
 use clap::ArgMatches;
-use serde_json::{json, Value};
+use serde_json::json;
 
 pub fn new_certificate(config: &'static Config, arg_matches: &ArgMatches) {
   let name = arg_matches.get_one::<String>("name").expect("required");

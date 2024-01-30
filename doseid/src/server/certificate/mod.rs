@@ -192,18 +192,12 @@ async fn provision_certification(
     .split("-----END CERTIFICATE-----")
     .map(|cert| format!("{}-----END CERTIFICATE-----", cert))
     .collect();
-  info!("{:?}", certificates);
   certificates.pop();
-  info!("{:?}", certificates);
 
   let mut expires_at = Utc::now();
   if let Ok(cert) = openssl::x509::X509::from_pem(certificates[0].as_bytes()) {
-    if let Ok(not_after) = cert
-      .not_after()
-      .to_owned()
-      .to_string()
-      .parse::<DateTime<Utc>>()
-    {
+    info!("{}", cert.not_after().to_string());
+    if let Ok(not_after) = cert.not_after().to_string().parse::<DateTime<Utc>>() {
       expires_at = not_after;
     }
   }
