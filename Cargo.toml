@@ -3,7 +3,7 @@ members = ["proto", "doseid", "proxy", "util", 'dctl']
 resolver = "2"
 
 [workspace.package]
-version = "0.0.12"
+version = "0.0.13"
 license = "Apache-2.0"
 repository = "https://github.com/doseiai/engine"
 authors = [
