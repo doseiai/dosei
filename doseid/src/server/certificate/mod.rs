@@ -117,31 +117,21 @@ async fn create_certification(
   domain_name: &str,
   order: Arc<Mutex<Order>>,
 ) -> anyhow::Result<(String, String)> {
-  info!("beging stuff");
   let certificate = {
     let mut params = CertificateParams::new(vec![domain_name.to_owned()]);
     params.distinguished_name = DistinguishedName::new();
     Certificate::from_params(params)?
   };
-
-  info!("here");
   let signing_request = certificate.serialize_request_der()?;
-  info!("here2");
   let mut order = order.lock().await;
-  info!("here3");
   order.finalize(&signing_request).await?;
 
-  info!("here4");
   let cert_chain_pem = loop {
     match order.certificate().await? {
       Some(cert_chain_pem) => break cert_chain_pem,
       None => sleep(Duration::from_secs(1)).await,
     }
   };
-  info!(
-    "Certificate and Private Key generated for domain: {}",
-    domain_name
-  );
   Ok((
     cert_chain_pem.to_string(),
     certificate.serialize_private_key_pem(),
