@@ -33,18 +33,18 @@ pub fn external_check(order: Arc<Mutex<Order>>) {
       match order_state.status {
         OrderStatus::Ready => {
           info!("Order Status Ready, TODO, generate cert");
+          break;
         }
         order_status => {
           error!("Order Status: {:?}", order_status);
           backoff_duration *= 4;
           attempts += 1;
 
-          if attempts < EXTERNAL_MAX_CHECKS {
-            info!("Order is not ready, waiting {backoff_duration:?}");
-          } else {
+          if EXTERNAL_MAX_CHECKS <= attempts {
             error!("Order is not yet ready after {EXTERNAL_MAX_CHECKS} attempts, Giving up.");
             break;
           }
+          info!("Order is not ready, waiting {backoff_duration:?}");
         }
       }
     }
