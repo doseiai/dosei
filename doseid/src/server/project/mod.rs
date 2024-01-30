@@ -31,11 +31,9 @@ pub async fn api_new_project(
       return Err(StatusCode::SERVICE_UNAVAILABLE);
     }
   };
-  println!("{:?}", session);
   let user = get_user(session.owner_id, Arc::clone(&pool))
     .await
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-  println!("{:?}", user);
   let user_github = user
     .deserialize_github()
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
