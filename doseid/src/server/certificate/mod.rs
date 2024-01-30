@@ -25,7 +25,7 @@ const INTERNAL_CHECK_SPAN: u64 = 5;
 const EXTERNAL_MAX_CHECKS: u64 = 10;
 
 pub async fn create_acme_account(email: &str) -> anyhow::Result<AccountCredentials> {
-  let server_url = LetsEncrypt::Staging.url().to_string();
+  let server_url = LetsEncrypt::Production.url().to_string();
 
   let new_account_info = NewAccount {
     contact: &[&format!("mailto:{}", email)],
