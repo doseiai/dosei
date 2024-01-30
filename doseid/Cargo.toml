@@ -53,6 +53,7 @@ instant-acme = "0.4.2"
 cached = "0.48.1"
 trust-dns-resolver = "0.23.2"
 rcgen = "0.12.1"
+openssl = "0.10.63"
 
 [dev-dependencies]
 futures = "0.3.30"

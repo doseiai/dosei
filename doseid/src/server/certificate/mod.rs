@@ -2,7 +2,7 @@ pub(crate) mod route;
 pub(crate) mod schema;
 
 use cached::{Cached, TimedCache};
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use instant_acme::{
   Account, AccountCredentials, ChallengeType, Identifier, LetsEncrypt, NewAccount, NewOrder, Order,
   OrderStatus,
@@ -193,12 +193,24 @@ async fn provision_certification(
     .map(|cert| format!("{}-----END CERTIFICATE-----", cert))
     .collect();
 
+  let mut expires_at = Utc::now();
+  if let Ok(cert) = openssl::x509::X509::from_pem(certificates[0].as_bytes()) {
+    if let Ok(not_after) = cert
+      .not_after()
+      .to_owned()
+      .to_string()
+      .parse::<DateTime<Utc>>()
+    {
+      expires_at = not_after;
+    }
+  }
+
   let certificate = schema::Certificate {
     id: Uuid::new_v4(),
     domain_name: domain_name.to_string(),
     certificate: certificates[0].to_string(),
     private_key: certificate.serialize_private_key_pem(),
-    expires_at: Default::default(),
+    expires_at,
     owner_id,
     updated_at: Utc::now(),
     created_at: Utc::now(),
