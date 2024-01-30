@@ -21,7 +21,7 @@ use trust_dns_resolver::TokioAsyncResolver;
 
 const CACHE_LIFESPAN: u64 = 600;
 const INTERNAL_CHECK_SPAN: u64 = 5;
-const EXTERNAL_MAX_CHECKS: u64 = 5;
+const EXTERNAL_MAX_CHECKS: u64 = 10;
 
 pub async fn create_acme_account(email: &str) -> anyhow::Result<AccountCredentials> {
   let server_url = LetsEncrypt::Staging.url().to_string();
