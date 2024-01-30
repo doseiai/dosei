@@ -4,8 +4,7 @@ ENV SQLX_OFFLINE=true
 
 WORKDIR /usr/src/dosei
 
-RUN apt-get update && \
-    apt-get install -y build-essential protobuf-compiler python3.11-dev
+RUN apt-get update && apt-get install -y build-essential protobuf-compiler python3.11-dev
 
 COPY . .
 
