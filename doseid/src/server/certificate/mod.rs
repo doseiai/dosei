@@ -123,17 +123,23 @@ async fn create_certification(
     params.distinguished_name = DistinguishedName::new();
     Certificate::from_params(params)?
   };
+
+  info!("here");
   let signing_request = certificate.serialize_request_der()?;
   let mut order = order.lock().await;
   order.finalize(&signing_request).await?;
 
+  info!("here2");
   let cert_chain_pem = loop {
-    match order.certificate().await.unwrap() {
+    match order.certificate().await? {
       Some(cert_chain_pem) => break cert_chain_pem,
       None => sleep(Duration::from_secs(1)).await,
     }
   };
-  info!("done");
+  info!(
+    "Certificate and Private Key generated for domain: {}",
+    domain_name
+  );
   Ok((
     cert_chain_pem.to_string(),
     certificate.serialize_private_key_pem(),
