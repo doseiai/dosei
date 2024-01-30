@@ -30,26 +30,28 @@ pub fn internal_check(domain_name: &str, token: &str, token_value: &str, order: 
     loop {
       sleep(Duration::from_secs(INTERNAL_CHECK_SPAN)).await;
       let resolver = TokioAsyncResolver::tokio(ResolverConfig::default(), ResolverOpts::default());
-      let response = resolver.lookup_ip(&domain_name).await.unwrap();
-      let address = response.iter().next().expect("no addresses returned!");
-      let url = format!("http://{}/.well-known/acme-challenge/{}", address, token);
-      let client = reqwest::Client::builder().no_proxy().build().unwrap();
-      let response = client.get(&url).send().await;
+      if let Ok(response) = resolver.lookup_ip(&domain_name).await {
+        if let Some(address) = response.iter().next() {
+          let url = format!("http://{}/.well-known/acme-challenge/{}", address, token);
+          let client = reqwest::Client::builder().no_proxy().build().unwrap();
+          let response = client.get(&url).send().await;
 
-      if response.is_success() {
-        if let Ok(response_text) = response.unwrap().text().await {
-          if response_text == token_value {
-            let mut order = order.lock().await;
-            let order_state = order.refresh().await.unwrap();
-            match order_state.status {
-              OrderStatus::Ready => {
-                info!("Order Status Ready, TODO, genete cert");
-              }
-              _ => {
-                error!("Give up, It's you not me");
+          if response.is_success() {
+            if let Ok(response_text) = response.unwrap().text().await {
+              if response_text == token_value {
+                let mut order = order.lock().await;
+                let order_state = order.refresh().await.unwrap();
+                match order_state.status {
+                  OrderStatus::Ready => {
+                    info!("Order Status Ready, TODO, genete cert");
+                  }
+                  _ => {
+                    error!("Give up, It's you not me");
+                  }
+                }
+                break;
               }
             }
-            break;
           }
         }
       }
