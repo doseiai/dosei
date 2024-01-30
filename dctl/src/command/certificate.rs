@@ -13,7 +13,15 @@ pub fn new_certificate(config: &'static Config, arg_matches: &ArgMatches) {
     .send()
     .unwrap();
   if response.status().is_success() {
-    let result = response.json::<Value>().unwrap();
-    println!("{}", result);
+    println!(
+      "
+    {name}
+
+    Set the following record on your DNS provider to continue:
+
+    Type Name Value
+    A    @    34.175.93.38
+    "
+    );
   }
 }
