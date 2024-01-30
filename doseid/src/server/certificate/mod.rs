@@ -24,7 +24,6 @@ const EXTERNAL_MAX_CHECKS: u64 = 5;
 pub fn external_check(domain_name: &str, order: Arc<Mutex<Order>>) {
   let domain_name = domain_name.to_string();
   let order = Arc::clone(&order);
-  let order2 = Arc::clone(&order);
 
   let mut attempts = 1;
   let mut backoff_duration = Duration::from_millis(250);
@@ -37,7 +36,7 @@ pub fn external_check(domain_name: &str, order: Arc<Mutex<Order>>) {
         OrderStatus::Ready => {
           info!("It's ready, begin create cert");
           drop(order_guard);
-          match create_certification(&domain_name, order2).await {
+          match create_certification(&domain_name, order).await {
             Ok((certificate, private_key)) => {
               info!(certificate);
               info!(private_key);
