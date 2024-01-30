@@ -44,9 +44,9 @@ pub fn internal_check(domain_name: &str, token: &str, token_value: &str, order: 
               }
               _ => {
                 error!("Give up, It's you not me");
-                break;
               }
             }
+            break;
           }
         }
       }
