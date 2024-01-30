@@ -188,10 +188,13 @@ async fn provision_certification(
     }
   };
 
-  let certificates: Vec<String> = cert_chain_pem
+  let mut certificates: Vec<String> = cert_chain_pem
     .split("-----END CERTIFICATE-----")
     .map(|cert| format!("{}-----END CERTIFICATE-----", cert))
     .collect();
+  info!("{:?}", certificates);
+  certificates.pop();
+  info!("{:?}", certificates);
 
   let mut expires_at = Utc::now();
   if let Ok(cert) = openssl::x509::X509::from_pem(certificates[0].as_bytes()) {
