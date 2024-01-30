@@ -18,6 +18,7 @@ use trust_dns_resolver::TokioAsyncResolver;
 
 const CACHE_LIFESPAN: u64 = 600;
 const INTERNAL_CHECK_SPAN: u64 = 5;
+const EXTERNAL_MAX_CHECKS: u64 = 5;
 
 pub fn external_check(order: Arc<Mutex<Order>>) {
   let order = Arc::clone(&order);
@@ -38,10 +39,10 @@ pub fn external_check(order: Arc<Mutex<Order>>) {
           backoff_duration *= 4;
           attempts += 1;
 
-          if attempts < 10 {
+          if attempts < EXTERNAL_MAX_CHECKS {
             info!("Order is not ready, waiting {backoff_duration:?}");
           } else {
-            error!("Order is not yet ready after 10 attempts, Giving up.");
+            error!("Order is not yet ready after {EXTERNAL_MAX_CHECKS} attempts, Giving up.");
             break;
           }
         }
