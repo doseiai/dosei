@@ -2,6 +2,7 @@ pub(crate) mod route;
 pub(crate) mod schema;
 
 use cached::{Cached, TimedCache};
+use chrono::Utc;
 use instant_acme::{
   Account, AccountCredentials, ChallengeType, Identifier, LetsEncrypt, NewAccount, NewOrder, Order,
   OrderStatus,
@@ -133,10 +134,7 @@ pub fn external_check(domain_name: &str, order: Arc<Mutex<Order>>, pool: Arc<Poo
         OrderStatus::Ready => {
           drop(order_guard);
           match provision_certification(&domain_name, order, pool).await {
-            Ok((certificate, private_key)) => {
-              info!(certificate);
-              info!(private_key);
-            }
+            Ok(_) => {}
             Err(_) => {
               error!("Something went wrong when generating CERT");
             }
@@ -163,7 +161,7 @@ async fn provision_certification(
   domain_name: &str,
   order: Arc<Mutex<Order>>,
   pool: Arc<Pool<Postgres>>,
-) -> anyhow::Result<(String, String)> {
+) -> anyhow::Result<()> {
   let certificate = {
     let mut params = CertificateParams::new(vec![domain_name.to_owned()]);
     params.distinguished_name = DistinguishedName::new();
@@ -179,11 +177,41 @@ async fn provision_certification(
       None => sleep(Duration::from_secs(1)).await,
     }
   };
+
+  let certificate = schema::Certificate {
+    id: Default::default(),
+    domain_name: domain_name.to_string(),
+    certificate: cert_chain_pem.to_string(),
+    private_key: certificate.serialize_private_key_pem(),
+    expires_at: Default::default(),
+    owner_id: Default::default(),
+    updated_at: Utc::now(),
+    created_at: Utc::now(),
+  };
+
+  match sqlx::query_as!(
+      schema::Certificate,
+      r#"INSERT INTO certificate (id, domain_name, certificate, private_key, expires_at, owner_id, updated_at, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id, domain_name, certificate, private_key, expires_at, owner_id, updated_at, created_at"#,
+      certificate.id,
+      certificate.domain_name,
+      certificate.certificate,
+      certificate.private_key,
+      certificate.expires_at,
+      certificate.owner_id,
+      certificate.updated_at,
+      certificate.created_at,
+    ).fetch_one(&*pool).await {
+    Ok(recs) => {
+      info!("{:?}", recs);
+    },
+    Err(err) => {
+      error!("Error in creating certificate: {:?}", err);
+    }
+  }
   // TODO: Send email and notify.
-  Ok((
-    cert_chain_pem.to_string(),
-    certificate.serialize_private_key_pem(),
-  ))
+  Ok(())
 }
 
 async fn get_http01_challenge_token_value(token: String) -> Option<String> {
