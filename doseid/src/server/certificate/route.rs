@@ -28,7 +28,6 @@ pub async fn api_new_certificate(
   let user = get_user(session.owner_id, Arc::clone(&pool))
     .await
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())?;
-  info!("{}", user.email);
   let acme_account_credentials = create_acme_account(&user.email)
     .await
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())?;

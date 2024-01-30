@@ -12,7 +12,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
 use tokio::time::sleep;
-use tracing::error;
+use tracing::{error, info};
 
 const CACHE_LIFESPAN: u64 = 600;
 const INTERNAL_CHECK_SPAN: u64 = 5;
@@ -39,7 +39,9 @@ pub fn internal_check(domain_name: &str, token: &str, order: Arc<Mutex<Order>>) 
         let mut order = order.lock().await;
         let order_state = order.refresh().await.unwrap();
         match order_state.status {
-          OrderStatus::Ready => {}
+          OrderStatus::Ready => {
+            info!("Order Status Ready, TODO, genete cert");
+          }
           _ => {
             error!("Give up, It's you not me");
             break;
