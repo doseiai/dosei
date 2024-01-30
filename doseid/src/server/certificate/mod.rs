@@ -35,6 +35,7 @@ pub fn external_check(domain_name: &str, order_arc: Arc<Mutex<Order>>) {
       let order_state = order.refresh().await.unwrap();
       match order_state.status {
         OrderStatus::Ready => {
+          info!("It's ready, begin create cert");
           match create_certification(&domain_name, order_arc2).await {
             Ok((certificate, private_key)) => {
               info!(certificate);
@@ -116,6 +117,7 @@ async fn create_certification(
   domain_name: &str,
   order: Arc<Mutex<Order>>,
 ) -> anyhow::Result<(String, String)> {
+  info!("beging stuff");
   let certificate = {
     let mut params = CertificateParams::new(vec![domain_name.to_owned()]);
     params.distinguished_name = DistinguishedName::new();
@@ -131,6 +133,7 @@ async fn create_certification(
       None => sleep(Duration::from_secs(1)).await,
     }
   };
+  info!("done");
   Ok((
     cert_chain_pem.to_string(),
     certificate.serialize_private_key_pem(),

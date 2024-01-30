@@ -13,7 +13,6 @@ use chrono::Utc;
 use serde::Deserialize;
 use sqlx::{Pool, Postgres};
 use std::sync::Arc;
-use tracing::info;
 use uuid::Uuid;
 
 pub async fn api_new_certificate(
@@ -31,11 +30,10 @@ pub async fn api_new_certificate(
   let acme_account_credentials = create_acme_account(&user.email)
     .await
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())?;
-  let token = create_acme_certificate(&body.domain_name, acme_account_credentials)
+  create_acme_certificate(&body.domain_name, acme_account_credentials)
     .await
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())?;
-  info!("{}", token);
-  let certificate = Certificate {
+  Ok(Json(Certificate {
     id: Uuid::new_v4(),
     domain_name: body.domain_name,
     certificate: "".to_string(),
@@ -44,9 +42,7 @@ pub async fn api_new_certificate(
     owner_id: Default::default(),
     updated_at: Utc::now(),
     created_at: Utc::now(),
-  };
-  info!("{:?}", certificate);
-  Ok(Json(certificate))
+  }))
 }
 
 #[derive(Deserialize)]
