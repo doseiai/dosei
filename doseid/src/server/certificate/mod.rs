@@ -21,22 +21,23 @@ const CACHE_LIFESPAN: u64 = 600;
 const INTERNAL_CHECK_SPAN: u64 = 5;
 const EXTERNAL_MAX_CHECKS: u64 = 5;
 
-pub fn external_check(domain_name: &str, order_arc: Arc<Mutex<Order>>) {
+pub fn external_check(domain_name: &str, order: Arc<Mutex<Order>>) {
   let domain_name = domain_name.to_string();
-  let order_arc = Arc::clone(&order_arc);
-  let order_arc2 = Arc::clone(&order_arc);
+  let order = Arc::clone(&order);
+  let order2 = Arc::clone(&order);
 
   let mut attempts = 1;
   let mut backoff_duration = Duration::from_millis(250);
   tokio::spawn(async move {
     loop {
       sleep(backoff_duration).await;
-      let mut order = order_arc.lock().await;
-      let order_state = order.refresh().await.unwrap();
+      let mut order_guard = order.lock().await;
+      let order_state = order_guard.refresh().await.unwrap();
       match order_state.status {
         OrderStatus::Ready => {
           info!("It's ready, begin create cert");
-          match create_certification(&domain_name, order_arc2).await {
+          drop(order_guard);
+          match create_certification(&domain_name, order2).await {
             Ok((certificate, private_key)) => {
               info!(certificate);
               info!(private_key);
