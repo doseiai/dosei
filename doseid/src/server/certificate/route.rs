@@ -20,7 +20,7 @@ pub async fn api_new_certificate(
   config: Extension<&'static Config>,
   headers: axum::http::HeaderMap,
   Json(body): Json<CertificateBody>,
-) -> Result<Json<Certificate>, Response> {
+) -> Result<Response, Response> {
   let session = validate_session(Arc::clone(&pool), &config, headers)
     .await
     .map_err(|e| e.into_response())?;
@@ -37,16 +37,7 @@ pub async fn api_new_certificate(
   )
   .await
   .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())?;
-  Ok(Json(Certificate {
-    id: Uuid::new_v4(),
-    domain_name: body.domain_name,
-    certificate: "".to_string(),
-    private_key: "".to_string(),
-    expires_at: Utc::now(),
-    owner_id: Default::default(),
-    updated_at: Utc::now(),
-    created_at: Utc::now(),
-  }))
+  Ok(StatusCode::CREATED.into_response())
 }
 
 #[derive(Deserialize)]
