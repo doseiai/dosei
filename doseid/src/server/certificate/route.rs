@@ -1,7 +1,7 @@
 use crate::config::Config;
 use crate::server::certificate::schema::Certificate;
 use crate::server::certificate::{
-  create_acme_account, create_acme_certificate, get_certificate_order,
+  create_acme_account, create_acme_certificate, get_http01_challenge_token_value,
 };
 use crate::server::session::validate_session;
 use crate::server::user::get_user;
@@ -51,7 +51,7 @@ pub struct CertificateBody {
 }
 
 pub async fn api_http01_challenge(Path(token): Path<String>) -> Result<String, Response> {
-  if let Some(token_value) = get_certificate_order(token).await {
+  if let Some(token_value) = get_http01_challenge_token_value(token).await {
     return Ok(token_value);
   }
   Err(StatusCode::NOT_FOUND.into_response())

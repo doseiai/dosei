@@ -34,7 +34,6 @@ pub fn external_check(domain_name: &str, order: Arc<Mutex<Order>>) {
       let order_state = order_guard.refresh().await.unwrap();
       match order_state.status {
         OrderStatus::Ready => {
-          info!("It's ready, begin create cert");
           drop(order_guard);
           match create_certification(&domain_name, order).await {
             Ok((certificate, private_key)) => {
@@ -159,9 +158,9 @@ pub async fn create_acme_certificate(
     .find(|ch| ch.r#type == ChallengeType::Http01)
     .ok_or_else(|| anyhow::Error::msg("http-01 challenge not found"))?;
   order.set_challenge_ready(&challenge.url).await?;
-  let certificate_order_cache = Arc::clone(&CERTIFICATE_ORDER_CACHE);
+  let http1_challenge_token_cache = Arc::clone(&HTTP1_CHALLENGE_TOKEN_CACHE);
   {
-    let mut cache = certificate_order_cache.lock().await;
+    let mut cache = http1_challenge_token_cache.lock().await;
     cache.cache_set(
       challenge.token.clone(),
       order.key_authorization(challenge).as_str().to_string(),
@@ -176,10 +175,10 @@ pub async fn create_acme_certificate(
   Ok(challenge.token.clone())
 }
 
-async fn get_certificate_order(token: String) -> Option<String> {
-  let certificate_order_cache = Arc::clone(&CERTIFICATE_ORDER_CACHE);
+async fn get_http01_challenge_token_value(token: String) -> Option<String> {
+  let http1_challenge_token_cache = Arc::clone(&HTTP1_CHALLENGE_TOKEN_CACHE);
   {
-    let mut cache = certificate_order_cache.lock().await;
+    let mut cache = http1_challenge_token_cache.lock().await;
     if let Some(value) = cache.cache_get(&token) {
       let token_value = value.clone();
       return cache.cache_set(token, token_value);
@@ -188,7 +187,8 @@ async fn get_certificate_order(token: String) -> Option<String> {
   None
 }
 
-static CERTIFICATE_ORDER_CACHE: Lazy<Arc<Mutex<TimedCache<String, String>>>> = Lazy::new(|| {
-  let cache = TimedCache::with_lifespan(CACHE_LIFESPAN);
-  Arc::new(Mutex::new(cache))
-});
+static HTTP1_CHALLENGE_TOKEN_CACHE: Lazy<Arc<Mutex<TimedCache<String, String>>>> =
+  Lazy::new(|| {
+    let cache = TimedCache::with_lifespan(CACHE_LIFESPAN);
+    Arc::new(Mutex::new(cache))
+  });
