@@ -7,6 +7,7 @@ use instant_acme::{
   OrderStatus,
 };
 use once_cell::sync::Lazy;
+use rcgen::{Certificate, CertificateParams, DistinguishedName};
 use sqlx::testing::TestTermination;
 use std::sync::Arc;
 use std::time::Duration;
@@ -20,19 +21,29 @@ const CACHE_LIFESPAN: u64 = 600;
 const INTERNAL_CHECK_SPAN: u64 = 5;
 const EXTERNAL_MAX_CHECKS: u64 = 5;
 
-pub fn external_check(order: Arc<Mutex<Order>>) {
-  let order = Arc::clone(&order);
+pub fn external_check(domain_name: &str, order_arc: Arc<Mutex<Order>>) {
+  let domain_name = domain_name.to_string();
+  let order_arc = Arc::clone(&order_arc);
+  let order_arc2 = Arc::clone(&order_arc);
 
   let mut attempts = 1;
   let mut backoff_duration = Duration::from_millis(250);
   tokio::spawn(async move {
     loop {
       sleep(backoff_duration).await;
-      let mut order = order.lock().await;
+      let mut order = order_arc.lock().await;
       let order_state = order.refresh().await.unwrap();
       match order_state.status {
         OrderStatus::Ready => {
-          info!("Order Status Ready, TODO, generate cert");
+          match create_certification(&domain_name, order_arc2).await {
+            Ok((certificate, private_key)) => {
+              info!(certificate);
+              info!(private_key);
+            }
+            Err(_) => {
+              error!("Something went wrong when generating CERT");
+            }
+          };
           break;
         }
         order_status => {
@@ -71,7 +82,7 @@ pub fn internal_check(domain_name: &str, token: &str, token_value: &str, order: 
           if response.is_success() {
             if let Ok(response_text) = response.unwrap().text().await {
               if response_text == token_value {
-                external_check(order);
+                external_check(&domain_name, order);
                 break;
               }
             }
@@ -99,6 +110,31 @@ pub async fn create_acme_account(email: &str) -> anyhow::Result<AccountCredentia
 
   let result = Account::create(&new_account_info, &server_url, None).await?;
   Ok(result.1)
+}
+
+async fn create_certification(
+  domain_name: &str,
+  order: Arc<Mutex<Order>>,
+) -> anyhow::Result<(String, String)> {
+  let certificate = {
+    let mut params = CertificateParams::new(vec![domain_name.to_owned()]);
+    params.distinguished_name = DistinguishedName::new();
+    Certificate::from_params(params)?
+  };
+  let signing_request = certificate.serialize_request_der()?;
+  let mut order = order.lock().await;
+  order.finalize(&signing_request).await?;
+
+  let cert_chain_pem = loop {
+    match order.certificate().await.unwrap() {
+      Some(cert_chain_pem) => break cert_chain_pem,
+      None => sleep(Duration::from_secs(1)).await,
+    }
+  };
+  Ok((
+    cert_chain_pem.to_string(),
+    certificate.serialize_private_key_pem(),
+  ))
 }
 
 pub async fn create_acme_certificate(
