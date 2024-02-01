@@ -27,7 +27,7 @@ fn cli() -> Command {
     .subcommand(Command::new("session").about("Print active cluster session"))
     .subcommand(env::sub_command())
     .subcommand(token::sub_command())
-    .subcommand(certificate::subcommand())
+    .subcommand(certificate::sub_command())
 }
 
 fn main() -> anyhow::Result<()> {

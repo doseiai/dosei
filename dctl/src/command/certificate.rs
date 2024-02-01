@@ -2,7 +2,7 @@ use crate::config::Config;
 use clap::{Arg, ArgMatches, Command};
 use serde_json::json;
 
-pub fn subcommand() -> Command {
+pub fn sub_command() -> Command {
   Command::new("certificate")
     .about("Certificates commands")
     .subcommand_required(true)
