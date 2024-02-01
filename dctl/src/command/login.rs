@@ -1,7 +1,12 @@
 use crate::cluster::get_cluster_info;
 use crate::config::{Config, SessionCredentials};
+use clap::Command;
 use reqwest::Url;
 use tiny_http::{Header, Response, Server};
+
+pub fn sub_command() -> Command {
+  Command::new("login").about("Log in to a cluster")
+}
 
 pub fn login(config: &'static Config) {
   let host = "localhost:8085";

@@ -7,12 +7,13 @@ mod cluster;
 mod test;
 
 use crate::command::certificate::new_certificate;
+use crate::command::deploy::deploy;
 use crate::command::login::login;
 use crate::command::logout::logout;
 use crate::command::new::new;
 use crate::command::session::session;
 use crate::command::token::list_token;
-use crate::command::{certificate, env, new, token};
+use crate::command::{certificate, deploy, env, login, logout, new, token};
 use crate::config::{Config, VERSION};
 use clap::Command;
 
@@ -22,13 +23,14 @@ fn cli() -> Command {
     .subcommand_required(true)
     .arg_required_else_help(true)
     .allow_external_subcommands(true)
-    .subcommand(Command::new("login").about("Log in to a cluster"))
-    .subcommand(Command::new("logout").about("Log out from a cluster"))
-    .subcommand(Command::new("session").about("Print active cluster session"))
-    .subcommand(new::sub_command())
-    .subcommand(env::sub_command())
-    .subcommand(token::sub_command())
+    .subcommand(login::sub_command())
+    .subcommand(logout::sub_command())
+    .subcommand(command::session::sub_command())
     .subcommand(certificate::sub_command())
+    .subcommand(deploy::sub_command())
+    .subcommand(env::sub_command())
+    .subcommand(new::sub_command())
+    .subcommand(token::sub_command())
 }
 
 fn main() -> anyhow::Result<()> {
@@ -39,6 +41,7 @@ fn main() -> anyhow::Result<()> {
     Some(("logout", _)) => logout(config),
     Some(("session", _)) => session(config),
     Some(("new", arg_matches)) => new(config, arg_matches),
+    Some(("deploy", _)) => deploy(config),
     Some(("env", params)) => match params.subcommand() {
       Some(("list", _)) => env::list_env(config),
       Some(("set", _)) => env::set_env(config),

@@ -1,6 +1,11 @@
 use crate::config::Config;
+use clap::Command;
 use reqwest::StatusCode;
 use serde_json::Value;
+
+pub fn sub_command() -> Command {
+  Command::new("logout").about("Log out from a cluster")
+}
 
 pub fn logout(config: &'static Config) {
   let response = config
