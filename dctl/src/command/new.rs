@@ -1,7 +1,20 @@
 use crate::config::Config;
-use clap::ArgMatches;
+use clap::{Arg, ArgMatches, Command};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+
+pub fn sub_command() -> Command {
+  Command::new("new")
+    .about("New resource commands")
+    .arg(
+      Arg::new("template")
+        .short('t')
+        .long("template")
+        .value_parser(["fastapi"])
+        .default_value("fastapi"),
+    )
+    .arg(Arg::new("name").index(1).required(true))
+}
 
 pub fn new(config: &'static Config, arg_matches: &ArgMatches) {
   let template = arg_matches.get_one::<String>("template").expect("required");

@@ -7,47 +7,16 @@ mod cluster;
 mod test;
 
 use crate::command::certificate::new_certificate;
-use crate::command::env::{list_env, set_env};
 use crate::command::login::login;
 use crate::command::logout::logout;
 use crate::command::new::new;
 use crate::command::session::session;
 use crate::command::token::list_token;
+use crate::command::{certificate, env, token};
 use crate::config::{Config, VERSION};
-use clap::{Arg, Command};
+use clap::Command;
 
 fn cli() -> Command {
-  let env_subcommand = Command::new("env")
-    .about("Environment variables commands")
-    .subcommand_required(true)
-    .subcommand(Command::new("list").about("List environment variables"))
-    .subcommand(Command::new("set").about("Set environment variables"));
-
-  let token_subcommand = Command::new("token")
-    .about("Tokens commands")
-    .subcommand_required(true)
-    .subcommand(Command::new("list").about("List tokens"));
-
-  let certificate_subcommand = Command::new("certificate")
-    .about("Certificates commands")
-    .subcommand_required(true)
-    .subcommand(
-      Command::new("new")
-        .about("New certificate")
-        .arg(Arg::new("name").index(1).required(true)),
-    );
-
-  let new_subcommand = Command::new("new")
-    .about("New resource commands")
-    .arg(
-      Arg::new("template")
-        .short('t')
-        .long("template")
-        .value_parser(["fastapi"])
-        .default_value("fastapi"),
-    )
-    .arg(Arg::new("name").index(1).required(true));
-
   Command::new("dctl")
     .version(VERSION)
     .subcommand_required(true)
@@ -56,10 +25,9 @@ fn cli() -> Command {
     .subcommand(Command::new("login").about("Log in to a cluster"))
     .subcommand(Command::new("logout").about("Log out from a cluster"))
     .subcommand(Command::new("session").about("Print active cluster session"))
-    .subcommand(env_subcommand)
-    .subcommand(token_subcommand)
-    .subcommand(new_subcommand)
-    .subcommand(certificate_subcommand)
+    .subcommand(env::sub_command())
+    .subcommand(token::sub_command())
+    .subcommand(certificate::subcommand())
 }
 
 fn main() -> anyhow::Result<()> {
@@ -71,8 +39,8 @@ fn main() -> anyhow::Result<()> {
     Some(("session", _)) => session(config),
     Some(("new", arg_matches)) => new(config, arg_matches),
     Some(("env", params)) => match params.subcommand() {
-      Some(("list", _)) => list_env(config),
-      Some(("set", _)) => set_env(config),
+      Some(("list", _)) => env::list_env(config),
+      Some(("set", _)) => env::set_env(config),
       _ => unreachable!(),
     },
     Some(("certificate", params)) => match params.subcommand() {

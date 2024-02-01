@@ -1,5 +1,13 @@
 use crate::config::Config;
+use clap::Command;
 use serde::{Deserialize, Serialize};
+
+pub fn sub_command() -> Command {
+  Command::new("token")
+    .about("Tokens commands")
+    .subcommand_required(true)
+    .subcommand(Command::new("list").about("List tokens"))
+}
 
 pub fn list_token(config: &'static Config) {
   let response = config
