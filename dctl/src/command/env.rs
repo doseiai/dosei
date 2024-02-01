@@ -1,6 +1,15 @@
 use crate::config::Config;
 use crate::session::get_session_user;
+use clap::Command;
 use serde::{Deserialize, Serialize};
+
+pub fn sub_command() -> Command {
+  Command::new("env")
+    .about("Environment variables commands")
+    .subcommand_required(true)
+    .subcommand(Command::new("list").about("List environment variables"))
+    .subcommand(Command::new("set").about("Set environment variables"))
+}
 
 pub fn list_env(config: &'static Config) {
   let user = match get_session_user(config) {
