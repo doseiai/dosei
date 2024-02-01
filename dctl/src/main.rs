@@ -12,7 +12,7 @@ use crate::command::logout::logout;
 use crate::command::new::new;
 use crate::command::session::session;
 use crate::command::token::list_token;
-use crate::command::{certificate, env, token};
+use crate::command::{certificate, env, new, token};
 use crate::config::{Config, VERSION};
 use clap::Command;
 
@@ -25,6 +25,7 @@ fn cli() -> Command {
     .subcommand(Command::new("login").about("Log in to a cluster"))
     .subcommand(Command::new("logout").about("Log out from a cluster"))
     .subcommand(Command::new("session").about("Print active cluster session"))
+    .subcommand(new::sub_command())
     .subcommand(env::sub_command())
     .subcommand(token::sub_command())
     .subcommand(certificate::sub_command())
