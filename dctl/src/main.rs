@@ -7,12 +7,15 @@ mod cluster;
 mod test;
 
 use crate::command::certificate::new_certificate;
+use crate::command::dev::dev;
+use crate::command::export::export;
 use crate::command::login::login;
 use crate::command::logout::logout;
 use crate::command::new::new;
+use crate::command::run::run;
 use crate::command::session::session;
 use crate::command::token::list_token;
-use crate::command::{certificate, env, new, token};
+use crate::command::{certificate, env, new, run, token};
 use crate::config::{Config, VERSION};
 use clap::Command;
 
@@ -22,6 +25,9 @@ fn cli() -> Command {
     .subcommand_required(true)
     .arg_required_else_help(true)
     .allow_external_subcommands(true)
+    .subcommand(run::sub_command())
+    .subcommand(Command::new("dev").about("Execute a Dosei App"))
+    .subcommand(Command::new("export").about("Export a Dosei App"))
     .subcommand(Command::new("login").about("Log in to a cluster"))
     .subcommand(Command::new("logout").about("Log out from a cluster"))
     .subcommand(Command::new("session").about("Print active cluster session"))
@@ -35,6 +41,9 @@ fn main() -> anyhow::Result<()> {
   let config: &'static Config = Box::leak(Box::new(Config::new()?));
   let matches = cli().get_matches();
   match matches.subcommand() {
+    Some(("run", arg_matches)) => run(arg_matches),
+    Some(("dev", _)) => dev(),
+    Some(("export", _)) => export(),
     Some(("login", _)) => login(config),
     Some(("logout", _)) => logout(config),
     Some(("session", _)) => session(config),

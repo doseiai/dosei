@@ -5,3 +5,7 @@ target/
 *doseid.toml
 .vscode/
 *.DS_Store
+
+# Dosei application things
+.dosei/
+dosei_config.*
