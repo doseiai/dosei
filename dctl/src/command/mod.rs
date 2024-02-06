@@ -11,6 +11,7 @@ pub(crate) mod new;
 pub(crate) mod run;
 pub(crate) mod session;
 pub(crate) mod token;
+pub(crate) mod up;
 
 fn find_and_print_dosei_config_extension(directory: &Path) -> anyhow::Result<String> {
   if let Ok(entries) = fs::read_dir(directory) {
