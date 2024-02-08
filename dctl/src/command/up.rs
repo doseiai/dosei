@@ -1,14 +1,9 @@
-use crate::command::find_and_print_dosei_config_extension;
-use clap::{Arg, ArgMatches, Command};
-use pyo3::exceptions::PySystemExit;
-use pyo3::prelude::*;
-use std::path::Path;
+use clap::{ArgMatches, Command};
 
 pub fn sub_command() -> Command {
-  Command::new("up")
-    .about("Create and start containers")
+  Command::new("up").about("Create and start containers")
 }
 
-pub fn up(arg_matches: &ArgMatches) {
+pub fn up(_: &ArgMatches) {
   todo!()
 }

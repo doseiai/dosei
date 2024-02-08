@@ -20,6 +20,22 @@ pub fn export() {
           }
         });
       }
+      "js" | "mjs" | "cjs" | ".ts" | "tsx" => {
+        use std::process::{Command, Stdio};
+        let node_command = r#"
+        (async () => {
+          const { export_config } = await import('@dosei/dosei');
+          await export_config();
+        })();"#;
+        let output = Command::new("node")
+          .arg("-e")
+          .arg(node_command)
+          .env("NODE_PATH", ".")
+          .stdout(Stdio::piped())
+          .stderr(Stdio::piped())
+          .output();
+        println!("{:?}", output);
+      }
       _ => unreachable!(),
     },
     Err(_) => {}

@@ -2,6 +2,7 @@ use std::fs;
 use std::path::Path;
 
 pub(crate) mod certificate;
+pub(crate) mod deploy;
 pub(crate) mod dev;
 pub(crate) mod env;
 pub(crate) mod export;

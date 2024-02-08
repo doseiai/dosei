@@ -12,10 +12,8 @@ pub fn dev() {
           let dosei_main = py.import("dosei.main").unwrap();
           let result = dosei_main.call_method("dev", (), None);
           if let Err(e) = result {
-            if e.is_instance(py, py.get_type::<PySystemExit>()) {
-              if e.value(py).to_string() != "0" {
-                println!("An error occurred: {:?}", e);
-              }
+            if e.is_instance(py, py.get_type::<PySystemExit>()) && e.value(py).to_string() != "0" {
+              println!("An error occurred: {:?}", e);
             }
           }
         });
