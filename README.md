@@ -16,11 +16,9 @@ The open source <a href="https://cloud.google.com/run"> Cloud Run</a> successor.
 [![X (formerly Twitter)](https://img.shields.io/twitter/follow/dosei_ai?style=flat&logo=x)](https://x.com/dosei_ai)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-white)](https://www.apache.org/licenses/LICENSE-2.0)
 
-## What is Dosei? The infrastructure runtime for Developers
+## The infrastructure runtime for Developers
 
-The open-source [Cloud Run](https://cloud.google.com/run) successor.
-
-Cloud Run and other container orchestration services are awesome. It has made Developers work massively easier when we compare it
+The open-source [Cloud Run](https://cloud.google.com/run) successor. Cloud Run and other container orchestration services are awesome. It has made Developers work massively easier when we compare it
 to operating a Kubernetes Cluster. However, most services are either non-portable (aka. "proprietary") or built on top of K8S, which makes it hard to test and operate applications infrastructure, specially locally.
 
 That's where Dosei comes in! Self-hosted, IaC and local development first experience.
