@@ -6,6 +6,7 @@
 [//]: # (<h3 align="center">Dosei</h3>)
 <p align="center">
 The open source <a href="https://cloud.google.com/run"> Cloud Run</a> successor.<br/>
+<br />
 <a href="https://dosei.ai/docs"><strong>Read the docs »</strong></a>
 <br />
 <br />
