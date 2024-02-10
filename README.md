@@ -5,7 +5,7 @@
 
 [//]: # (<h3 align="center">Dosei</h3>)
 <p align="center">
-The open source <a href="https://cloud.google.com/run"> Cloud Run</a> successor.<br/>
+The open source <a href="https://cloud.google.com/run"> Google Cloud Run</a> successor.<br/>
 <br />
 <a href="https://dosei.ai/docs"><strong>Read the docs »</strong></a>
 <br />
@@ -18,7 +18,7 @@ The open source <a href="https://cloud.google.com/run"> Cloud Run</a> successor.
 
 ## The infrastructure runtime for Developers
 
-The open-source [Cloud Run](https://cloud.google.com/run) successor. Cloud Run and other container orchestration services are awesome. It has made Developers work massively easier when we compare it
+The open-source [Google Cloud Run](https://cloud.google.com/run) successor. Google Cloud Run and other container orchestration services are awesome. It has made Developers work massively easier when we compare it
 to operating a Kubernetes Cluster. However, most services are either non-portable (aka. "proprietary") or built on top of K8S, which makes it hard to test and operate applications infrastructure, specially locally.
 
 That's where Dosei comes in! Self-hosted, IaC and local development first experience.
