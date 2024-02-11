@@ -9,7 +9,7 @@ pub fn export() {
     Ok(extension) => match extension.as_str() {
       "py" => {
         Python::with_gil(|py| {
-          let dosei_main = py.import("dosei.main").unwrap();
+          let dosei_main = py.import("dosei_sdk.main").unwrap();
           let result = dosei_main.call_method("export", (), None);
           if let Err(e) = result {
             if e.is_instance(py, py.get_type::<PySystemExit>()) {
