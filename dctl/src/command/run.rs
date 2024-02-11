@@ -22,7 +22,7 @@ pub fn run(arg_matches: &ArgMatches) {
     Ok(extension) => match extension.as_str() {
       "py" => {
         Python::with_gil(|py| {
-          let dosei_main = py.import("dosei.main").unwrap();
+          let dosei_main = py.import("dosei_sdk.main").unwrap();
           if let Err(e) = dosei_main.call_method("run", args, None) {
             if e.is_instance(py, py.get_type::<PySystemExit>()) {
               if e.value(py).to_string() != "0" {

@@ -3,7 +3,6 @@ use std::path::Path;
 
 pub(crate) mod certificate;
 pub(crate) mod deploy;
-pub(crate) mod dev;
 pub(crate) mod env;
 pub(crate) mod export;
 pub(crate) mod login;
@@ -20,7 +19,7 @@ fn find_and_print_dosei_config_extension(directory: &Path) -> anyhow::Result<Str
       let path = entry.path();
       if path.is_file() {
         if let Some(stem) = path.file_stem() {
-          if stem.to_string_lossy().eq("dosei_config") {
+          if stem.to_string_lossy().eq("dosei") {
             if let Some(extension) = path.extension() {
               return Ok(extension.to_string_lossy().to_string());
             }
@@ -29,5 +28,5 @@ fn find_and_print_dosei_config_extension(directory: &Path) -> anyhow::Result<Str
       }
     }
   }
-  Err(anyhow::Error::msg("No 'dosei_config.*' file found."))
+  Err(anyhow::Error::msg("No 'dosei.*' file found."))
 }
