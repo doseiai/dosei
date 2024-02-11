@@ -18,16 +18,14 @@ pub fn run(arg_matches: &ArgMatches) {
     (None,)
   };
   let path = Path::new(".");
-  match find_and_print_dosei_config_extension(path) {
-    Ok(extension) => match extension.as_str() {
+  if let Ok(extension) = find_and_print_dosei_config_extension(path) {
+    match extension.as_str() {
       "py" => {
         Python::with_gil(|py| {
           let dosei_main = py.import("dosei_sdk.main").unwrap();
           if let Err(e) = dosei_main.call_method("run", args, None) {
-            if e.is_instance(py, py.get_type::<PySystemExit>()) {
-              if e.value(py).to_string() != "0" {
-                println!("An error occurred: {:?}", e);
-              }
+            if e.is_instance(py, py.get_type::<PySystemExit>()) && e.value(py).to_string() != "0" {
+              println!("An error occurred: {:?}", e);
             }
           }
         });
@@ -36,7 +34,6 @@ pub fn run(arg_matches: &ArgMatches) {
         todo!()
       }
       _ => unreachable!(),
-    },
-    Err(_) => {}
-  };
+    }
+  }
 }

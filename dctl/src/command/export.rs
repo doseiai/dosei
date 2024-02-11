@@ -5,17 +5,15 @@ use std::path::Path;
 
 pub fn export() {
   let path = Path::new(".");
-  match find_and_print_dosei_config_extension(path) {
-    Ok(extension) => match extension.as_str() {
+  if let Ok(extension) = find_and_print_dosei_config_extension(path) {
+    match extension.as_str() {
       "py" => {
         Python::with_gil(|py| {
           let dosei_main = py.import("dosei_sdk.main").unwrap();
           let result = dosei_main.call_method("export", (), None);
           if let Err(e) = result {
-            if e.is_instance(py, py.get_type::<PySystemExit>()) {
-              if e.value(py).to_string() != "0" {
-                println!("An error occurred: {:?}", e);
-              }
+            if e.is_instance(py, py.get_type::<PySystemExit>()) && e.value(py).to_string() != "0" {
+              println!("An error occurred: {:?}", e);
             }
           }
         });
@@ -37,7 +35,6 @@ pub fn export() {
         println!("{:?}", output);
       }
       _ => unreachable!(),
-    },
-    Err(_) => {}
-  };
+    }
+  }
 }
