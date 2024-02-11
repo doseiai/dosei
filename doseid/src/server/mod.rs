@@ -64,10 +64,6 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
     .route("/cron-jobs", routing::post(cron::route::api_create_job))
     .route("/cron-jobs", routing::get(cron::route::api_get_cron_jobs))
     .route(
-      "/unstable/deploy",
-      routing::post(deployment::route::api_deploy),
-    )
-    .route(
       "/unstable/integration/github/events",
       routing::post(integration::github::route::api_integration_github_events),
     )
