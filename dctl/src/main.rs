@@ -40,7 +40,6 @@ fn main() -> anyhow::Result<()> {
   let matches = cli().get_matches();
   match matches.subcommand() {
     Some(("run", arg_matches)) => run(arg_matches),
-    Some(("up", arg_matches)) => up(arg_matches),
     Some(("export", _)) => export(),
     Some(("login", _)) => login(config),
     Some(("logout", _)) => logout(config),
