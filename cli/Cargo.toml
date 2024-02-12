@@ -1,9 +1,8 @@
 [package]
-name = "dctl"
+name = "dosei"
 description = "Dosei Command Line Interface (CLI)"
 version = { workspace = true }
 edition = { workspace = true }
-
 
 [dependencies]
 clap = { workspace = true, features = ["derive"] }

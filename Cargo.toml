@@ -1,11 +1,11 @@
 [workspace]
-members = ["proto", "doseid", "proxy", "util", 'dctl']
+members = ["proto", "doseid", "proxy", "util", 'cli']
 resolver = "2"
 
 [workspace.package]
 version = "0.0.17"
 license = "Apache-2.0"
-repository = "https://github.com/doseiai/engine"
+repository = "https://github.com/doseiai/dosei"
 authors = [
     "Alvaro Molina <am@dosei.ai>",
     "Rahul Lakhanpal <rahulkp220@gmail.com>",

@@ -724,23 +724,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7e962a19be5cfc3f3bf6dd8f61eb50107f356ad6270fbb3ed41476571db78be5"
 
 [[package]]
-name = "dctl"
-version = "0.0.17"
-dependencies = [
- "anyhow",
- "clap",
- "home",
- "once_cell",
- "reqwest",
- "serde",
- "serde_json",
- "sysinfo",
- "tiny_http",
- "uuid",
- "webbrowser",
-]
-
-[[package]]
 name = "der"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -795,6 +778,23 @@ dependencies = [
  "const-oid",
  "crypto-common",
  "subtle",
+]
+
+[[package]]
+name = "dosei"
+version = "0.0.17"
+dependencies = [
+ "anyhow",
+ "clap",
+ "home",
+ "once_cell",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sysinfo",
+ "tiny_http",
+ "uuid",
+ "webbrowser",
 ]
 
 [[package]]

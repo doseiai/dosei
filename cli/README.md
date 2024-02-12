@@ -1,6 +1,6 @@
-# Dosei CLI (dctl)
+# Dosei CLI (dosei)
 
-`dctl` is the Command Line Interface (CLI) for Dosei.
+`dosei` is the Command Line Interface (CLI) for Dosei.
 
 ## Learn more
 
