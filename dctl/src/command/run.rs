@@ -17,14 +17,15 @@ pub fn run(arg_matches: &ArgMatches) {
       "py" => {
         let arg = match function {
           Some(command) => format!("from dosei_sdk import main\nmain.run(\"{}\")", command),
-          None => "from dosei_sdk import main\nmain.run()".to_string()
+          None => "from dosei_sdk import main\nmain.run()".to_string(),
         };
         if let Err(err) = std::process::Command::new("python3")
           .arg("-c")
           .arg(arg)
           .stdout(Stdio::inherit())
           .stderr(Stdio::inherit())
-          .output() {
+          .output()
+        {
           eprintln!("{:?}", err);
         };
       }

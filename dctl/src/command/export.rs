@@ -12,7 +12,8 @@ pub fn export() {
           .arg("from dosei_sdk import main\nmain.export()")
           .stdout(Stdio::inherit())
           .stderr(Stdio::inherit())
-          .output() {
+          .output()
+        {
           eprintln!("{:?}", err);
         };
       }
@@ -28,7 +29,8 @@ pub fn export() {
           .env("NODE_PATH", ".")
           .stdout(Stdio::inherit())
           .stderr(Stdio::inherit())
-          .output() {
+          .output()
+        {
           eprintln!("{:?}", err);
         };
       }
