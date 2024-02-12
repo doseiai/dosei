@@ -33,7 +33,7 @@ That's where Dosei comes in! Self-hosted, IaC and local development first experi
 At it's core Dosei is really an infrastructure runtime for Developers
 
 ## Getting started
-> **Dosei is under active development.** While under development every version change should be assumed to be **breaking**.
+> 🚨 **Dosei is under active development.** While under development every version change should be assumed to be **breaking**.
 
 This is an installation guide. You'll learn how to install, run, and experiment with Dosei.
 
