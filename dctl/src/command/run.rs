@@ -21,6 +21,7 @@ pub fn run(arg_matches: &ArgMatches) {
   if let Ok(extension) = find_and_print_dosei_config_extension(path) {
     match extension.as_str() {
       "py" => {
+        pyo3::prepare_freethreaded_python();
         Python::with_gil(|py| {
           let dosei_main = py.import("dosei_sdk.main").unwrap();
           if let Err(e) = dosei_main.call_method("run", args, None) {
