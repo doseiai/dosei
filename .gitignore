@@ -9,3 +9,5 @@ target/
 # Dosei application things
 .dosei/
 dosei_config.*
+
+__pycache__/
