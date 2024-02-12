@@ -1,4 +1,4 @@
-FROM rust:1.74.1 as builder
+FROM rust:1.76.0 as builder
 
 ENV SQLX_OFFLINE=true
 
@@ -15,7 +15,7 @@ RUN --mount=type=cache,target=target cp target/release/doseid release/doseid
 RUN --mount=type=cache,target=target cp target/release/dctl release/dctl
 RUN --mount=type=cache,target=target cp target/release/proxy release/proxy
 
-FROM rust:1.74.1
+FROM rust:1.76.0
 
 RUN apt-get update && apt-get install -y python3.11-dev
 
