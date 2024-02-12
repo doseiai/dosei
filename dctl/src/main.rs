@@ -23,7 +23,6 @@ fn cli() -> Command {
     .version(VERSION)
     .subcommand_required(true)
     .arg_required_else_help(true)
-    .allow_external_subcommands(true)
     .subcommand(run::sub_command())
     .subcommand(Command::new("export").about("Export a Dosei App"))
     .subcommand(Command::new("login").about("Log in to a cluster"))
@@ -37,8 +36,7 @@ fn cli() -> Command {
 
 fn main() -> anyhow::Result<()> {
   let config: &'static Config = Box::leak(Box::new(Config::new()?));
-  let matches = cli().get_matches();
-  match matches.subcommand() {
+  match cli().get_matches().subcommand() {
     Some(("run", arg_matches)) => run(arg_matches),
     Some(("export", _)) => export(),
     Some(("login", _)) => login(config),
