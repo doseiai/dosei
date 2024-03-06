@@ -52,6 +52,29 @@ pub async fn build_image(name: &str, tag: &str, folder_path: &Path) {
   remove_file(output_path).await.unwrap();
 }
 
+pub async fn build_image_raw(name: &str, tag: &str, tar: Vec<u8>) {
+  let docker = Docker::connect_with_socket_defaults().unwrap();
+
+  let build_image_options = BuildImageOptions {
+    dockerfile: "Dockerfile",
+    t: &format!("{}:{}", name, tag),
+    ..Default::default()
+  };
+
+  let mut stream = docker.build_image(build_image_options, None, Some(tar.into()));
+  while let Some(build_result) = stream.next().await {
+    match build_result {
+      Ok(build_info) => {
+        info!("{:?}", build_info);
+      }
+      Err(e) => {
+        error!("{:?}", e);
+        break;
+      }
+    }
+  }
+}
+
 pub async fn push_image(name: &str, tag: &str) {
   let docker = Docker::connect_with_socket_defaults().unwrap();
   let mut stream = docker.push_image(
