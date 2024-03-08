@@ -2,7 +2,7 @@ build:
 	cargo build --release
 
 dev:
-	cargo run --bin doseid -- --config-path dev.doseid.toml
+	cargo run --bin doseid
 
 dev-compose:
 	docker compose -f docker-compose.base.yml up --build
