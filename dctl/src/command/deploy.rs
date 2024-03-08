@@ -1,11 +1,10 @@
-use crate::util::write_tar_gz;
-use clap::{Command};
-use std::env;
 use crate::config::Config;
+use crate::util::write_tar_gz;
+use clap::Command;
+use std::env;
 
 pub fn sub_command() -> Command {
-  Command::new("deploy")
-    .about("Deploy Dosei App")
+  Command::new("deploy").about("Deploy Dosei App")
 }
 
 pub fn deploy(config: &'static Config) {
@@ -17,10 +16,12 @@ pub fn deploy(config: &'static Config) {
     .file("file", ".dosei/output.tar.gz")
     .expect("failed");
 
-  config.cluster_api_client()
+  config
+    .cluster_api_client()
     .expect("Client connection failed")
     .post(format!("{}/deploy", config.api_base_url))
     .multipart(form)
-    .send().unwrap();
+    .send()
+    .unwrap();
   println!("Do deploy thing")
 }

@@ -10,7 +10,7 @@ pub fn sub_command() -> Command {
       Arg::new("template")
         .help("The Template name")
         .index(1)
-        .required(true)
+        .required(true),
     )
 }
 

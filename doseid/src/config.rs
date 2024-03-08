@@ -9,17 +9,19 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::HashMap;
 use std::fmt::Formatter;
-use std::fs::File;
+use std::fs::{create_dir_all, File};
 use std::io::Read;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::{env, fmt, fs, write};
 use uuid::Uuid;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub const DEPLOYMENT_LOG_PATH: &str = ".dosei/doseid/data/deployments/logs";
+const CONFIG_TEMPLATE: &str = include_str!("../resources/doseid.toml");
+const DEFAULT_CONFIG_PATH: &str = ".dosei/doseid/data/doseid.toml";
 
+pub const DEPLOYMENT_LOG_PATH: &str = ".dosei/doseid/data/deployments/logs";
 const TELEMETRY_ID_PATH: &str = ".dosei/doseid/data/id";
 
 #[derive(Parser, Debug)]
@@ -60,7 +62,7 @@ impl Config {
   ///
   pub fn new() -> anyhow::Result<Config> {
     dotenv().ok();
-    let args = Args::parse();
+    let mut args = Args::parse();
     if env::var("RUST_LOG").is_err() {
       env::set_var("RUST_LOG", "info");
     }
@@ -70,6 +72,18 @@ impl Config {
       .with_target(true)
       .finish();
     tracing::subscriber::set_global_default(subscriber)?;
+
+    // Save default config
+    let mut dst_path = home_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
+    dst_path.push(DEFAULT_CONFIG_PATH);
+    if let Some(parent_dir) = dst_path.parent() {
+      if create_dir_all(parent_dir).is_ok() && !dst_path.exists() {
+        fs::write(&dst_path, CONFIG_TEMPLATE)?;
+      }
+    }
+    if args.config_path.is_none() {
+      args.config_path = Some(dst_path.to_str().unwrap().to_string());
+    }
 
     let mut github_integration = None;
     // So ugly, wtf, but right now it works

@@ -8,6 +8,7 @@ mod test;
 mod util;
 
 use crate::command::certificate::new_certificate;
+use crate::command::create::create;
 use crate::command::deploy::deploy;
 use crate::command::export::export;
 use crate::command::login::login;
@@ -19,7 +20,6 @@ use crate::command::token::list_token;
 use crate::command::{certificate, create, deploy, env, new, run, token};
 use crate::config::{Config, VERSION};
 use clap::Command;
-use crate::command::create::create;
 
 fn cli() -> Command {
   Command::new("dctl")

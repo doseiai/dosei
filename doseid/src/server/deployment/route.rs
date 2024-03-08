@@ -1,9 +1,9 @@
 use crate::config::Config;
+use crate::docker::build_image_raw;
 use axum::extract::Multipart;
-use axum::{Extension};
+use axum::Extension;
 use sqlx::{Pool, Postgres};
 use std::sync::Arc;
-use crate::docker::{build_image_raw};
 
 pub async fn api_deploy(
   pool: Extension<Arc<Pool<Postgres>>>,

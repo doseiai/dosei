@@ -14,7 +14,7 @@ use tar::Builder;
 /// * `folder_path` - A Path slice that holds the path for the input directory
 pub fn write_tar_gz(input_path: &Path, output_path: &str) -> Result<()> {
   let output_path = PathBuf::from(output_path);
-  let tar_gz = File::create(&output_path)?;
+  let tar_gz = File::create(output_path)?;
   let enc = GzEncoder::new(tar_gz, Compression::default());
   let mut tar = Builder::new(enc);
 

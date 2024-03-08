@@ -11,3 +11,5 @@ target/
 dosei_config.*
 
 __pycache__/
+
+.idea/
