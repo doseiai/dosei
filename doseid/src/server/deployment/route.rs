@@ -29,10 +29,8 @@ pub async fn api_deploy(
 
   let mut combined_data = Vec::new();
   while let Some(mut field) = multipart.next_field().await.unwrap() {
-    let name = field.name().unwrap().to_string();
     let data = field.bytes().await.unwrap();
     combined_data.extend(data.clone());
-    // println!("Length of `{}` is {} bytes", name, data.len());
   }
   let image_tag = format!(
     "{}/{}/dosei-bot:{}",
@@ -40,6 +38,8 @@ pub async fn api_deploy(
     user.username.to_lowercase(),
     "latest"
   );
+
+  build_image_raw(&image_tag, &combined_data).await;
 
   let temp_dir = tempdir().expect("Failed to create a temp dir");
   let temp_path = temp_dir.path();
@@ -49,8 +49,6 @@ pub async fn api_deploy(
   let app = import_dosei_app(&image_tag, temp_path)
     .await
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-  build_image_raw(&image_tag, &combined_data).await;
 
   // Create the exposed port key
   let exposed_port = format!("{}/tcp", &app.port);
@@ -88,12 +86,11 @@ pub async fn api_deploy(
     .await
     .unwrap();
 
-  match docker
+  if let Err(e) = docker
     .start_container(&container.id, None::<StartContainerOptions<String>>)
     .await
   {
-    Ok(info) => {}
-    Err(e) => error!("Error starting container: {:?}", e),
+    error!("Error starting container: {:?}", e)
   }
 
   Ok(StatusCode::CREATED.into_response())
