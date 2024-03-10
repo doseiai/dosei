@@ -19,6 +19,7 @@ use sqlx::Pool;
 use std::sync::Arc;
 
 use crate::config::Config;
+use crate::docker;
 use axum::{routing, Extension, Router};
 use bollard::Docker;
 use tokio::net::TcpListener;
@@ -36,6 +37,7 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
 
   cluster::start_cluster(config)?;
   cron::start_job_manager(config, Arc::clone(&shared_pool));
+  docker::event::start_docker_event_listener();
   let app = Router::new()
     .route("/tokens", routing::get(token::route::api_get_tokens))
     .route("/tokens", routing::post(token::route::api_set_token))

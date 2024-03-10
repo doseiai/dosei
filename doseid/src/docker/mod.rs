@@ -1,4 +1,5 @@
 pub(crate) mod credentials;
+pub(crate) mod event;
 
 use bollard::auth::DockerCredentials;
 use bollard::image::{BuildImageOptions, PushImageOptions};
