@@ -5,6 +5,7 @@ mod server;
 
 #[cfg(test)]
 mod test;
+mod util;
 
 use config::Config;
 

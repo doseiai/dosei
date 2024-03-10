@@ -1,8 +1,9 @@
 use crate::config::Config;
 use crate::deployment::app::import_dosei_app;
-use crate::docker::{build_image_raw, extract_tar_gz_from_memory};
+use crate::docker::build_image_raw;
 use crate::server::session::validate_session;
 use crate::server::user::get_user;
+use crate::util::extract_tar_gz_from_memory;
 use axum::extract::Multipart;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
