@@ -161,7 +161,7 @@ async fn run_job(config: &'static Config, cron_job: CronJob) {
           tag: &cron_job.deployment_id,
           ..Default::default()
         });
-        let credentials = docker::gcr_credentials().await;
+        let credentials = docker::credentials::docker_credentials().await.unwrap();
         let mut stream = docker.create_image(options, None, Some(credentials));
         while let Some(result) = stream.next().await {
           if let Err(e) = result {

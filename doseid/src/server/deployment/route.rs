@@ -15,6 +15,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tempfile::tempdir;
 use tracing::{error, info};
+use uuid::Uuid;
 
 pub async fn api_deploy(
   pool: Extension<Arc<Pool<Postgres>>>,
@@ -32,12 +33,7 @@ pub async fn api_deploy(
     let data = field.bytes().await.unwrap();
     combined_data.extend(data.clone());
   }
-  let image_tag = format!(
-    "{}/{}/dosei-bot:{}",
-    config.container_registry_url,
-    user.username.to_lowercase(),
-    "latest"
-  );
+  let image_tag = format!("{}/{}", Uuid::new_v4(), Uuid::new_v4());
 
   build_image_raw(&image_tag, &combined_data).await;
 

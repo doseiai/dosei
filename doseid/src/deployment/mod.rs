@@ -47,7 +47,7 @@ pub async fn build_from_github(
     return;
   }
 
-  // build(Uuid::new_v4(), Uuid::new_v4(), deployment_id, temp_path).await;
+  build(Uuid::new_v4(), Uuid::new_v4(), deployment_id, temp_path).await;
   drop(temp_dir);
 }
 

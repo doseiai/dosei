@@ -1,11 +1,13 @@
+pub(crate) mod credentials;
+
 use bollard::auth::DockerCredentials;
 use bollard::image::{BuildImageOptions, PushImageOptions};
 use bollard::Docker;
 use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
 use flate2::Compression;
+
 use futures_util::StreamExt;
-use gcp_auth::AuthenticationManager;
 use std::default::Default;
 use std::fs::File;
 use std::io::Cursor;
@@ -14,17 +16,6 @@ use tar::{Archive, Builder};
 use tokio::fs::remove_file;
 use tokio::task;
 use tracing::{error, info};
-
-pub async fn gcr_credentials() -> DockerCredentials {
-  let authentication_manager = AuthenticationManager::new().await.unwrap();
-  let scopes = &["https://www.googleapis.com/auth/cloud-platform"];
-  let token = authentication_manager.get_token(scopes).await.unwrap();
-  DockerCredentials {
-    username: Some("oauth2accesstoken".to_string()),
-    password: Some(token.as_str().to_string()),
-    ..Default::default()
-  }
-}
 
 pub async fn build_image(name: &str, tag: &str, folder_path: &Path) {
   let docker = Docker::connect_with_socket_defaults().unwrap();
