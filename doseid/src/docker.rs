@@ -1,14 +1,16 @@
 use bollard::auth::DockerCredentials;
 use bollard::image::{BuildImageOptions, PushImageOptions};
 use bollard::Docker;
+use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
 use flate2::Compression;
 use futures_util::StreamExt;
 use gcp_auth::AuthenticationManager;
 use std::default::Default;
 use std::fs::File;
+use std::io::Cursor;
 use std::path::Path;
-use tar::Builder;
+use tar::{Archive, Builder};
 use tokio::fs::remove_file;
 use tokio::task;
 use tracing::{error, info};
@@ -52,16 +54,16 @@ pub async fn build_image(name: &str, tag: &str, folder_path: &Path) {
   remove_file(output_path).await.unwrap();
 }
 
-pub async fn build_image_raw(name: &str, tag: &str, tar: Vec<u8>) {
+pub async fn build_image_raw(image_tag: &str, tar: &[u8]) {
   let docker = Docker::connect_with_socket_defaults().unwrap();
 
   let build_image_options = BuildImageOptions {
     dockerfile: "Dockerfile",
-    t: &format!("{}:{}", name, tag),
+    t: image_tag,
     ..Default::default()
   };
 
-  let mut stream = docker.build_image(build_image_options, None, Some(tar.into()));
+  let mut stream = docker.build_image(build_image_options, None, Some(tar.to_owned().into()));
   while let Some(build_result) = stream.next().await {
     match build_result {
       Ok(build_info) => {
@@ -75,12 +77,12 @@ pub async fn build_image_raw(name: &str, tag: &str, tar: Vec<u8>) {
   }
 }
 
-pub async fn push_image(name: &str, tag: &str) {
+pub async fn push_image(name: &str, tag: &str, docker_credentials: DockerCredentials) {
   let docker = Docker::connect_with_socket_defaults().unwrap();
   let mut stream = docker.push_image(
     name,
     Some(PushImageOptions { tag }),
-    Some(gcr_credentials().await),
+    Some(docker_credentials),
   );
   while let Some(push_result) = stream.next().await {
     match push_result {
@@ -109,7 +111,23 @@ async fn write_tar_gz(output_path: &str, folder_path: &Path) -> anyhow::Result<(
   .await?
 }
 
-async fn read_tar_gz_content(output_path: &str) -> Vec<u8> {
+pub(crate) async fn extract_tar_gz_from_memory(
+  combined_data: &[u8],
+  target_folder: &Path,
+) -> anyhow::Result<()> {
+  let combined_data_owned = combined_data.to_owned();
+  let target_folder_buf = target_folder.to_path_buf();
+  task::spawn_blocking(move || {
+    let cursor = Cursor::new(combined_data_owned);
+    let decoder = GzDecoder::new(cursor);
+    let mut archive = Archive::new(decoder);
+    archive.unpack(target_folder_buf)?;
+    Ok(())
+  })
+  .await?
+}
+
+pub(crate) async fn read_tar_gz_content(output_path: &str) -> Vec<u8> {
   use tokio::fs::File;
   use tokio::io::AsyncReadExt;
 

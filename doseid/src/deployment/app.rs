@@ -7,11 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::path::Path;
 use tracing::info;
 
-pub async fn import_dosei_app(
-  name: &str,
-  tag: &str,
-  folder_path: &Path,
-) -> anyhow::Result<DoseiApp> {
+pub async fn import_dosei_app(image_tag: &str, folder_path: &Path) -> anyhow::Result<DoseiApp> {
   let app_instance = dosei_util::_find_framework_init(&Framework::Dosei, folder_path)
     .map_err(|_| anyhow!("No Dosei initialization found."))?;
   info!("Detected `Dosei` initialization({})", app_instance);
@@ -22,11 +18,11 @@ pub async fn import_dosei_app(
     .create_container(
       None::<CreateContainerOptions<String>>,
       bollard::container::Config {
-        image: Some(format!("{}:{}", name, tag).as_str()),
+        image: Some(image_tag),
         cmd: Some(vec![
           "/bin/sh",
           "-c",
-          format!("dosei export {} && cat .dosei/app.json", app_instance).as_str(),
+          r#"python -c "from dosei_sdk import main; main.export()" && cat .dosei/app.json"#,
         ]),
         ..Default::default()
       },
@@ -72,12 +68,15 @@ pub async fn import_dosei_app(
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DoseiApp {
-  cron_jobs: Vec<CronJob>,
+  pub name: String,
+  pub run: String,
+  pub port: u16,
+  pub cron_jobs: Vec<CronJob>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CronJob {
-  schedule: String,
-  entrypoint: String,
-  is_async: bool,
+  pub schedule: String,
+  pub entrypoint: String,
+  pubis_async: bool,
 }
