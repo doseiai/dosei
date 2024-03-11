@@ -9,8 +9,7 @@ use bollard::container::{
   CreateContainerOptions, InspectContainerOptions, LogOutput, LogsOptions, StartContainerOptions,
 };
 use bollard::image::{CreateImageOptions, ListImagesOptions};
-use bollard::models::{ContainerInspectResponse, EventMessage, EventMessageTypeEnum};
-use bollard::system::EventsOptions;
+use bollard::models::ContainerInspectResponse;
 use bollard::Docker;
 use chrono::Utc;
 use cron::Schedule;

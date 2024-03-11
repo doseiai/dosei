@@ -4,22 +4,15 @@ pub(crate) mod event;
 use bollard::auth::DockerCredentials;
 use bollard::image::{BuildImageOptions, PushImageOptions};
 use bollard::Docker;
-use flate2::read::GzDecoder;
-use flate2::write::GzEncoder;
-use flate2::Compression;
 
 use crate::util::{read_tar_gz_content, write_tar_gz};
 use futures_util::StreamExt;
 use std::default::Default;
-use std::fs::File;
-use std::io::Cursor;
 use std::path::Path;
-use tar::{Archive, Builder};
 use tokio::fs::remove_file;
-use tokio::task;
 use tracing::{error, info};
 
-pub async fn build_image(name: &str, tag: &str, folder_path: &Path) {
+pub async fn build_image(image_tag: &str, folder_path: &Path) {
   let docker = Docker::connect_with_socket_defaults().unwrap();
 
   let output_path = "output.tar.gz";
@@ -27,7 +20,7 @@ pub async fn build_image(name: &str, tag: &str, folder_path: &Path) {
 
   let build_image_options = BuildImageOptions {
     dockerfile: "Dockerfile",
-    t: &format!("{}:{}", name, tag),
+    t: image_tag,
     ..Default::default()
   };
 
@@ -47,7 +40,7 @@ pub async fn build_image(name: &str, tag: &str, folder_path: &Path) {
   remove_file(output_path).await.unwrap();
 }
 
-pub async fn build_image_raw(image_tag: &str, tar: &[u8]) {
+pub async fn build_image_raw(image_tag: &str, tar: &[u8]) -> anyhow::Result<Vec<String>> {
   let docker = Docker::connect_with_socket_defaults().unwrap();
 
   let build_image_options = BuildImageOptions {
@@ -57,17 +50,24 @@ pub async fn build_image_raw(image_tag: &str, tar: &[u8]) {
   };
 
   let mut stream = docker.build_image(build_image_options, None, Some(tar.to_owned().into()));
+  let mut logs = Vec::new(); // Vector to store logs
+
   while let Some(build_result) = stream.next().await {
     match build_result {
       Ok(build_info) => {
-        info!("{:?}", build_info);
+        if let Some(stream) = build_info.stream {
+          logs.push(stream);
+        }
       }
       Err(e) => {
-        error!("{:?}", e);
+        let error = format!("{:?}", e);
+        error!("{}", e);
+        logs.push(error);
         break;
       }
     }
   }
+  Ok(logs)
 }
 
 pub async fn push_image(name: &str, tag: &str, docker_credentials: DockerCredentials) {

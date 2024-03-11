@@ -34,7 +34,7 @@ async fn listen_docker_events() {
             "die" => {
               error!("die");
             }
-            (event_action) => {
+            event_action => {
               warn!("Unhandled container event action: {}", event_action);
             }
           },

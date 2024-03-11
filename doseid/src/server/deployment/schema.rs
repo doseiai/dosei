@@ -10,12 +10,13 @@ pub struct Deployment {
   pub project_id: Uuid,
   pub owner_id: Uuid,
   pub status: DeploymentStatus,
+  pub build_logs: Value,
   pub updated_at: DateTime<Utc>,
   pub created_at: DateTime<Utc>,
 }
 
 #[derive(sqlx::Type, Serialize, Deserialize, Debug)]
-#[sqlx(type_name = "status", rename_all = "lowercase")]
+#[sqlx(type_name = "deployment_status", rename_all = "lowercase")]
 pub enum DeploymentStatus {
   Queued,
   Building,

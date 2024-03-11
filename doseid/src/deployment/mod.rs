@@ -1,6 +1,5 @@
 pub(crate) mod app;
 
-use crate::deployment::app::import_dosei_app;
 use crate::docker::build_image;
 use home::home_dir;
 use std::path::{Path, PathBuf};
@@ -59,13 +58,8 @@ async fn build(owner_id: Uuid, project_id: Uuid, deployment_id: String, folder_p
     return;
   }
   info!("Detected `Dockerfile`");
-  let image_name = &format!("{}/{}", owner_id, project_id);
-  let image_tag = &deployment_id;
-  let image_with_tag = format!("{}:{}", image_name, image_tag);
-  if let Ok(app) = import_dosei_app(&image_with_tag, folder_path).await {
-    // TODO: Implement DoseiApp Deployment
-  }
-  build_image(image_name, image_tag, folder_path).await;
+  let image_tag = format!("{}/{}:{}", owner_id, project_id, deployment_id);
+  build_image(&image_tag, folder_path).await;
 }
 
 #[cfg(test)]

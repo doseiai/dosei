@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE deployment SET status = $1, updated_at = $2, build_logs = $3  WHERE id = $4::uuid",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "deployment_status",
+            "kind": {
+              "Enum": [
+                "queued",
+                "building",
+                "error",
+                "canceled",
+                "ready"
+              ]
+            }
+          }
+        },
+        "Timestamptz",
+        "Jsonb",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3fed14eb0ac6823f5f03990b6440c823522d4c7b5e11fe0f212829b61b894bbb"
+}

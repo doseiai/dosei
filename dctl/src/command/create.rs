@@ -1,7 +1,6 @@
 use crate::config::Config;
 use clap::{Arg, ArgMatches, Command};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
 
 pub fn sub_command() -> Command {
   Command::new("create")

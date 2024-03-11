@@ -8,7 +8,7 @@ pub fn sub_command() -> Command {
   Command::new("deploy").about("Deploy Dosei App")
 }
 
-pub fn deploy(config: &'static Config) {
+pub fn deploy(config: &'static Config) -> anyhow::Result<()> {
   println!("{:?}", env::current_dir());
   let path = env::current_dir().expect("Something went wrong");
 
@@ -31,7 +31,8 @@ pub fn deploy(config: &'static Config) {
     .post(format!("{}/deploy", config.api_base_url))
     .multipart(form)
     .bearer_auth(config.bearer_token())
-    .send()
-    .unwrap();
-  println!("Do deploy thing")
+    .send()?
+    .error_for_status()?;
+  println!("Do deploy thing");
+  Ok(())
 }

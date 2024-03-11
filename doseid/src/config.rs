@@ -12,7 +12,7 @@ use std::fmt::Formatter;
 use std::fs::{create_dir_all, File};
 use std::io::Read;
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::{env, fmt, fs, write};
 use uuid::Uuid;
 

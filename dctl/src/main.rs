@@ -44,7 +44,7 @@ fn main() -> anyhow::Result<()> {
   match cli().get_matches().subcommand() {
     Some(("run", arg_matches)) => run(arg_matches),
     Some(("create", arg_matches)) => create(config, arg_matches),
-    Some(("deploy", _)) => deploy(config),
+    Some(("deploy", _)) => deploy(config)?,
     Some(("export", _)) => export(),
     Some(("login", _)) => login(config),
     Some(("logout", _)) => logout(config),
