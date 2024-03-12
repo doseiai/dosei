@@ -42,7 +42,7 @@ jobs:
       - name: Cargo deb
         run: |
           CARGO_DEB_OUTPUT=$(cargo deb --package doseid)
-          DEB_PACKAGE_NAME=(echo "$CARGO_DEB_OUTPUT" | grep -o '[^/]*\.deb$')
+          DEB_PACKAGE_NAME=$(echo "$CARGO_DEB_OUTPUT" | grep -o '[^/]*\.deb$')
           echo "DEB_PACKAGE_NAME=$DEB_PACKAGE_NAME" >> $GITHUB_ENV
 
       - name: Configure AWS Credentials
