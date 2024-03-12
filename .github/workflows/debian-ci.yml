@@ -40,8 +40,9 @@ jobs:
         uses: alw3ys/setup-deb-s3@v1
 
       - name: Cargo deb
-        run: cargo deb --package doseid
-
+        run: |
+          CARGO_DEB_OUTPUT=$(cargo deb --package doseid)
+          export DEB_PACKAGE_NAME=(echo "$CARGO_DEB_OUTPUT" | grep -o '[^/]*\.deb$')
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -52,4 +53,4 @@ jobs:
 
       - name: Publish to S3
         working-directory: target/debian
-        run: deb-s3 upload --bucket packages.dosei.io doseid_0.0.17-1_amd64.deb
+        run: deb-s3 upload --bucket packages.dosei.io $DEB_PACKAGE_NAME
