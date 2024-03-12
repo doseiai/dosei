@@ -39,3 +39,15 @@ jobs:
 
       - name: Cargo deb
         run: cargo deb --package doseid
+
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: AKIASZDFCITSGESB2DSD
+          aws-region: eu-west-1
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Publish to S3
+        working-directory: target/debian
+        run: deb-s3 upload --bucket packages.dosei.ai doseid_0.0.17-1_amd64.deb
