@@ -9,7 +9,7 @@ on:
     branches: [ main ]
 
 concurrency:
-  group: ${{ github.ref }}
+  group: ${{ github.ref }}-deb
   cancel-in-progress: true
 
 jobs:
