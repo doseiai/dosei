@@ -90,6 +90,24 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
   let listener = TcpListener::bind(&address)
     .await
     .context("Failed to start server")?;
+  println!(
+    "
+                  @@@@@@@@@@@.         &@@@@.
+            @@@      @@@@  .@@@  @@,    #@@&
+          @@%   &@@@#      &@@@         @@          {}
+         @@@@@@.      .@@@&          &@@
+        @@       *@@@@           %@@@               Running in standalone mode
+        @@ .@@@@(            @@@@                   Port {}
+                        @@@@  #@@@@                 Node Port {}
+     @@@         .@@@@%  %@@@   @@
+  /@@ .&*   @@@@.  (@@@@      @@%
+ @@@       ,@@@@@@         @@@                      https://dosei.io
+ .@@@@@@@%        @@@@@@@@
+  ",
+    env!("CARGO_PKG_DESCRIPTION"),
+    &config.address.port,
+    &config.node_info.address.port
+  );
   info!("Dosei running on http://{} (Press CTRL+C to quit", address);
   axum::serve(listener, app).await?;
   Ok(())
