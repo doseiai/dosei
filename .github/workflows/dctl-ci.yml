@@ -31,7 +31,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Rust
         uses: dsherret/rust-toolchain-file@v1
@@ -45,7 +45,7 @@ jobs:
           cache-all-crates: true
 
       - name: Install Protoc
-        uses: arduino/setup-protoc@v2
+        uses: arduino/setup-protoc@v3
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -61,7 +61,7 @@ jobs:
         run: Compress-Archive -CompressionLevel Optimal -Force -Path target/${{ matrix.target }}/release/dctl.exe -DestinationPath dctl-${{ matrix.target }}.zip
 
       - name: Upload Zip
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: dctl
           path: dctl-${{ matrix.target }}.zip
@@ -72,11 +72,11 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     needs: [build]
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: dctl
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             dctl-x86_64-unknown-linux-gnu.zip
