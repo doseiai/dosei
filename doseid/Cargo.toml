@@ -2,6 +2,8 @@
 name = "doseid"
 description = "Dosei Daemon"
 version = { workspace = true }
+license = { workspace = true }
+authors = { workspace = true }
 edition = { workspace = true }
 
 [dependencies]
