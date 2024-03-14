@@ -59,6 +59,8 @@ CREATE TABLE IF NOT EXISTS deployment (
     owner_id UUID NOT NULL,
     status deployment_status NOT NULL,
     build_logs jsonb NOT NULL,
+    exposed_port smallint,
+    internal_port smallint,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     PRIMARY KEY (id)
