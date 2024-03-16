@@ -1,33 +1,40 @@
-FROM rust:1.76.0 as builder
+ARG RUST_VERSION=1.76.0
+FROM lukemathwalker/cargo-chef:0.1.66-rust-$RUST_VERSION as chef
 
 ENV SQLX_OFFLINE=true
+WORKDIR /dosei
 
-WORKDIR /usr/src/dosei
-
-RUN apt-get update && apt-get install -y build-essential protobuf-compiler python3.11-dev
-
+FROM chef AS planner
 COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
 
-RUN --mount=type=cache,target=target cargo build --release
+FROM chef AS builder
 
-RUN mkdir release
-RUN --mount=type=cache,target=target cp target/release/doseid release/doseid
-RUN --mount=type=cache,target=target cp target/release/dctl release/dctl
-RUN --mount=type=cache,target=target cp target/release/proxy release/proxy
+RUN apt-get update && apt-get install build-essential protobuf-compiler python3.11-dev -y
 
-FROM rust:1.76.0
+COPY --from=planner /dosei/recipe.json recipe.json
+# Build dependencies - this is the caching Docker layer!
+RUN cargo chef cook --release --recipe-path recipe.json
+# Build Dosei
+COPY . .
+RUN cargo build --release
 
-RUN apt-get update && apt-get install -y python3.11-dev
+FROM debian:12-slim AS runtime
 
-ARG RELEASE_PATH=/usr/src/dosei/release
-ARG DOSEID_INSTALL=/bin/doseid
-ARG DOSEI_CLI_INSTALL=/bin/dctl
-ARG DOSEI_PROXY_INSTALL=/bin/dosei-proxy
+LABEL org.opencontainers.image.title="Dosei"
+LABEL org.opencontainers.image.description="Official Dosei image"
+LABEL org.opencontainers.image.url="https://dosei.ai"
+LABEL org.opencontainers.image.documentation="https://dosei.ai/docs"
+LABEL org.opencontainers.image.source="https://github.com/doseiai/dosei"
+LABEL org.opencontainers.image.vendor="Dosei"
 
-COPY --from=builder ${RELEASE_PATH}/doseid ${DOSEID_INSTALL}
-COPY --from=builder ${RELEASE_PATH}/dctl ${DOSEI_CLI_INSTALL}
-COPY --from=builder ${RELEASE_PATH}/proxy ${DOSEI_PROXY_INSTALL}
+RUN apt-get update && apt-get install python3.11-dev -y
 
-RUN chmod +x ${DOSEID_INSTALL} ${DOSEI_CLI_INSTALL} ${DOSEI_PROXY_INSTALL}
+ARG RELEASE_PATH=/dosei/target/release
+ARG TAGET_PATH=/usr/local/bin
 
-CMD ["/bin/doseid"]
+COPY --from=builder $RELEASE_PATH/doseid $TAGET_PATH
+COPY --from=builder $RELEASE_PATH/dctl $TAGET_PATH
+COPY --from=builder $RELEASE_PATH/proxy $TAGET_PATH
+
+ENTRYPOINT ["/usr/local/bin/doseid"]
