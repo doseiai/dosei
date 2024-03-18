@@ -5,6 +5,7 @@ use crate::server::deployment::schema::{Deployment, DeploymentStatus};
 use crate::server::session::validate_session;
 use crate::server::user::get_user;
 use crate::util::extract_tar_gz_from_memory;
+use crate::util::network::find_available_port;
 use axum::extract::Multipart;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
@@ -35,18 +36,19 @@ pub async fn api_deploy(
 
   let deployment = Deployment {
     id: Uuid::new_v4(),
-    commit_id: "non_tracked".to_string(),
+    commit_id: "0000000000000000000000000000000000000000".to_string(),
     commit_metadata: json!({}),
     project_id: Uuid::new_v4(),
     owner_id: session.owner_id,
     status: DeploymentStatus::Building,
     build_logs: json!({}),
+    exposed_port: None,
+    internal_port: None,
     updated_at: Utc::now(),
     created_at: Utc::now(),
   };
 
-  sqlx::query_as!(
-      Deployment,
+  sqlx::query!(
       "
       INSERT INTO deployment (id, commit_id, commit_metadata, project_id, owner_id, status, build_logs, updated_at, created_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -82,6 +84,8 @@ pub async fn api_deploy(
     .await
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
+  let available_host_port = find_available_port().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
   // Create the exposed port key
   let exposed_port = format!("{}/tcp", &app.port);
 
@@ -92,8 +96,8 @@ pub async fn api_deploy(
 
   // Initialize port bindings
   let port_binding = vec![PortBinding {
-    host_ip: Some("0.0.0.0".to_string()),
-    host_port: Some(app.port.to_string()),
+    host_ip: Some("127.0.0.1".to_string()),
+    host_port: Some(available_host_port.to_string()),
   }];
   let mut port_map = PortMap::new();
   port_map.insert(format!("{}/tcp", &app.port), Some(port_binding));
@@ -126,10 +130,12 @@ pub async fn api_deploy(
   }
   sqlx::query_as!(
     Deployment,
-    "UPDATE deployment SET status = $1, updated_at = $2, build_logs = $3  WHERE id = $4::uuid",
+    "UPDATE deployment SET status = $1, updated_at = $2, build_logs = $3, exposed_port = $4, internal_port = $5  WHERE id = $6::uuid",
     DeploymentStatus::Ready as DeploymentStatus,
     Utc::now(),
     json!(build_logs),
+    Some(available_host_port as i16),
+    Some(app.port as i16),
     deployment.id,
   )
   .execute(&**pool)

@@ -11,6 +11,8 @@ pub struct Deployment {
   pub owner_id: Uuid,
   pub status: DeploymentStatus,
   pub build_logs: Value,
+  pub exposed_port: Option<i16>,
+  pub internal_port: Option<i16>,
   pub updated_at: DateTime<Utc>,
   pub created_at: DateTime<Utc>,
 }
