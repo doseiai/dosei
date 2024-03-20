@@ -50,6 +50,7 @@ pub struct Config {
   pub container_registry_url: String,
   pub telemetry: Telemetry,
   pub github_integration: Option<GithubIntegration>,
+  pub console: bool,
 }
 
 impl Config {
@@ -84,7 +85,7 @@ impl Config {
     if args.config_path.is_none() {
       args.config_path = Some(dst_path.to_str().unwrap().to_string());
     }
-
+    let mut console = false;
     let mut github_integration = None;
     // So ugly, wtf, but right now it works
     if cfg!(test) {
@@ -93,6 +94,7 @@ impl Config {
       if toml_config.github.unstable.enabled {
         github_integration = Some(GithubIntegration::new()?);
       }
+      console = toml_config.console.enabled;
     };
 
     Ok(Config {
@@ -126,6 +128,7 @@ impl Config {
         )
         .build(),
       github_integration,
+      console,
     })
   }
 
@@ -199,7 +202,7 @@ impl Telemetry {
         path.push(TELEMETRY_ID_PATH);
         let dir = path.parent().unwrap();
         if !dir.exists() {
-          let _ = fs::create_dir_all(dir);
+          let _ = create_dir_all(dir);
         }
         let uuid = match File::open(&path) {
           Ok(mut file) => {
@@ -268,7 +271,13 @@ impl PostHogClient {
 
 #[derive(Deserialize)]
 pub struct TOMLConfig {
+  console: ConsoleTOML,
   github: GithubTOML,
+}
+
+#[derive(Deserialize)]
+pub struct ConsoleTOML {
+  enabled: bool,
 }
 
 #[derive(Deserialize)]

@@ -132,7 +132,7 @@ pub struct NewProjectFromClone {
   source_full_name: String,
   branch: Option<String>,
   path: Option<String>,
-  private: Option<bool>,
+  // private: Option<bool>,
   name: String,
-  envs: Option<HashMap<String, String>>,
+  // envs: Option<HashMap<String, String>>,
 }

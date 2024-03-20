@@ -3,6 +3,7 @@ mod config;
 mod session;
 
 mod cluster;
+mod git;
 #[cfg(test)]
 mod test;
 mod util;

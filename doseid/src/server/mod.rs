@@ -1,3 +1,4 @@
+mod app;
 mod certificate;
 mod cluster;
 mod cron;
@@ -20,13 +21,20 @@ use std::sync::Arc;
 
 use crate::config::Config;
 use crate::docker;
+use crate::server::app::shutdown_app;
 use axum::{routing, Extension, Router};
 use bollard::Docker;
 use tokio::net::TcpListener;
+use tokio::signal;
 use tracing::{error, info};
 
 pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
   check_docker_daemon_status().await;
+
+  if config.console {
+    app::start_app().await.context("Failed to start App")?;
+    info!("[Integrations] Enabling console");
+  }
 
   let pool = Pool::<Postgres>::connect(&config.database_url)
     .await
@@ -111,8 +119,18 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
     &config.address.port,
     &config.node_info.address.port
   );
-  info!("Dosei running on http://{} (Press CTRL+C to quit", address);
-  axum::serve(listener, app).await?;
+  tokio::spawn(async move {
+    info!("Dosei running on http://{} (Press CTRL+C to quit", address);
+    axum::serve(listener, app)
+      .await
+      .expect("Failed start Dosei API");
+  });
+  match signal::ctrl_c().await {
+    Ok(()) => {
+      shutdown_app().await?;
+    }
+    Err(err) => error!("Unable to listen for shutdown signal: {}", err),
+  }
   Ok(())
 }
 
