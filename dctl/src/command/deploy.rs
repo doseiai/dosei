@@ -3,6 +3,7 @@ use crate::util::write_tar_gz;
 use clap::Command;
 use std::env;
 use std::fs::create_dir_all;
+use std::time::Duration;
 
 pub fn sub_command() -> Command {
   Command::new("deploy").about("Deploy Dosei App")
@@ -30,6 +31,7 @@ pub fn deploy(config: &'static Config) -> anyhow::Result<()> {
     .expect("Client connection failed")
     .post(format!("{}/deploy", config.api_base_url))
     .multipart(form)
+    .timeout(Duration::from_secs(3600))
     .bearer_auth(config.bearer_token())
     .send()?
     .error_for_status()?;

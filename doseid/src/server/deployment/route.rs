@@ -20,7 +20,6 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tempfile::tempdir;
 use tracing::error;
-use tracing_subscriber::fmt::format::json;
 use uuid::Uuid;
 
 pub async fn api_deploy(
@@ -73,16 +72,23 @@ pub async fn api_deploy(
 
   let build_logs = build_image_raw(&image_tag, &combined_data)
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .map_err(|e| {
+      error!("{}", e);
+      StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
   let temp_dir = tempdir().expect("Failed to create a temp dir");
   let temp_path = temp_dir.path();
   extract_tar_gz_from_memory(&combined_data, temp_path)
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-  let app = import_dosei_app(&image_tag, temp_path)
-    .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .map_err(|e| {
+      error!("{}", e);
+      StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+  let app = import_dosei_app(&image_tag, temp_path).await.map_err(|e| {
+    error!("{}", e);
+    StatusCode::INTERNAL_SERVER_ERROR
+  })?;
 
   let available_host_port = find_available_port().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 

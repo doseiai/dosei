@@ -1,50 +1,77 @@
 use crate::config::Config;
+use crate::git::git_clone;
 use clap::{Arg, ArgMatches, Command};
+use git2::Repository;
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use std::path::Path;
+use std::time::Instant;
+use std::{env, fs};
+use tempfile::tempdir;
 
 pub fn sub_command() -> Command {
   Command::new("new")
-    .about("New resource commands")
+    .about("Create a new project from a template")
     .arg(
       Arg::new("template")
-        .short('t')
-        .long("template")
+        .help("The Template name")
+        .index(1)
         .value_parser(["fastapi"])
-        .default_value("fastapi"),
+        .required(true),
     )
-    .arg(Arg::new("name").index(1).required(true))
+    .arg(
+      Arg::new("destination")
+        .help("The folder destination")
+        .index(2),
+    )
 }
 
-pub fn new(config: &'static Config, arg_matches: &ArgMatches) {
+pub fn new(_: &'static Config, arg_matches: &ArgMatches) {
   let template = arg_matches.get_one::<String>("template").expect("required");
-  let name = arg_matches.get_one::<String>("name").expect("required");
-  println!("{} {}", template, name);
+  let destination = arg_matches
+    .get_one::<String>("destination")
+    .unwrap_or(template);
 
   let selected_template = match template.to_lowercase().as_str() {
     "fastapi" => TemplateType::FastAPI.template(),
-    _ => panic!("Invalid template"),
-  };
-  let mut body = json!({"name": name});
-  merge(&mut body, serde_json::to_value(selected_template).unwrap());
-
-  match config
-    .cluster_api_client()
-    .expect("Client connection failed")
-    .post(format!("{}/projects/clone", config.api_base_url))
-    .bearer_auth(config.bearer_token())
-    .json(&body)
-    .send()
-  {
-    Ok(response) => {
-      if response.status().is_success() {
-        println!("Project created successfully.");
-      } else {
-        eprintln!("Failed to create project: {:?}", response.text().unwrap());
-      }
+    _ => {
+      eprintln!("Invalid template, Options: fastapi");
+      return;
     }
-    Err(e) => eprintln!("Failed to send request: {:?}", e),
-  }
+  };
+  println!("Creating a new project from the {} template", template);
+
+  let temp_dir = tempdir().unwrap();
+  let temp_path = temp_dir.path();
+  let mut template_path = temp_path.to_path_buf();
+  template_path.push(&selected_template.path);
+
+  let _ = git_clone(
+    "https://github.com/doseiai/examples",
+    temp_path,
+    Some("main"),
+  );
+
+  let mut target_path = env::current_dir().unwrap();
+  target_path.push(destination);
+
+  let start_copying = Instant::now();
+  copy_dir_all(&template_path, &target_path).unwrap();
+  let elapsed = start_copying.elapsed().as_secs_f64() * 1000.0;
+  println!(
+    "Copying {} completed: {:.2}ms",
+    &selected_template.path, elapsed
+  );
+
+  Repository::init(&target_path).unwrap();
+  println!(
+    "Initialized empty Git repository in {}",
+    &target_path.display()
+  );
+
+  println!();
+  println!("That's it!");
+  println!("Enter your project directory using cd {}", &destination);
+  println!("Join the community at https://discord.gg/BP5aUkhcAh");
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -62,7 +89,7 @@ impl TemplateType {
   fn template(&self) -> Template {
     match self {
       TemplateType::FastAPI => Template {
-        source_full_name: "doseiai/dosei".to_string(),
+        source_full_name: "doseiai/examples".to_string(),
         path: "examples/fastapi".to_string(),
         branch: "main".to_string(),
       },
@@ -70,14 +97,22 @@ impl TemplateType {
   }
 }
 
-fn merge(a: &mut Value, b: Value) {
-  match (a, b) {
-    (a @ &mut Value::Object(_), Value::Object(b)) => {
-      let a = a.as_object_mut().unwrap();
-      for (k, v) in b {
-        merge(a.entry(k).or_insert(Value::Null), v);
-      }
-    }
-    (a, b) => *a = b,
+fn copy_dir_all(src: &Path, dst: &Path) -> std::io::Result<()> {
+  if !dst.exists() {
+    fs::create_dir_all(dst)?;
   }
+
+  for entry in fs::read_dir(src)? {
+    let entry = entry?;
+    let ty = entry.file_type()?;
+    let src_path = entry.path();
+    let dst_path = dst.join(entry.file_name());
+
+    if ty.is_dir() {
+      copy_dir_all(&src_path, &dst_path)?;
+    } else {
+      fs::copy(&src_path, &dst_path)?;
+    }
+  }
+  Ok(())
 }
