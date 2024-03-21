@@ -81,7 +81,8 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: dosei
+          pattern: dosei-*
+          merge-multiple: true
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
