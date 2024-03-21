@@ -736,7 +736,7 @@ checksum = "7e962a19be5cfc3f3bf6dd8f61eb50107f356ad6270fbb3ed41476571db78be5"
 
 [[package]]
 name = "dctl"
-version = "0.0.19"
+version = "0.0.20"
 dependencies = [
  "anyhow",
  "clap",
@@ -816,7 +816,7 @@ dependencies = [
 
 [[package]]
 name = "dosei_proto"
-version = "0.0.19"
+version = "0.0.20"
 dependencies = [
  "prost",
  "prost-build",
@@ -824,7 +824,7 @@ dependencies = [
 
 [[package]]
 name = "dosei_util"
-version = "0.0.19"
+version = "0.0.20"
 dependencies = [
  "pyo3",
  "regex",
@@ -835,7 +835,7 @@ dependencies = [
 
 [[package]]
 name = "doseid"
-version = "0.0.19"
+version = "0.0.20"
 dependencies = [
  "anyhow",
  "axum",
@@ -2458,7 +2458,7 @@ dependencies = [
 
 [[package]]
 name = "proxy"
-version = "0.0.19"
+version = "0.0.20"
 dependencies = [
  "anyhow",
  "axum",
