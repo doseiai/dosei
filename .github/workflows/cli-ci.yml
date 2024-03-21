@@ -70,7 +70,7 @@ jobs:
       - name: Upload Zip
         uses: actions/upload-artifact@v4
         with:
-          name: dosei
+          name: dosei-${{ matrix.target }}
           path: dosei-${{ matrix.target }}.zip
 
   release:
