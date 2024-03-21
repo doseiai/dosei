@@ -9,8 +9,7 @@ use bollard::container::{
   CreateContainerOptions, InspectContainerOptions, LogOutput, LogsOptions, StartContainerOptions,
 };
 use bollard::image::{CreateImageOptions, ListImagesOptions};
-use bollard::models::{ContainerInspectResponse, EventMessage, EventMessageTypeEnum};
-use bollard::system::EventsOptions;
+use bollard::models::ContainerInspectResponse;
 use bollard::Docker;
 use chrono::Utc;
 use cron::Schedule;
@@ -31,52 +30,6 @@ pub fn start_job_manager(config: &'static Config, pool: Arc<Pool<Postgres>>) {
       sleep(Duration::from_secs(60)).await;
     }
   });
-  tokio::spawn(async move {
-    listen_docker_events().await;
-  });
-}
-
-async fn listen_docker_events() {
-  let docker = Docker::connect_with_socket_defaults().unwrap();
-
-  let mut filters = HashMap::new();
-  filters.insert("type", vec!["container"]);
-  // filters.insert("event", vec!["start", "stop"]); // Listen for start and stop events
-
-  let options = EventsOptions {
-    filters,
-    ..Default::default()
-  };
-
-  let mut stream = docker.events(Some(options));
-
-  while let Some(event_result) = stream.next().await {
-    match event_result {
-      Ok(event) => {
-        let event: EventMessage = event;
-        match event.typ {
-          Some(EventMessageTypeEnum::CONTAINER) => match event.action.clone().unwrap().as_str() {
-            "create" => {
-              info!("create");
-            }
-            "start" => {
-              info!("start");
-            }
-            "die" => {
-              error!("die");
-              let actor = event.actor.unwrap();
-              let job = new_job_from_event(&actor.id.unwrap()).await;
-              info!("{:?}", job);
-            }
-            _ => {}
-          },
-          Some(EventMessageTypeEnum::BUILDER) => todo!("handle builder events"),
-          _ => {}
-        }
-      }
-      Err(e) => error!("Docker streaming failed: {:?}", e),
-    }
-  }
 }
 
 async fn new_job_from_event(container_id: &str) -> Job {
@@ -161,7 +114,7 @@ async fn run_job(config: &'static Config, cron_job: CronJob) {
           tag: &cron_job.deployment_id,
           ..Default::default()
         });
-        let credentials = docker::gcr_credentials().await;
+        let credentials = docker::credentials::docker_credentials().await.unwrap();
         let mut stream = docker.create_image(options, None, Some(credentials));
         while let Some(result) = stream.next().await {
           if let Err(e) = result {

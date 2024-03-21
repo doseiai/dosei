@@ -10,7 +10,6 @@ use axum::{Extension, Json};
 use chrono::Utc;
 use serde::Deserialize;
 use sqlx::{Pool, Postgres};
-use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
 use tempfile::tempdir;
@@ -132,7 +131,7 @@ pub struct NewProjectFromClone {
   source_full_name: String,
   branch: Option<String>,
   path: Option<String>,
-  private: Option<bool>,
+  // private: Option<bool>,
   name: String,
-  envs: Option<HashMap<String, String>>,
+  // envs: Option<HashMap<String, String>>,
 }

@@ -1,3 +1,4 @@
+mod app;
 mod certificate;
 mod cluster;
 mod cron;
@@ -19,13 +20,21 @@ use sqlx::Pool;
 use std::sync::Arc;
 
 use crate::config::Config;
+use crate::docker;
+use crate::server::app::shutdown_app;
 use axum::{routing, Extension, Router};
 use bollard::Docker;
 use tokio::net::TcpListener;
+use tokio::signal;
 use tracing::{error, info};
 
 pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
   check_docker_daemon_status().await;
+
+  if config.console {
+    app::start_app().await.context("Failed to start App")?;
+    info!("[Integrations] Enabling console");
+  }
 
   let pool = Pool::<Postgres>::connect(&config.database_url)
     .await
@@ -36,6 +45,7 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
 
   cluster::start_cluster(config)?;
   cron::start_job_manager(config, Arc::clone(&shared_pool));
+  docker::event::start_docker_event_listener();
   let app = Router::new()
     .route("/tokens", routing::get(token::route::api_get_tokens))
     .route("/tokens", routing::post(token::route::api_set_token))
@@ -71,6 +81,7 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
       "/auth/github/cli",
       routing::get(session::route::api_auth_github_cli),
     )
+    .route("/deploy", routing::post(deployment::route::api_deploy))
     .route("/auth/logout", routing::delete(session::route::api_logout))
     .route("/projects/clone", routing::post(project::api_new_project))
     .route("/user", routing::get(user::route::api_get_user))
@@ -108,8 +119,18 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
     &config.address.port,
     &config.node_info.address.port
   );
-  info!("Dosei running on http://{} (Press CTRL+C to quit", address);
-  axum::serve(listener, app).await?;
+  tokio::spawn(async move {
+    info!("Dosei running on http://{} (Press CTRL+C to quit", address);
+    axum::serve(listener, app)
+      .await
+      .expect("Failed start Dosei API");
+  });
+  match signal::ctrl_c().await {
+    Ok(()) => {
+      shutdown_app().await?;
+    }
+    Err(err) => error!("Unable to listen for shutdown signal: {}", err),
+  }
   Ok(())
 }
 

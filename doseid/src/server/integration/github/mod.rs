@@ -119,6 +119,7 @@ impl GithubIntegration {
     Err(CreateRepoError::RequestError(error_result))
   }
 
+  #[allow(dead_code)]
   async fn delete_repository(
     &self,
     repo_full_name: &str,

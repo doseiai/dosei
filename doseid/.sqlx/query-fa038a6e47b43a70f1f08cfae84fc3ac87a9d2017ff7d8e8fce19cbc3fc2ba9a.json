@@ -1,0 +1,35 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      INSERT INTO deployment (id, commit_id, commit_metadata, project_id, owner_id, status, build_logs, updated_at, created_at)\n      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n      ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Jsonb",
+        "Uuid",
+        "Uuid",
+        {
+          "Custom": {
+            "name": "deployment_status",
+            "kind": {
+              "Enum": [
+                "queued",
+                "building",
+                "error",
+                "canceled",
+                "ready"
+              ]
+            }
+          }
+        },
+        "Jsonb",
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "fa038a6e47b43a70f1f08cfae84fc3ac87a9d2017ff7d8e8fce19cbc3fc2ba9a"
+}

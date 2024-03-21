@@ -1,0 +1,5 @@
+[console]
+enabled = true
+
+[github.unstable]
+enabled = false

@@ -2,7 +2,6 @@ data/
 target/
 .env
 .env*
-*doseid.toml
 .vscode/
 *.DS_Store
 
@@ -11,3 +10,5 @@ target/
 dosei_config.*
 
 __pycache__/
+
+.idea/
