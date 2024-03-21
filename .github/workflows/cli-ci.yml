@@ -43,14 +43,14 @@ jobs:
         with:
           cache-all-crates: true
 
-      - name: Set OpenSSL env vars for aarch64-unknown-linux-gnu
-        if: matrix.target == 'aarch64-unknown-linux-gnu'
-        run: sudo apt install gcc-aarch64-linux-gnu
-
       - name: Install Protoc
         uses: arduino/setup-protoc@v3
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install aarch64-linux-gnu-gcc
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: sudo apt-get install aarch64-linux-gnu-gcc -y
 
       - name: Build Release
         run: cargo build --package dosei --target ${{ matrix.target }} --release
