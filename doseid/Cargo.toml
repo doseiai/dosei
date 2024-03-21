@@ -36,7 +36,7 @@ anyhow = "1.0.79"
 thiserror = "1.0.56"
 once_cell = "1.19.0"
 futures-util = "0.3.29"
-gcp_auth = "0.10.0"
+gcp_auth = "0.11.0"
 hex = "0.4.3"
 reqwest = { version = "0.11.23", features = ["json"] }
 tracing-subscriber = { version = "0.3.18", features = ["json"] }
@@ -52,10 +52,10 @@ sha2 = "0.10.8"
 tracing-appender = "0.2.3"
 rand = "0.8.5"
 instant-acme = "0.4.2"
-cached = "0.48.1"
+cached = "0.49.2"
 trust-dns-resolver = "0.23.2"
 rcgen = "0.12.1"
-openssl = "0.10.63"
+openssl = "0.10.64"
 
 [dev-dependencies]
 futures = "0.3.30"

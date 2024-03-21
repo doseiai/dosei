@@ -1,4 +1,4 @@
-name: dctl-ci
+name: cli-ci
 
 on:
   push:
@@ -50,21 +50,21 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Release
-        run: cargo build --package dctl --target ${{ matrix.target }} --release
+        run: cargo build --package dosei --target ${{ matrix.target }} --release
 
       - name: Zip (Linux/MacOS)
         if: matrix.os != 'windows-latest'
-        run: zip -j dctl-${{ matrix.target }}.zip target/${{ matrix.target }}/release/dctl
+        run: zip -j dosei-${{ matrix.target }}.zip target/${{ matrix.target }}/release/dosei
 
       - name: Zip (Windows)
         if: matrix.os == 'windows-latest'
-        run: Compress-Archive -CompressionLevel Optimal -Force -Path target/${{ matrix.target }}/release/dctl.exe -DestinationPath dctl-${{ matrix.target }}.zip
+        run: Compress-Archive -CompressionLevel Optimal -Force -Path target/${{ matrix.target }}/release/dosei.exe -DestinationPath dosei-${{ matrix.target }}.zip
 
       - name: Upload Zip
         uses: actions/upload-artifact@v4
         with:
-          name: dctl
-          path: dctl-${{ matrix.target }}.zip
+          name: dosei
+          path: dosei-${{ matrix.target }}.zip
 
   release:
     name: Release
@@ -74,19 +74,19 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: dctl
+          name: dosei
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dctl-x86_64-unknown-linux-gnu.zip
-            dctl-x86_64-apple-darwin.zip
-            dctl-aarch64-apple-darwin.zip
-            dctl-x86_64-pc-windows-msvc.zip
+            dosei-x86_64-unknown-linux-gnu.zip
+            dosei-x86_64-apple-darwin.zip
+            dosei-aarch64-apple-darwin.zip
+            dosei-x86_64-pc-windows-msvc.zip
       - name: Print files sha256
         run: |
           shasum -a 256 \
-          dctl-x86_64-unknown-linux-gnu.zip \
-          dctl-x86_64-apple-darwin.zip \
-          dctl-aarch64-apple-darwin.zip \
-          dctl-x86_64-pc-windows-msvc.zip
+          dosei-x86_64-unknown-linux-gnu.zip \
+          dosei-x86_64-apple-darwin.zip \
+          dosei-aarch64-apple-darwin.zip \
+          dosei-x86_64-pc-windows-msvc.zip
