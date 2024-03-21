@@ -53,6 +53,8 @@ jobs:
         run: sudo apt-get install gcc-aarch64-linux-gnu -y
 
       - name: Build Release
+        env:
+          PKG_CONFIG_ALLOW_CROSS: 1
         run: cargo build --package dosei --target ${{ matrix.target }} --release
 
       - name: Zip (Linux/MacOS)
