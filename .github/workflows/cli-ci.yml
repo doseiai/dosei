@@ -49,6 +49,10 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install OpenSSL for macOS
+        if: matrix.os != 'macos-latest'
+        run: brew install openssl
+
       - name: Build Release
         run: cargo build --package dosei --target ${{ matrix.target }} --release
 
