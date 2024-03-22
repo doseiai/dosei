@@ -1,4 +1,14 @@
 data/
 target/
 .env
-.env.example
+.env*
+.vscode/
+*.DS_Store
+
+# Dosei application things
+.dosei/
+dosei_config.*
+
+__pycache__/
+
+.idea/

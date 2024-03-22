@@ -10,7 +10,6 @@ mod util;
 
 use crate::command::certificate::new_certificate;
 use crate::command::deploy::deploy;
-use crate::command::export::export;
 use crate::command::login::login;
 use crate::command::logout::logout;
 use crate::command::new::new;
@@ -29,7 +28,6 @@ fn cli() -> Command {
     .subcommand(run::sub_command())
     .subcommand(new::sub_command())
     .subcommand(deploy::sub_command())
-    .subcommand(Command::new("export").about("Export a Dosei App"))
     .subcommand(Command::new("login").about("Log in to a cluster"))
     .subcommand(Command::new("logout").about("Log out from a cluster"))
     .subcommand(Command::new("session").about("Print active cluster session"))
@@ -43,7 +41,6 @@ fn main() -> anyhow::Result<()> {
   match cli().get_matches().subcommand() {
     Some(("run", arg_matches)) => run(arg_matches),
     Some(("deploy", _)) => deploy(config)?,
-    Some(("export", _)) => export(),
     Some(("login", _)) => login(config),
     Some(("logout", _)) => logout(config),
     Some(("session", _)) => session(config),

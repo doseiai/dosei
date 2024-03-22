@@ -4,16 +4,19 @@ use std::path::Path;
 use std::process::Stdio;
 
 pub fn sub_command() -> Command {
-  Command::new("run")
-    .about("Execute a Dosei App")
-    .arg(Arg::new("function").index(1).required(false))
+  Command::new("run").about("Execute a Dosei App").arg(
+    Arg::new("function")
+      .help("The function to run; Eg. module.sub_module:function_name")
+      .index(1)
+      .required(false),
+  )
 }
 
 pub fn run(arg_matches: &ArgMatches) {
   let function = arg_matches.get_one::<String>("function");
   let path = Path::new(".");
-  if let Ok(extension) = find_and_print_dosei_config_extension(path) {
-    match extension.as_str() {
+  match find_and_print_dosei_config_extension(path) {
+    Ok(extension) => match extension.as_str() {
       "py" => {
         let arg = match function {
           Some(command) => format!("from dosei_sdk import main\nmain.run(\"{}\")", command),
@@ -33,6 +36,7 @@ pub fn run(arg_matches: &ArgMatches) {
         todo!()
       }
       _ => unreachable!(),
-    }
+    },
+    Err(e) => eprintln!("{}", e),
   }
 }

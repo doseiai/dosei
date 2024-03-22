@@ -80,3 +80,21 @@ pub struct CronJob {
   pub entrypoint: String,
   pubis_async: bool,
 }
+
+// "js" | "mjs" | "cjs" | ".ts" | "tsx" => {
+// let node_command = r#"
+//         (async () => {
+//           const { export_config } = await import('@dosei/dosei');
+//           await export_config();
+//         })();"#;
+// if let Err(err) = Command::new("node")
+// .arg("-e")
+// .arg(node_command)
+// .env("NODE_PATH", ".")
+// .stdout(Stdio::inherit())
+// .stderr(Stdio::inherit())
+// .output()
+// {
+// eprintln!("{:?}", err);
+// };
+// }
