@@ -36,7 +36,7 @@ pub async fn start_app() -> anyhow::Result<()> {
   };
 
   let config = bollard::container::Config {
-    image: Some("doseiai/app"),
+    image: Some("doseiai/console"),
     exposed_ports: Some(exposed_ports),
     host_config: Some(host_config),
     tty: Some(true),
