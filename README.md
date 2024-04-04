@@ -28,7 +28,7 @@ That's where Dosei comes in! Self-hosted, IaC and local development first experi
 - **Fast**: 🦀 [Rust](https://www.rust-lang.org/) is blazingly fast and Dosei is built on top of it!
 - **Language agnostic IaC**: We officially support SDKS in [Python](https://github.com/doseiai/python-sdk) and [JavaScript](https://github.com/doseiai/javascript-sdk)
 - **Local first**: Build, test and run your infrastructure locally!
-- [Cron Jobs](https://docs.dosei.ai/cron-jobs): Locally testable, versioned and scalable Cron Jobs! 
+- [Cron Jobs](https://dosei.ai/docs/cron-jobs): Locally testable, versioned and scalable Cron Jobs! 
 
 At it's core Dosei is really an infrastructure runtime for Developers
 
