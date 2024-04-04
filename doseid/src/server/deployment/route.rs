@@ -2,6 +2,7 @@ use crate::config::Config;
 use crate::deployment::app::import_dosei_app;
 use crate::docker::build_image_raw;
 use crate::server::deployment::schema::{Deployment, DeploymentStatus};
+use crate::server::project::create_project;
 use crate::server::session::validate_session;
 use crate::server::user::get_user;
 use crate::util::extract_tar_gz_from_memory;
@@ -15,7 +16,7 @@ use bollard::models::{HostConfig, PortBinding, PortMap};
 use bollard::Docker;
 use chrono::Utc;
 use serde_json::json;
-use sqlx::{Pool, Postgres};
+use sqlx::{Error, Pool, Postgres};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tempfile::tempdir;
@@ -90,6 +91,27 @@ pub async fn api_deploy(
     StatusCode::INTERNAL_SERVER_ERROR
   })?;
 
+  // Does this project exists? if not create
+  let project_id = match sqlx::query!(
+    "SELECT id FROM project WHERE owner_id = $1::uuid AND name = $2::text",
+    session.owner_id,
+    app.name
+  )
+  .fetch_one(&**pool)
+  .await
+  {
+    Ok(result) => Ok(result.id),
+    Err(error) => match &error {
+      Error::RowNotFound => {
+        match create_project(Arc::clone(&pool), app.name, session.owner_id, None).await {
+          Ok(result) => Ok(result.id),
+          Err(err) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        }
+      }
+      _ => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    },
+  }?;
+
   let available_host_port = find_available_port().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
   // Create the exposed port key
@@ -136,12 +158,13 @@ pub async fn api_deploy(
   }
   sqlx::query_as!(
     Deployment,
-    "UPDATE deployment SET status = $1, updated_at = $2, build_logs = $3, exposed_port = $4, internal_port = $5  WHERE id = $6::uuid",
+    "UPDATE deployment SET status = $1, updated_at = $2, build_logs = $3, exposed_port = $4, internal_port = $5, project_id = $6 WHERE id = $7::uuid",
     DeploymentStatus::Ready as DeploymentStatus,
     Utc::now(),
     json!(build_logs),
     Some(available_host_port as i16),
     Some(app.port as i16),
+    project_id,
     deployment.id,
   )
   .execute(&**pool)

@@ -1,3 +1,4 @@
+pub(crate) mod route;
 mod schema;
 
 use crate::config::Config;
@@ -9,12 +10,49 @@ use axum::http::StatusCode;
 use axum::{Extension, Json};
 use chrono::Utc;
 use serde::Deserialize;
-use sqlx::{Pool, Postgres};
+use serde_json::{json, Value};
+use sqlx::{Error, Pool, Postgres};
 use std::path::Path;
 use std::sync::Arc;
 use tempfile::tempdir;
 use tracing::{error, info};
+use tracing_subscriber::fmt::format::json;
 use uuid::Uuid;
+
+pub async fn create_project(
+  pool: Arc<Pool<Postgres>>,
+  name: String,
+  owner_id: Uuid,
+  github_repo_response: Option<Value>,
+) -> Result<Project, sqlx::Error> {
+  let project = Project {
+    id: Uuid::new_v4(),
+    name,
+    owner_id,
+    git_source: GitSource::Github,
+    git_source_metadata: github_repo_response.unwrap_or_else(|| json!({})),
+    updated_at: Utc::now(),
+    created_at: Utc::now(),
+  };
+  match sqlx::query_as!(
+      Project,
+      r#"
+      INSERT INTO project (id, name, owner_id, git_source, git_source_metadata, updated_at, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING id, name, owner_id, git_source AS "git_source!: GitSource", git_source_metadata, updated_at, created_at
+      "#,
+      project.id,
+      project.name,
+      project.owner_id,
+      project.git_source as GitSource,
+      project.git_source_metadata,
+      project.updated_at,
+      project.created_at,
+    ).fetch_one(&*pool).await {
+    Ok(rec) => Ok(rec),
+    Err(err) => Err(err),
+  }
+}
 
 pub async fn api_new_project(
   config: Extension<&'static Config>,
@@ -74,38 +112,22 @@ pub async fn api_new_project(
       error!("Github Clone Failed");
       StatusCode::INTERNAL_SERVER_ERROR
     })?;
-
-  let project = Project {
-    id: Uuid::new_v4(),
-    name: body.name.clone(),
-    owner_id: session.owner_id,
-    git_source: GitSource::Github,
-    git_source_metadata: github_repo_response,
-    updated_at: Utc::now(),
-    created_at: Utc::now(),
-  };
-  match sqlx::query_as!(
-      Project,
-      r#"INSERT INTO project (id, name, owner_id, git_source, git_source_metadata, updated_at, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING id, name, owner_id, git_source AS "git_source!: GitSource", git_source_metadata, updated_at, created_at"#,
-      project.id,
-      project.name,
-      project.owner_id,
-      project.git_source as GitSource,
-      project.git_source_metadata,
-      project.updated_at,
-      project.created_at,
-    ).fetch_one(&**pool).await {
-    Ok(recs) => {
-      info!("{:?}", recs);
-    },
+  match create_project(
+    Arc::clone(&pool),
+    body.name.clone(),
+    session.owner_id,
+    Some(github_repo_response),
+  )
+  .await
+  {
+    Ok(rec) => {
+      info!("{:?}", rec);
+    }
     Err(err) => {
       error!("Error in creating project: {:?}", err);
       return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
   }
-
   github_integration
     .git_push(
       format!("{}/{}", user_github.login, body.name),

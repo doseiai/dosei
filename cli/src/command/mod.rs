@@ -8,6 +8,7 @@ pub(crate) mod login;
 pub(crate) mod logout;
 pub(crate) mod new;
 pub(crate) mod run;
+pub(crate) mod service;
 pub(crate) mod session;
 pub(crate) mod token;
 

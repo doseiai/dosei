@@ -26,6 +26,7 @@ use axum::{routing, Extension, Router};
 use bollard::Docker;
 use tokio::net::TcpListener;
 use tokio::signal;
+use tower_http::cors::CorsLayer;
 use tracing::{error, info};
 
 pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
@@ -78,11 +79,20 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
       routing::post(integration::github::route::api_integration_github_events),
     )
     .route(
+      "/auth/github",
+      routing::get(session::route::api_auth_github_cli),
+    )
+    .route(
       "/auth/github/cli",
       routing::get(session::route::api_auth_github_cli),
     )
     .route("/deploy", routing::post(deployment::route::api_deploy))
     .route("/auth/logout", routing::delete(session::route::api_logout))
+    .route("/projects", routing::get(project::route::api_list_projects))
+    .route(
+      "/projects/:owner_name/:project_name/deployments",
+      routing::get(project::route::api_list_project_deployments),
+    )
     .route("/projects/clone", routing::post(project::api_new_project))
     .route("/user", routing::get(user::route::api_get_user))
     .route("/info", routing::get(info::api_info))
@@ -95,6 +105,7 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
     //   "/deployments/:deployment_id/logs/stream",
     //   routing::get(logs::deployment_logstream),
     // )
+    .layer(CorsLayer::permissive())
     .layer(Extension(Arc::clone(&shared_pool)))
     .layer(Extension(config));
   let address = config.address.to_string();

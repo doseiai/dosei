@@ -25,3 +25,4 @@ ignore = { version = "0.4.22" }
 regex = "1.10.3"
 git2 = { version = "0.18.1",features = ["vendored-openssl"] }
 tempfile = "3.10.1"
+chrono = { version = "0.4.31", features = ["serde"] }

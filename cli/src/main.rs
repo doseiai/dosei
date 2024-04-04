@@ -16,9 +16,10 @@ use crate::command::new::new;
 use crate::command::run::run;
 use crate::command::session::session;
 use crate::command::token::list_token;
-use crate::command::{certificate, deploy, env, new, run, token};
+use crate::command::{certificate, deploy, env, new, run, service, token};
 use crate::config::{Config, VERSION};
 use clap::Command;
+use crate::command::service::list_services;
 
 fn cli() -> Command {
   Command::new("dosei")
@@ -26,6 +27,7 @@ fn cli() -> Command {
     .subcommand_required(true)
     .arg_required_else_help(true)
     .subcommand(run::sub_command())
+    .subcommand(service::sub_command())
     .subcommand(new::sub_command())
     .subcommand(deploy::sub_command())
     .subcommand(Command::new("login").about("Log in to a cluster"))
@@ -43,6 +45,10 @@ fn main() -> anyhow::Result<()> {
     Some(("deploy", _)) => deploy(config)?,
     Some(("login", _)) => login(config),
     Some(("logout", _)) => logout(config),
+    Some(("service", params)) => match params.subcommand() {
+      Some(("list", _)) => list_services(config),
+      _ => unreachable!(),
+    },
     Some(("session", _)) => session(config),
     Some(("new", arg_matches)) => new(config, arg_matches),
     Some(("env", params)) => match params.subcommand() {
