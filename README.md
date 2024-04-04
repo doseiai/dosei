@@ -45,7 +45,7 @@ This is what you need to run Dosei.
 
 ### Install Dosei with Docker Compose
 
-Follow [our installation guide](https://docs.dosei.ai/getting-started) to set up Dosei using Docker Compose.
+Follow [our installation guide](https://dosei.ai/docs/getting-started) to set up Dosei using Docker Compose.
 
 ## License
 
