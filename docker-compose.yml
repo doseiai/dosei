@@ -1,29 +1,17 @@
 version: "3.9"
 
 services:
-  dosei:
-    container_name: dosei
-    restart: always
-    build: .
-    command: /bin/doseid --host 0.0.0.0
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./data/doseid:/root/.dosei/doseid/data
-    env_file:
-      - .env
-    depends_on:
-      - postgres
-    ports:
-      - '8844:8844'
-    networks:
-      - net
   postgres:
-    extends:
-      file: docker-compose.base.yml
-      service: postgres
-    networks:
-      - net
-
-networks:
-  net:
-    driver: bridge
+    container_name: postgres
+    restart: always
+    image: postgres:16.1
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - '5432:5432'
+    command: >
+      -c log_connections=on
+      -c log_disconnections=on

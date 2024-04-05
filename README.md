@@ -43,9 +43,11 @@ This is what you need to run Dosei.
 
 - Docker
 
-### Install Dosei with Docker Compose
+### Run Dosei with Docker
 
-Follow [our installation guide](https://dosei.ai/docs/getting-started) to set up Dosei using Docker Compose.
+```
+docker run -v /var/run/docker.sock:/var/run/docker.sock doseiai/dosei
+```
 
 ## License
 

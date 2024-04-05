@@ -4,15 +4,6 @@ build:
 dev:
 	cargo run --bin doseid
 
-dev-compose:
-	docker compose -f docker-compose.base.yml up --build
-
-test-compose:
-	docker compose -f docker-compose.test.yml up --build
-
-configure-compose:
-	./script/configure-compose.sh
-
 lint:
 	cargo fmt
 	cargo clippy --release --all-targets --all-features -- -D clippy::all

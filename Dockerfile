@@ -21,6 +21,18 @@ RUN cargo build --release
 
 FROM debian:12-slim AS runtime
 
+## Postgres
+RUN apt-get update && apt-get install -y wget gnupg lsb-release
+
+RUN sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+
+RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
+
+RUN apt-get update && apt-get -y install postgresql
+
+COPY doseid/resources/pg_hba.conf /etc/postgresql/16/main/
+VOLUME /var/lib/postgresql/data
+
 LABEL org.opencontainers.image.title="Dosei"
 LABEL org.opencontainers.image.description="Official Dosei image"
 LABEL org.opencontainers.image.url="https://dosei.ai"
@@ -28,6 +40,7 @@ LABEL org.opencontainers.image.documentation="https://dosei.ai/docs"
 LABEL org.opencontainers.image.source="https://github.com/doseiai/dosei"
 LABEL org.opencontainers.image.vendor="Dosei"
 
+# Dosei
 RUN apt-get update && apt-get install python3.11-dev -y
 
 ARG RELEASE_PATH=/dosei/target/release
@@ -37,4 +50,5 @@ COPY --from=builder $RELEASE_PATH/doseid $TAGET_PATH
 COPY --from=builder $RELEASE_PATH/dosei $TAGET_PATH
 COPY --from=builder $RELEASE_PATH/proxy $TAGET_PATH
 
-ENTRYPOINT ["/usr/local/bin/doseid"]
+COPY entrypoint.sh /usr/local/bin/
+ENTRYPOINT ["entrypoint.sh"]
