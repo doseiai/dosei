@@ -799,7 +799,7 @@ dependencies = [
 
 [[package]]
 name = "dosei"
-version = "0.0.21"
+version = "0.0.22"
 dependencies = [
  "anyhow",
  "chrono",
@@ -823,7 +823,7 @@ dependencies = [
 
 [[package]]
 name = "dosei_proto"
-version = "0.0.21"
+version = "0.0.22"
 dependencies = [
  "prost",
  "prost-build",
@@ -831,7 +831,7 @@ dependencies = [
 
 [[package]]
 name = "dosei_util"
-version = "0.0.21"
+version = "0.0.22"
 dependencies = [
  "pyo3",
  "regex",
@@ -842,7 +842,7 @@ dependencies = [
 
 [[package]]
 name = "doseid"
-version = "0.0.21"
+version = "0.0.22"
 dependencies = [
  "anyhow",
  "axum",
@@ -2508,7 +2508,7 @@ dependencies = [
 
 [[package]]
 name = "proxy"
-version = "0.0.21"
+version = "0.0.22"
 dependencies = [
  "anyhow",
  "axum",
