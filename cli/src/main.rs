@@ -17,7 +17,7 @@ use crate::command::run::run;
 use crate::command::service::list_services;
 use crate::command::session::session;
 use crate::command::token::list_token;
-use crate::command::{certificate, deploy, env, new, run, service, token};
+use crate::command::{certificate, deploy, env, info, new, run, service, token};
 use crate::config::{Config, VERSION};
 use clap::Command;
 
@@ -34,6 +34,7 @@ fn cli() -> Command {
     .subcommand(Command::new("logout").about("Log out from a cluster"))
     .subcommand(Command::new("session").about("Print active cluster session"))
     .subcommand(env::sub_command())
+    .subcommand(Command::new("info").about("Print cluster information."))
     .subcommand(token::sub_command())
     .subcommand(certificate::sub_command())
 }
@@ -44,6 +45,7 @@ fn main() -> anyhow::Result<()> {
     Some(("run", arg_matches)) => run(arg_matches),
     Some(("deploy", _)) => deploy(config)?,
     Some(("login", _)) => login(config),
+    Some(("info", _)) => info::cluster_info(config),
     Some(("logout", _)) => logout(config),
     Some(("service", params)) => match params.subcommand() {
       Some(("list", _)) => list_services(config),
