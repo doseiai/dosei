@@ -1,7 +1,7 @@
 use crate::config::Config;
+use chrono::{DateTime, Utc};
 use clap::Command;
 use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
 
 pub fn sub_command() -> Command {
   Command::new("service")
@@ -58,7 +58,7 @@ fn format_time_ago(from_datetime: DateTime<Utc>) -> String {
   let now = Utc::now();
   let duration = now.signed_duration_since(from_datetime);
 
-  return if duration.num_days() >= 1 {
+  if duration.num_days() >= 1 {
     format!("{}d", duration.num_days())
   } else if duration.num_hours() >= 1 {
     format!("{}h", duration.num_hours())
@@ -74,5 +74,5 @@ fn format_time_ago(from_datetime: DateTime<Utc>) -> String {
 #[derive(Debug, Serialize, Deserialize)]
 struct Service {
   name: String,
-  updated_at: DateTime<Utc>
+  updated_at: DateTime<Utc>,
 }

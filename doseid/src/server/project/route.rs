@@ -1,9 +1,9 @@
 use crate::config::Config;
 use crate::server::deployment::schema::Deployment;
+use crate::server::deployment::schema::DeploymentStatus;
 use crate::server::project::schema::Project;
 use crate::server::project::GitSource;
 use crate::server::session::validate_session;
-use crate::server::deployment::schema::DeploymentStatus;
 use axum::extract::Path;
 use axum::http::StatusCode;
 use axum::{Extension, Json};
