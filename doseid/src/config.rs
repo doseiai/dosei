@@ -16,7 +16,7 @@ use std::io::Read;
 use std::io::Write;
 use std::path::PathBuf;
 use std::{env, fmt, fs, write};
-use tracing::{info, warn};
+use tracing::warn;
 use uuid::Uuid;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -119,20 +119,19 @@ impl Config {
       },
       primary_address: args.connect,
       database_url: env::var("DATABASE_URL").context("DATABASE_URL is required.")?,
-      jwt_secret: env::var("JWT_SECRET")
-        .unwrap_or_else(|_| {
-          let random_id: String = rand::thread_rng()
-            .sample_iter(&Alphanumeric)
-            .take(24)
-            .map(char::from)
-            .collect();
-          warn!(
-            "No JWT_SECRET provided - generated random secret. \
+      jwt_secret: env::var("JWT_SECRET").unwrap_or_else(|_| {
+        let random_id: String = rand::thread_rng()
+          .sample_iter(&Alphanumeric)
+          .take(24)
+          .map(char::from)
+          .collect();
+        warn!(
+          "No JWT_SECRET provided - generated random secret. \
         This may cause problems when Dosei operates on cluster mode. \
         To provide a shared secret set the JWT_SECRET environment variable."
-          );
-          random_id
-        }),
+        );
+        random_id
+      }),
       container_registry_url: env::var("CONTAINER_REGISTRY_URL")
         .context("CONTAINER_REGISTRY_URL is required.")?,
       telemetry: Telemetry::new()

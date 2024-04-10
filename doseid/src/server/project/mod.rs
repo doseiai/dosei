@@ -11,12 +11,11 @@ use axum::{Extension, Json};
 use chrono::Utc;
 use serde::Deserialize;
 use serde_json::{json, Value};
-use sqlx::{Error, Pool, Postgres};
+use sqlx::{Pool, Postgres};
 use std::path::Path;
 use std::sync::Arc;
 use tempfile::tempdir;
 use tracing::{error, info};
-use tracing_subscriber::fmt::format::json;
 use uuid::Uuid;
 
 pub async fn create_project(
