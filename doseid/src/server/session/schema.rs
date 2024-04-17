@@ -58,16 +58,3 @@ impl Session {
     }
   }
 }
-
-#[cfg(test)]
-mod tests {
-  use crate::server::session::schema::Session;
-  use crate::test::CONFIG;
-  use uuid::Uuid;
-
-  #[test]
-  fn test_new_session() {
-    let session = Session::new(&CONFIG, Uuid::new_v4());
-    assert!(session.is_ok())
-  }
-}

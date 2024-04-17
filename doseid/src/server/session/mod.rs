@@ -3,17 +3,13 @@ mod schema;
 
 use crate::config::Config;
 use crate::server::session::schema::SessionToken;
-use crate::server::token::schema::Token;
 use axum::http::{header, StatusCode};
 use jsonwebtoken::{Algorithm, DecodingKey, Validation};
-use sqlx::{Pool, Postgres};
 use std::collections::HashSet;
-use std::sync::Arc;
 
 const BEARER: &str = "Bearer ";
 
 pub async fn validate_session(
-  pool: Arc<Pool<Postgres>>,
   config: &'static Config,
   headers: axum::http::HeaderMap,
 ) -> Result<SessionToken, StatusCode> {
@@ -39,15 +35,5 @@ pub async fn validate_session(
     .map_err(|_| StatusCode::UNAUTHORIZED)?;
     return Ok(token_message.claims);
   }
-  let token = sqlx::query_as!(
-    Token,
-    "SELECT * FROM token WHERE value = $1::text and expires_at >= CURRENT_TIMESTAMP",
-    bearer_token
-  )
-  .fetch_one(&*pool)
-  .await
-  .map_err(|_| StatusCode::UNAUTHORIZED)?;
-  Ok(SessionToken {
-    owner_id: token.owner_id,
-  })
+  Err(StatusCode::UNAUTHORIZED)
 }

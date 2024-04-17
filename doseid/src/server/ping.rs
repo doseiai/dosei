@@ -1,10 +1,11 @@
 use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
 use axum::Extension;
 use bollard::Docker;
 use sqlx::{Connection, Pool, Postgres};
 use std::sync::Arc;
 
-pub async fn api_ping(pool: Extension<Arc<Pool<Postgres>>>) -> Result<StatusCode, StatusCode> {
+pub async fn api_ping(pool: Extension<Arc<Pool<Postgres>>>) -> Result<Response, StatusCode> {
   let mut conn = pool
     .acquire()
     .await
@@ -20,5 +21,5 @@ pub async fn api_ping(pool: Extension<Arc<Pool<Postgres>>>) -> Result<StatusCode
     .ping()
     .await
     .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?;
-  Ok(StatusCode::OK)
+  Ok("Pong!".into_response())
 }

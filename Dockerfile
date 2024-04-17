@@ -1,4 +1,4 @@
-ARG RUST_VERSION=1.76.0
+ARG RUST_VERSION=1.77.2
 FROM lukemathwalker/cargo-chef:0.1.66-rust-$RUST_VERSION as chef
 
 ENV SQLX_OFFLINE=true
@@ -41,14 +41,16 @@ LABEL org.opencontainers.image.source="https://github.com/doseiai/dosei"
 LABEL org.opencontainers.image.vendor="Dosei"
 
 # Dosei
-RUN apt-get update && apt-get install python3.11-dev -y
+RUN apt-get update && apt-get install python3.11-dev nodejs -y
 
 ARG RELEASE_PATH=/dosei/target/release
 ARG TAGET_PATH=/usr/local/bin
 
 COPY --from=builder $RELEASE_PATH/doseid $TAGET_PATH
-COPY --from=builder $RELEASE_PATH/dosei $TAGET_PATH
-COPY --from=builder $RELEASE_PATH/proxy $TAGET_PATH
+#COPY --from=builder $RELEASE_PATH/dosei $TAGET_PATH
+#COPY --from=builder $RELEASE_PATH/proxy $TAGET_PATH
 
-COPY entrypoint.sh /usr/local/bin/
-ENTRYPOINT ["entrypoint.sh"]
+COPY docker-entrypoint.sh /usr/local/bin/
+
+EXPOSE 8844
+ENTRYPOINT ["docker-entrypoint.sh"]
