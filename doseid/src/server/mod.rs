@@ -33,6 +33,7 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
       routing::post(session::route::login_username_password),
     )
     .route("/logout", routing::delete(session::route::logout))
+    .route("/user", routing::get(user::route::user))
     .layer(TraceLayer::new_for_http())
     .layer(CorsLayer::permissive())
     .layer(Extension(Arc::clone(&shared_pool)))

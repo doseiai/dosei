@@ -1,4 +1,4 @@
-mod defaults;
+mod default;
 mod registry;
 
 use anyhow::Context;
@@ -57,14 +57,14 @@ impl Config {
     }
 
     Ok(Config {
-      host: env::var("DOSEID_HOST").unwrap_or(defaults::HOST.to_string()),
+      host: env::var("DOSEID_HOST").unwrap_or(default::HOST.to_string()),
       port: env::var("DOSEID_PORT")
-        .unwrap_or_else(|_| defaults::PORT.to_string())
+        .unwrap_or_else(|_| default::PORT.to_string())
         .parse()
         .context("Invalid port number")?,
-      database_url: env::var("DATABASE_URL").unwrap_or(defaults::DATABASE_URL.to_string()),
+      database_url: env::var("DATABASE_URL").unwrap_or(default::DATABASE_URL.to_string()),
       dosei_password: env::var("DOSEI_PASSWORD")
-        .unwrap_or(defaults::DOSEI_USER_PASSWORD.to_string()),
+        .unwrap_or(default::DOSEI_USER_PASSWORD.to_string()),
       jwt_secret: env::var("DOSEID_JWT_SECRET").unwrap_or_else(|_| {
         let random_id: String = rand::thread_rng()
           .sample_iter(&Alphanumeric)
@@ -79,7 +79,7 @@ impl Config {
         random_id
       }),
       disable_telemetry: env::var("DOSEID_DISABLE_TELEMETRY")
-        .unwrap_or(defaults::DISABLE_TELEMETRY.to_string())
+        .unwrap_or(default::DISABLE_TELEMETRY.to_string())
         .parse()
         .unwrap_or(true),
     })
