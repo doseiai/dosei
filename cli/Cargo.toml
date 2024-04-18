@@ -1,0 +1,20 @@
+[package]
+name = "dosei"
+default-run = "dosei"
+description = "Dosei Command Line Interface (CLI)"
+version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow = "1.0.82"
+clap = "4.5.4"
+reqwest = { version = "0.12.3", features = ["blocking", "json", "multipart"] }
+serde_json = "1.0.116"
+log = "0.4.21"
+serde = { version = "1.0.197", features = ["derive"] }
+uuid = { version = "1.8.0", features = ["v4", "serde"] }
+home = "0.5.9"
+sysinfo = "0.30.11"
