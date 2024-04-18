@@ -5,7 +5,7 @@ use bollard::Docker;
 use sqlx::{Connection, Pool, Postgres};
 use std::sync::Arc;
 
-pub async fn api_ping(pool: Extension<Arc<Pool<Postgres>>>) -> Result<Response, StatusCode> {
+pub async fn ping(pool: Extension<Arc<Pool<Postgres>>>) -> Result<Response, StatusCode> {
   let mut conn = pool
     .acquire()
     .await

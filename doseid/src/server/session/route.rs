@@ -17,7 +17,12 @@ pub async fn login_username_password(
   Json(body): Json<UsernamePasswordLoginBody>,
 ) -> Result<Json<SessionCredentials>, StatusCode> {
   let record = sqlx::query!(
-    "SELECT id, username, password FROM \"user\" WHERE username = $1",
+    "
+    SELECT account.id, account.name, \"user\".password
+    FROM account
+    JOIN \"user\" ON account.id = \"user\".id
+    WHERE account.name = $1 AND account.type = 'individual'
+    ",
     body.username
   )
   .fetch_one(&**pool)
@@ -37,14 +42,14 @@ pub async fn login_username_password(
     Session::new(&config, record.id).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
   sqlx::query!(
     "
-    INSERT INTO session (id, token, refresh_token, owner_id, updated_at, created_at)
+    INSERT INTO session (id, token, refresh_token, user_id, updated_at, created_at)
     VALUES ($1, $2, $3, $4, $5, $6)
     RETURNING *
     ",
     credentials.id,
     credentials.token,
     credentials.refresh_token,
-    credentials.owner_id,
+    credentials.user_id,
     credentials.updated_at,
     credentials.created_at,
   )
@@ -70,9 +75,9 @@ pub async fn logout(
 
   if sqlx::query_as!(
     Session,
-    "SELECT * FROM session WHERE id = $1::uuid and owner_id = $2::uuid",
+    "SELECT * FROM session WHERE id = $1::uuid and user_id = $2::uuid",
     query.session_id,
-    session.owner_id
+    session.user_id
   )
   .fetch_one(&**pool)
   .await
@@ -88,8 +93,8 @@ pub async fn logout(
   }
   if let Some(true) = query.revoke_all_sessions {
     sqlx::query!(
-      "DELETE FROM session WHERE owner_id = $1::uuid",
-      session.owner_id
+      "DELETE FROM session WHERE user_id = $1::uuid",
+      session.user_id
     )
     .execute(&**pool)
     .await
@@ -103,9 +108,9 @@ pub async fn logout(
     );
   }
   sqlx::query!(
-    "DELETE FROM session WHERE id = $1::uuid and owner_id = $2::uuid",
+    "DELETE FROM session WHERE id = $1::uuid and user_id = $2::uuid",
     query.session_id,
-    session.owner_id
+    session.user_id
   )
   .execute(&**pool)
   .await

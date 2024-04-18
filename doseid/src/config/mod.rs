@@ -132,13 +132,19 @@ pub(crate) async fn create_default_user(pool: Arc<Pool<Postgres>>, config: &'sta
   let password = bcrypt::hash(&config.dosei_password, bcrypt::DEFAULT_COST).unwrap();
   sqlx::query!(
     "
-    INSERT INTO \"user\" (id, username, password)
-    VALUES ($1, $2, $3)
-    ON CONFLICT (username) DO NOTHING
+    WITH inserted AS (
+        INSERT INTO account (id, name, type)
+        VALUES ($1, $2, 'individual')
+        ON CONFLICT (name) DO NOTHING
+        RETURNING id
+    )
+    INSERT INTO \"user\" (id, password)
+    SELECT $1, $3
+    FROM inserted
     ",
     Uuid::default(),
     "dosei",
-    password,
+    password
   )
   .execute(&*pool)
   .await

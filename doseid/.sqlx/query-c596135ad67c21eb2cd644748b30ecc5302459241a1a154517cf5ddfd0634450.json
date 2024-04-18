@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM session WHERE id = $1::uuid and owner_id = $2::uuid",
+  "query": "SELECT * FROM session WHERE id = $1::uuid and user_id = $2::uuid",
   "describe": {
     "columns": [
       {
@@ -20,7 +20,7 @@
       },
       {
         "ordinal": 3,
-        "name": "owner_id",
+        "name": "user_id",
         "type_info": "Uuid"
       },
       {
@@ -49,5 +49,5 @@
       false
     ]
   },
-  "hash": "0bc0bfbb82140ac6c893fca75beb953a81cebef76ba74e96de79a1338310225e"
+  "hash": "c596135ad67c21eb2cd644748b30ecc5302459241a1a154517cf5ddfd0634450"
 }

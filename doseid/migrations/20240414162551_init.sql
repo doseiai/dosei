@@ -1,21 +1,57 @@
-CREATE TABLE IF NOT EXISTS "user" (
+DO $$
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'account_type') THEN
+            CREATE TYPE account_type AS ENUM ('individual', 'organization');
+        END IF;
+    END
+$$;
+
+CREATE TABLE IF NOT EXISTS account (
     id UUID NOT NULL,
-    username TEXT NOT NULL,
-    password TEXT,
+    name TEXT NOT NULL,
+    type account_type NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     PRIMARY KEY (id),
-    UNIQUE (username)
+    UNIQUE (name)
+);
+
+CREATE TABLE IF NOT EXISTS "user" (
+    id UUID NOT NULL,
+    password TEXT,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    FOREIGN KEY (id) REFERENCES account(id),
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS organization (
+    id UUID NOT NULL,
+    display_name TEXT NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    FOREIGN KEY (id) REFERENCES account(id),
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS organization_member (
+    user_id UUID NOT NULL,
+    organization_id UUID NOT NULL,
+    role_id UUID NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES "user"(id),
+    FOREIGN KEY (organization_id) REFERENCES organization(id)
 );
 
 CREATE TABLE IF NOT EXISTS session (
     id UUID NOT NULL,
     token TEXT NOT NULL,
     refresh_token TEXT NOT NULL,
-    owner_id UUID NOT NULL,
+    user_id UUID NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    FOREIGN KEY (owner_id) REFERENCES "user"(id),
+    FOREIGN KEY (user_id) REFERENCES "user"(id),
     PRIMARY KEY (id)
 );
 
@@ -26,10 +62,10 @@ CREATE TABLE IF NOT EXISTS service (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     PRIMARY KEY (id),
-    FOREIGN KEY (owner_id) REFERENCES "user"(id),
+    FOREIGN KEY (owner_id) REFERENCES account(id),
     UNIQUE (name, owner_id)
 );
---
+
 CREATE TABLE IF NOT EXISTS deployment (
     id UUID NOT NULL,
     service_id UUID NOT NULL,
@@ -39,7 +75,7 @@ CREATE TABLE IF NOT EXISTS deployment (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     PRIMARY KEY (id),
-    FOREIGN KEY (owner_id) REFERENCES "user"(id),
+    FOREIGN KEY (owner_id) REFERENCES account(id),
     FOREIGN KEY (service_id) REFERENCES service(id)
 );
 
@@ -53,7 +89,7 @@ CREATE TABLE IF NOT EXISTS env (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     PRIMARY KEY (id),
-    FOREIGN KEY (owner_id) REFERENCES "user"(id),
+    FOREIGN KEY (owner_id) REFERENCES account(id),
     FOREIGN KEY (service_id) REFERENCES service(id),
     FOREIGN KEY (deployment_id) REFERENCES deployment(id)
 );

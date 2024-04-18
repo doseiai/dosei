@@ -1,4 +1,5 @@
 mod ping;
+mod role;
 mod session;
 mod user;
 
@@ -26,7 +27,7 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
   config::create_default_user(Arc::clone(&shared_pool), config).await;
 
   let app = Router::new()
-    .route("/ping", routing::get(ping::api_ping))
+    .route("/ping", routing::get(ping::ping))
     .route(
       "/login",
       routing::post(session::route::login_username_password),
@@ -41,6 +42,21 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
     .await
     .context("Failed to start server")?;
 
+  print_logo(config);
+  tokio::spawn(async move {
+    info!("Dosei running on http://{} (Press Ctrl+C to quit)", address);
+    axum::serve(listener, app)
+      .await
+      .expect("Failed start Dosei API");
+  });
+  signal::ctrl_c()
+    .await
+    .map_err(|err| anyhow!("Unable to listen for shutdown signal: {}", err))?;
+  info!("Gracefully stopping... (Press Ctrl+C again to force)");
+  Ok(())
+}
+
+fn print_logo(config: &'static Config) {
   println!(
     "
                   @@@@@@@@@@@.         &@@@@.
@@ -58,15 +74,4 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
     env!("CARGO_PKG_DESCRIPTION"),
     &config.port,
   );
-  tokio::spawn(async move {
-    info!("Dosei running on http://{} (Press CTRL+C to quit", address);
-    axum::serve(listener, app)
-      .await
-      .expect("Failed start Dosei API");
-  });
-  signal::ctrl_c()
-    .await
-    .map_err(|err| anyhow!("Unable to listen for shutdown signal: {}", err))?;
-  info!("Gracefully stopping... (press Ctrl+C again to force)");
-  Ok(())
 }
