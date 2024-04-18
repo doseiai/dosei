@@ -1,7 +1,12 @@
 use crate::config::{Config, SessionCredentials};
 use anyhow::anyhow;
+use clap::Command;
 use reqwest::blocking::Client;
 use serde_json::json;
+
+pub fn command() -> Command {
+  Command::new("login").about("Log in to a cluster")
+}
 
 pub fn login(config: &'static Config) -> anyhow::Result<()> {
   let login_url = format!("{}/login", config.api_base_url);

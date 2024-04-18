@@ -1,7 +1,12 @@
 use crate::config::Config;
 use anyhow::anyhow;
+use clap::Command;
 use reqwest::StatusCode;
 use serde_json::Value;
+
+pub fn command() -> Command {
+  Command::new("logout").about("Log out from a cluster")
+}
 
 pub fn logout(config: &'static Config) -> anyhow::Result<()> {
   let logout_url = format!("{}/logout", config.api_base_url);
@@ -21,7 +26,7 @@ pub fn logout(config: &'static Config) -> anyhow::Result<()> {
   if status_code.is_success() {
     let body = response.json::<Value>()?;
     config.remove_stored_credentials()?;
-    println!("{}", body.get("message").unwrap());
+    println!("{}", body.get("message").and_then(|v| v.as_str()).unwrap());
     return Ok(());
   }
   if status_code == StatusCode::NOT_FOUND {
