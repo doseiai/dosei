@@ -1,3 +1,4 @@
+mod deployment;
 mod ping;
 mod role;
 mod session;
@@ -34,6 +35,7 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
     )
     .route("/logout", routing::delete(session::route::logout))
     .route("/user", routing::get(user::route::user))
+    .route("/deploy", routing::post(deployment::route::deploy))
     .layer(TraceLayer::new_for_http())
     .layer(CorsLayer::permissive())
     .layer(Extension(Arc::clone(&shared_pool)))

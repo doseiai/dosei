@@ -1,10 +1,12 @@
 mod command;
 mod config;
 
+use crate::command::deploy::deploy;
 use crate::command::login::login;
 use crate::command::logout::logout;
+use crate::command::new::new;
 use crate::command::whoami::whoami;
-use crate::command::{login, logout, whoami};
+use crate::command::{deploy, login, logout, new, whoami};
 use crate::config::Config;
 use clap::Command;
 
@@ -16,6 +18,8 @@ fn cli() -> Command {
     .subcommand(login::command())
     .subcommand(logout::command())
     .subcommand(whoami::command())
+    .subcommand(deploy::command())
+    .subcommand(new::command())
 }
 
 fn main() -> anyhow::Result<()> {
@@ -24,6 +28,8 @@ fn main() -> anyhow::Result<()> {
     Some(("login", _)) => login(config)?,
     Some(("logout", _)) => logout(config)?,
     Some(("whoami", _)) => whoami(config)?,
+    Some(("new", arg_matches)) => new(arg_matches)?,
+    Some(("deploy", _)) => deploy(config)?,
     _ => unreachable!(),
   };
   Ok(())
