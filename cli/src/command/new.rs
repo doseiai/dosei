@@ -8,7 +8,7 @@ use tempfile::tempdir;
 
 pub fn command() -> Command {
   Command::new("new")
-    .about("Create a new project from a template")
+    .about("Create a new service from a template")
     .arg(
       Arg::new("template")
         .help("The Template name")
@@ -28,7 +28,7 @@ pub fn new(arg_matches: &ArgMatches) -> anyhow::Result<()> {
   let destination = arg_matches
     .get_one::<String>("destination")
     .unwrap_or(template);
-  println!("Creating a new project from the {} template", template);
+  println!("Creating a new service from the {} template", template);
 
   let temp_dir = tempdir().context("Failed to create temporary directory.")?;
   let temp_path = temp_dir.path();
