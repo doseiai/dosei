@@ -1,5 +1,5 @@
 [workspace]
-members = [ "cli","doseid", "util"]
+members = [ "cli","doseid", "proxy", "util"]
 resolver = "2"
 
 [workspace.package]
