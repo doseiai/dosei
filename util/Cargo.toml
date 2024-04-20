@@ -16,3 +16,4 @@ ignore = "0.4.22"
 tokio = "1.37.0"
 git2 = { version = "0.18.3",features = ["vendored-openssl"] }
 regex = "1.10.4"
+rand = "0.8.5"

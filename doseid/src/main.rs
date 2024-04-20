@@ -1,6 +1,6 @@
 mod config;
 mod container;
-mod server;
+pub(crate) mod server;
 
 use config::Config;
 

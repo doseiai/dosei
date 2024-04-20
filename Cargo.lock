@@ -593,6 +593,7 @@ dependencies = [
  "flate2",
  "git2",
  "ignore",
+ "rand",
  "regex",
  "tar",
  "tokio",

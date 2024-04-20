@@ -1,6 +1,7 @@
-mod deployment;
+pub(crate) mod deployment;
 mod ping;
 mod role;
+mod service;
 mod session;
 mod user;
 

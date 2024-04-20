@@ -66,12 +66,21 @@ CREATE TABLE IF NOT EXISTS service (
     UNIQUE (name, owner_id)
 );
 
+DO $$
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'deployment_status') THEN
+            CREATE TYPE deployment_status AS ENUM ('pending', 'error', 'ready', 'running', 'stopped');
+        END IF;
+    END
+$$;
+
 CREATE TABLE IF NOT EXISTS deployment (
     id UUID NOT NULL,
     service_id UUID NOT NULL,
     owner_id UUID NOT NULL,
-    exposed_port smallint,
-    internal_port smallint,
+    host_port smallint,
+    container_port smallint,
+    status deployment_status NOT NULL DEFAULT 'pending',
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     PRIMARY KEY (id),
