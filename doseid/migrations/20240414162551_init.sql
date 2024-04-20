@@ -102,3 +102,16 @@ CREATE TABLE IF NOT EXISTS env (
     FOREIGN KEY (service_id) REFERENCES service(id),
     FOREIGN KEY (deployment_id) REFERENCES deployment(id)
 );
+
+CREATE TABLE IF NOT EXISTS domain (
+    id UUID NOT NULL,
+    name TEXT NOT NULL,
+    service_id UUID NOT NULL,
+    owner_id UUID NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (owner_id) REFERENCES account(id),
+    FOREIGN KEY (service_id) REFERENCES service(id),
+    UNIQUE (name, owner_id)
+);
