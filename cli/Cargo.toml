@@ -22,3 +22,4 @@ home = "0.5.9"
 sysinfo = "0.30.11"
 tempfile = "3.10.1"
 git2 = { version = "0.18.3",features = ["vendored-openssl"] }
+rpassword = "7.3.1"

@@ -25,7 +25,7 @@ fn cli() -> Command {
 fn main() -> anyhow::Result<()> {
   let config: &'static Config = Box::leak(Box::new(Config::new()?));
   match cli().get_matches().subcommand() {
-    Some(("login", _)) => login(config)?,
+    Some(("login", arg_matches)) => login(arg_matches, config)?,
     Some(("logout", _)) => logout(config)?,
     Some(("whoami", _)) => whoami(config)?,
     Some(("new", arg_matches)) => new(arg_matches)?,
