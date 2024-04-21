@@ -30,7 +30,6 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
     .build(HttpConnector::new());
 
   let app = Router::new()
-    .route("/ping", routing::get(ping::ping))
     .route("/", any(handler))
     .route("/*path", any(handler))
     .with_state(client)
@@ -40,7 +39,7 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
   let address = config.address();
   let listener = TcpListener::bind(&address)
     .await
-    .context("Failed to start server")?;
+    .context("Failed to start proxy server")?;
   tokio::spawn(async move {
     info!(
       "Dosei Proxy running on http://{} (Press Ctrl+C to quit)",
@@ -48,8 +47,24 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
     );
     axum::serve(listener, app)
       .await
-      .expect("Failed start Dosei API");
+      .expect("Failed start Dosei Proxy");
   });
+
+  let ping_app = Router::new()
+    .route("/ping", routing::get(ping::ping))
+    .layer(Extension(Arc::clone(&shared_pool)))
+    .layer(Extension(config));
+
+  let ping_address = config.ping_address();
+  let ping_listener = TcpListener::bind(&ping_address)
+    .await
+    .context("Failed to start proxy ping server")?;
+  tokio::spawn(async move {
+    axum::serve(ping_listener, ping_app)
+      .await
+      .expect("Failed start Dosei Proxy Ping Server");
+  });
+
   signal::ctrl_c()
     .await
     .map_err(|err| anyhow!("Unable to listen for shutdown signal: {}", err))?;

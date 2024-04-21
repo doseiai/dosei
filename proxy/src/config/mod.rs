@@ -9,6 +9,7 @@ use std::env;
 pub struct Config {
   pub host: String,
   pub port: u16,
+  pub ping_port: u16,
   pub database_url: String,
 }
 
@@ -25,10 +26,15 @@ impl Config {
     // Configure logging
     let subscriber = tracing_subscriber::fmt().with_target(false).finish();
     tracing::subscriber::set_global_default(subscriber)?;
+
     Ok(Config {
       host: env::var("DOSEI_PROXY_HOST").unwrap_or(default::HOST.to_string()),
       port: env::var("DOSEI_PROXY_PORT")
         .unwrap_or_else(|_| default::PORT.to_string())
+        .parse()
+        .context("Invalid port number")?,
+      ping_port: env::var("DOSEI_PROXY_PING_PORT")
+        .unwrap_or_else(|_| default::PING_PORT.to_string())
         .parse()
         .context("Invalid port number")?,
       database_url: env::var("DATABASE_URL").unwrap_or(default::DATABASE_URL.to_string()),
@@ -37,5 +43,9 @@ impl Config {
 
   pub fn address(&self) -> String {
     format!("{}:{}", self.host, self.port)
+  }
+
+  pub fn ping_address(&self) -> String {
+    format!("{}:{}", self.host, self.ping_port)
   }
 }
