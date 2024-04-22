@@ -47,8 +47,8 @@ ARG RELEASE_PATH=/dosei/target/release
 ARG TAGET_PATH=/usr/local/bin
 
 COPY --from=builder $RELEASE_PATH/doseid $TAGET_PATH
-#COPY --from=builder $RELEASE_PATH/dosei $TAGET_PATH
-#COPY --from=builder $RELEASE_PATH/proxy $TAGET_PATH
+COPY --from=builder $RELEASE_PATH/dosei $TAGET_PATH
+COPY --from=builder $RELEASE_PATH/proxy $TAGET_PATH
 
 COPY docker-entrypoint.sh /usr/local/bin/
 
