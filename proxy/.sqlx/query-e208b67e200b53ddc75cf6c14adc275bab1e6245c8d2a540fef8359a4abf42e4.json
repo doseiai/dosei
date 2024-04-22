@@ -1,0 +1,35 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT\n        account.name AS account_name,\n        service.name AS service_name,\n        deployment.host_port AS service_port\n        FROM account\n        JOIN service ON account.id = service.owner_id\n        JOIN deployment ON account.id = deployment.owner_id\n        WHERE account.name = $1 AND service.name = $2 AND deployment.status = 'running'\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "account_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "service_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "service_port",
+        "type_info": "Int2"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "e208b67e200b53ddc75cf6c14adc275bab1e6245c8d2a540fef8359a4abf42e4"
+}

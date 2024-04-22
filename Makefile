@@ -13,3 +13,5 @@ migrate:
 
 prepare:
 	cd doseid && cargo sqlx prepare
+	cd ..
+	cd proxy && cargo sqlx prepare
