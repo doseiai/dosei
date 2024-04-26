@@ -69,7 +69,11 @@ pub fn set_env(arg_matches: &ArgMatches, config: &'static Config) -> anyhow::Res
 
   env_vars.insert(name.to_string(), value.to_string());
 
-  let mut file = OpenOptions::new().write(true).truncate(true).open(path)?;
+  let mut file = OpenOptions::new()
+    .write(true)
+    .create(true)
+    .truncate(true)
+    .open(path)?;
 
   for (key, value) in env_vars {
     writeln!(file, "{}={}", key, value)?;
