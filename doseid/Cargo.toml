@@ -30,3 +30,5 @@ chrono = { version = "0.4.38", features = ["serde"] }
 jsonwebtoken = "9.3.0"
 tempfile = "3.10.1"
 futures-util = "0.3.30"
+ring = "0.17.8"
+base64 = "0.22.0"

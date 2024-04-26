@@ -1,6 +1,8 @@
 pub(crate) mod deployment;
+mod env;
 mod ping;
 mod role;
+mod secret;
 mod service;
 mod session;
 mod user;
@@ -36,6 +38,8 @@ pub async fn start_server(config: &'static Config) -> anyhow::Result<()> {
     )
     .route("/logout", routing::delete(session::route::logout))
     .route("/user", routing::get(user::route::user))
+    .route("/secret", routing::get(secret::route::get_secret))
+    .route("/secret", routing::post(secret::route::set_secret))
     .route("/deploy", routing::post(deployment::route::deploy))
     .layer(TraceLayer::new_for_http())
     .layer(CorsLayer::permissive())

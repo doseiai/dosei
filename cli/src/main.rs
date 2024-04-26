@@ -6,7 +6,7 @@ use crate::command::login::login;
 use crate::command::logout::logout;
 use crate::command::new::new;
 use crate::command::whoami::whoami;
-use crate::command::{deploy, login, logout, new, whoami};
+use crate::command::{deploy, env, login, logout, new, whoami};
 use crate::config::Config;
 use clap::Command;
 
@@ -20,6 +20,7 @@ fn cli() -> Command {
     .subcommand(whoami::command())
     .subcommand(deploy::command())
     .subcommand(new::command())
+    .subcommand(env::command())
 }
 
 fn main() -> anyhow::Result<()> {
@@ -29,6 +30,11 @@ fn main() -> anyhow::Result<()> {
     Some(("logout", _)) => logout(config)?,
     Some(("whoami", _)) => whoami(config)?,
     Some(("new", arg_matches)) => new(arg_matches)?,
+    Some(("env", params)) => match params.subcommand() {
+      Some(("set", arg_matches)) => env::set::set_env(arg_matches, config)?,
+      Some(("unset", arg_matches)) => env::unset::unset_env(arg_matches, config)?,
+      _ => unreachable!(),
+    },
     Some(("deploy", _)) => deploy(config)?,
     _ => unreachable!(),
   };

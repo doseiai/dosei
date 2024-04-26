@@ -1,5 +1,7 @@
 mod config;
 mod container;
+mod crypto;
+mod proxy;
 pub(crate) mod server;
 
 use config::Config;

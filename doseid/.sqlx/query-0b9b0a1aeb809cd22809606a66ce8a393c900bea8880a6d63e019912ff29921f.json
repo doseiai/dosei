@@ -1,0 +1,83 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      INSERT INTO env (id, name, value, key, nonce, owner_id, updated_at, created_at)\n      VALUES ($1::uuid, $2, $3, $4, $5, $6::uuid, $7, $8)\n      RETURNING *\n      ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "value",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "key",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "nonce",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "service_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 6,
+        "name": "deployment_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 7,
+        "name": "owner_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 8,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 9,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Uuid",
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "0b9b0a1aeb809cd22809606a66ce8a393c900bea8880a6d63e019912ff29921f"
+}

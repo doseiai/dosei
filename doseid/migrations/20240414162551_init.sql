@@ -88,21 +88,6 @@ CREATE TABLE IF NOT EXISTS deployment (
     FOREIGN KEY (service_id) REFERENCES service(id)
 );
 
-CREATE TABLE IF NOT EXISTS env (
-    id UUID NOT NULL,
-    name TEXT NOT NULL,
-    value TEXT NOT NULL,
-    service_id UUID NOT NULL,
-    deployment_id UUID,
-    owner_id UUID NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    PRIMARY KEY (id),
-    FOREIGN KEY (owner_id) REFERENCES account(id),
-    FOREIGN KEY (service_id) REFERENCES service(id),
-    FOREIGN KEY (deployment_id) REFERENCES deployment(id)
-);
-
 CREATE TABLE IF NOT EXISTS domain (
     id UUID NOT NULL,
     name TEXT NOT NULL,
@@ -114,4 +99,22 @@ CREATE TABLE IF NOT EXISTS domain (
     FOREIGN KEY (owner_id) REFERENCES account(id),
     FOREIGN KEY (service_id) REFERENCES service(id),
     UNIQUE (name, owner_id)
+);
+
+CREATE TABLE IF NOT EXISTS env (
+    id UUID NOT NULL,
+    name TEXT NOT NULL,
+    value TEXT NOT NULL,
+    key TEXT,
+    nonce TEXT,
+    service_id UUID,
+    deployment_id UUID,
+    owner_id UUID NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (owner_id) REFERENCES account(id),
+    FOREIGN KEY (service_id) REFERENCES service(id),
+    FOREIGN KEY (deployment_id) REFERENCES deployment(id),
+    UNIQUE (name, service_id, owner_id)
 );

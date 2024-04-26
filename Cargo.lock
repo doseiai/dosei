@@ -674,6 +674,7 @@ version = "0.0.3"
 dependencies = [
  "anyhow",
  "axum",
+ "base64 0.22.0",
  "bcrypt",
  "bollard",
  "chrono",
@@ -684,6 +685,7 @@ dependencies = [
  "jsonwebtoken",
  "rand",
  "reqwest",
+ "ring",
  "serde",
  "serde_json",
  "sqlx",
