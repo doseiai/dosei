@@ -57,7 +57,11 @@ pub(crate) async fn build_docker_image(image_tag: &str, tar: &[u8]) -> anyhow::R
   Ok(logs)
 }
 
-pub(crate) async fn run_deployment(deployment: &Deployment, image_tag: &str) -> anyhow::Result<()> {
+pub(crate) async fn run_deployment(
+  deployment: &Deployment,
+  image_tag: &str,
+  env: HashMap<String, String>,
+) -> anyhow::Result<()> {
   let docker = Docker::connect_with_socket_defaults()?;
 
   let exposed_port;
@@ -93,10 +97,18 @@ pub(crate) async fn run_deployment(deployment: &Deployment, image_tag: &str) -> 
     platform: None,
   });
 
+  let env_vec: Vec<String> = env
+    .into_iter()
+    .map(|(key, value)| format!("{}={}", key, value))
+    .collect();
+
+  let env_refs: Vec<&str> = env_vec.iter().map(AsRef::as_ref).collect();
+
   let config = bollard::container::Config {
     image: Some(image_tag),
     exposed_ports,
     host_config,
+    env: Some(env_refs),
     tty: Some(true),
     ..Default::default()
   };

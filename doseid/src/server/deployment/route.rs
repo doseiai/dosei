@@ -3,6 +3,7 @@ use crate::container;
 use crate::container::{build_docker_image, container_working_dir, export_dot_dosei};
 use crate::server::deployment::schema;
 use crate::server::deployment::schema::DeploymentStatus;
+use crate::server::env;
 use crate::server::service::get_or_create_service;
 use crate::server::session::validate_session;
 use axum::extract::Multipart;
@@ -10,6 +11,7 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Extension;
 use sqlx::{Pool, Postgres};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tempfile::tempdir;
 use tracing::error;
@@ -72,7 +74,28 @@ pub async fn deploy(
         error!("{}", e);
         StatusCode::INTERNAL_SERVER_ERROR
       })?;
-    container::run_deployment(&deployment, &image_tag)
+
+    // let
+    // Load env variables to be injected
+    let mut plain_envs: HashMap<String, String> = HashMap::new();
+    if let Some(envs) = &app.env {
+      for (name, value) in envs.iter() {
+        if dosei_util::secret::is_secret_env(name) {
+          let secret = env::schema::Env::get_secret(
+            name.to_string(),
+            value.to_string(),
+            session.user_id,
+            Arc::clone(&pool),
+          )
+          .await
+          .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+          plain_envs.insert(secret.name, secret.value);
+        } else {
+          plain_envs.insert(name.to_string(), value.to_string());
+        }
+      }
+    }
+    container::run_deployment(&deployment, &image_tag, plain_envs)
       .await
       .map_err(|e| {
         error!("{}", e);

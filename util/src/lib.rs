@@ -1,5 +1,6 @@
 pub mod git;
 pub mod network;
+pub mod secret;
 
 use flate2::write::GzEncoder;
 use flate2::Compression;
@@ -18,6 +19,7 @@ pub fn write_tar_gz(input_path: &Path, output_path: &Path) -> anyhow::Result<()>
   let mut tar = Builder::new(enc);
 
   let walker = WalkBuilder::new(input_path)
+    .hidden(false)
     .ignore(true)
     .git_ignore(true)
     .git_exclude(true)

@@ -8,8 +8,6 @@ use std::io;
 use std::io::Write;
 use std::io::{BufRead, BufReader};
 
-const SECRET_PREFIX: &str = "DOSEI_SECRET_";
-
 pub fn command() -> Command {
   Command::new("set")
     .about("Set environment variables")
@@ -24,9 +22,8 @@ pub fn command() -> Command {
 
 pub fn set_env(arg_matches: &ArgMatches, config: &'static Config) -> anyhow::Result<()> {
   let name = arg_matches.get_one::<String>("name").unwrap();
-  let is_secret = name.starts_with(SECRET_PREFIX) && name.len() > SECRET_PREFIX.len();
   let mut value = String::new();
-  if is_secret {
+  if dosei_util::secret::is_secret_env(name) {
     value = rpassword::prompt_password("Enter the secret value: ")?;
 
     let login_url = format!("{}/secret", config.api_base_url);

@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 use std::sync::Arc;
@@ -108,6 +109,7 @@ pub struct App {
   pub name: Option<String>,
   pub run: Option<String>,
   pub port: Option<u16>,
+  pub env: Option<HashMap<String, String>>,
 }
 
 impl App {

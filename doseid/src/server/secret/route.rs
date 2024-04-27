@@ -1,6 +1,6 @@
 use crate::config::Config;
+use crate::crypto::encrypt_value;
 use crate::crypto::schema::SigningKey;
-use crate::crypto::{decrypt_value, encrypt_value};
 use crate::server::env;
 use crate::server::session::validate_session;
 use axum::http::StatusCode;
@@ -12,8 +12,6 @@ use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
 use std::sync::Arc;
 use uuid::Uuid;
-
-const SECRET_PREFIX: &str = "DOSEI_SECRET_";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Secret {
@@ -30,7 +28,7 @@ pub async fn set_secret(
   let session = validate_session(&config, headers).await?;
 
   // Make sure secret value is something like DOSEI_SECRET_A, not just DOSEI_SECRET_
-  if !body.name.starts_with(SECRET_PREFIX) || !body.name.len() <= SECRET_PREFIX.len() {
+  if !dosei_util::secret::is_secret_env(&body.name) {
     return Err(StatusCode::BAD_REQUEST);
   }
 
@@ -76,36 +74,17 @@ pub async fn get_secret(
 ) -> Result<Json<Secret>, StatusCode> {
   let session = validate_session(&config, headers).await?;
 
-  let env_secret = env::schema::Env::get_secret(
+  let secret = env::schema::Env::get_secret(
     body.name.clone(),
     body.value.clone(),
     session.user_id,
     Arc::clone(&pool),
   )
   .await
-  .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?;
-
-  let decoded_key: Vec<u8> = general_purpose::STANDARD
-    .decode(env_secret.key.unwrap().as_bytes())
-    .unwrap();
-  let decoded_value: Vec<u8> = general_purpose::STANDARD.decode(env_secret.value).unwrap();
-  let decoded_nonce: Vec<u8> = general_purpose::STANDARD
-    .decode(env_secret.nonce.unwrap().as_bytes())
-    .unwrap();
-
-  let mut opening_key =
-    SigningKey::fill(decoded_key, decoded_nonce).map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?;
-
-  let value = decrypt_value(
-    env_secret.owner_id,
-    &decoded_value,
-    &mut opening_key.key,
-    opening_key.nonce,
-  )
-  .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?;
+  .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
   Ok(Json(Secret {
-    name: body.name,
-    value,
+    name: secret.name,
+    value: secret.value,
   }))
 }
