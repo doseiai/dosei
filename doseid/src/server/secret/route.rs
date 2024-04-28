@@ -56,7 +56,7 @@ pub async fn set_secret(
     created_at: Utc::now(),
   };
   env_secret
-    .save_secret(Arc::clone(&pool))
+    .save_env(Arc::clone(&pool))
     .await
     .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?;
 

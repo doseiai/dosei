@@ -23,12 +23,16 @@ pub struct Env {
 }
 
 impl Env {
-  pub async fn save_secret(&self, pool: Arc<Pool<Postgres>>) -> anyhow::Result<()> {
+  pub async fn save_env(&self, pool: Arc<Pool<Postgres>>) -> anyhow::Result<()> {
     sqlx::query_as!(
       Env,
       "
-      INSERT INTO env (id, name, value, key, nonce, owner_id, updated_at, created_at)
-      VALUES ($1::uuid, $2, $3, $4, $5, $6::uuid, $7, $8)
+      INSERT INTO env (
+      id, name, value, key, nonce, deployment_id, service_id, owner_id, updated_at, created_at
+      )
+      VALUES (
+      $1::uuid, $2, $3, $4, $5, $6::uuid, $7::uuid, $8::uuid, $9, $10
+      )
       RETURNING *
       ",
       self.id,
@@ -36,6 +40,8 @@ impl Env {
       self.value,
       self.key,
       self.nonce,
+      self.deployment_id,
+      self.service_id,
       self.owner_id,
       self.updated_at,
       self.created_at
