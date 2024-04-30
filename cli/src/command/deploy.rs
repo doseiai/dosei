@@ -1,40 +1,43 @@
 use crate::config::Config;
-use crate::util::write_tar_gz;
 use clap::Command;
-use std::env;
-use std::fs::create_dir_all;
+use reqwest::blocking::multipart;
+use std::path::Path;
 use std::time::Duration;
+use std::{env, fs};
 
-pub fn sub_command() -> Command {
+pub fn command() -> Command {
   Command::new("deploy").about("Deploy Dosei App")
 }
 
 pub fn deploy(config: &'static Config) -> anyhow::Result<()> {
-  println!("{:?}", env::current_dir());
-  let path = env::current_dir().expect("Something went wrong");
+  let current_dir = env::current_dir()?;
+  let path = Path::new(&current_dir);
 
-  let mut dst_path = path.clone();
-  dst_path.push(".dosei/output.tar.gz");
-  if let Some(parent_dir) = dst_path.parent() {
-    println!("{:?}", parent_dir);
-    create_dir_all(parent_dir).unwrap();
+  dosei_util::dosei_service_config(path)?;
+
+  let output_path = path.join(".dosei/output.tar.gz");
+  if let Some(dosei_dir) = output_path.parent() {
+    fs::create_dir_all(dosei_dir)?;
   }
 
-  write_tar_gz(&path, &dst_path).unwrap();
+  dosei_util::write_tar_gz(path, &output_path)?;
 
-  let form = reqwest::blocking::multipart::Form::new()
-    .file("file", dst_path)
-    .expect("failed");
+  let deploy_url = format!("{}/deploy", config.api_base_url);
+  let body = multipart::Form::new().file("file", output_path)?;
 
-  config
-    .cluster_api_client()
-    .expect("Client connection failed")
-    .post(format!("{}/deploy", config.api_base_url))
-    .multipart(form)
+  let response = config
+    .api_client()?
+    .post(deploy_url)
+    .multipart(body)
     .timeout(Duration::from_secs(3600))
     .bearer_auth(config.bearer_token())
-    .send()?
-    .error_for_status()?;
-  println!("Do deploy thing");
+    .send()?;
+
+  let status_code = response.status();
+  if status_code.is_success() {
+    println!("Successfully deployed");
+    return Ok(());
+  }
+  response.error_for_status()?;
   Ok(())
 }

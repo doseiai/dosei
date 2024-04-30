@@ -1,14 +1,12 @@
-version: "3.9"
-
 services:
   postgres:
     container_name: postgres
     restart: always
-    image: postgres:16.1
+    image: postgres:16
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: trust
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - '5432:5432'

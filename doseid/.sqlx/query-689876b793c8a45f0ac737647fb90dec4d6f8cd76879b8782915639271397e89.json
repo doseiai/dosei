@@ -1,0 +1,93 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      UPDATE deployment\n      SET status = $1, updated_at = $2\n      WHERE id = $3::uuid AND owner_id::uuid = $4\n      RETURNING\n      id,\n      service_id,\n      owner_id,\n      host_port,\n      container_port,\n      status AS \"status!: DeploymentStatus\",\n      updated_at,\n      created_at\n      ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "service_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "owner_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "host_port",
+        "type_info": "Int2"
+      },
+      {
+        "ordinal": 4,
+        "name": "container_port",
+        "type_info": "Int2"
+      },
+      {
+        "ordinal": 5,
+        "name": "status!: DeploymentStatus",
+        "type_info": {
+          "Custom": {
+            "name": "deployment_status",
+            "kind": {
+              "Enum": [
+                "pending",
+                "error",
+                "ready",
+                "running",
+                "stopped"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 7,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "deployment_status",
+            "kind": {
+              "Enum": [
+                "pending",
+                "error",
+                "ready",
+                "running",
+                "stopped"
+              ]
+            }
+          }
+        },
+        "Timestamptz",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "689876b793c8a45f0ac737647fb90dec4d6f8cd76879b8782915639271397e89"
+}

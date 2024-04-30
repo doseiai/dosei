@@ -1,17 +1,19 @@
 [package]
 name = "dosei_util"
-version = { workspace = true }
-edition = { workspace = true }
+version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+edition.workspace = true
 
-[lib]
-crate-type = ["cdylib", "rlib"]
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-toml = { workspace = true }
-regex = { workspace = true }
-
-pyo3 = "0.20.0"
-walkdir = "2.4.0"
-
-[dev-dependencies]
-tempfile = "3.9.0"
+anyhow = "1.0.82"
+flate2 = "1.0.28"
+tar = "0.4.40"
+ignore = "0.4.22"
+tokio = "1.37.0"
+git2 = { version = "0.18.3",features = ["vendored-openssl"] }
+regex = "1.10.4"
+rand = "0.8.5"

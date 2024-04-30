@@ -1,0 +1,83 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n    INSERT INTO deployment (id, service_id, owner_id, host_port, container_port, updated_at, created_at)\n    VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5, $6, $7)\n    RETURNING\n    id,\n    service_id,\n    owner_id,\n    host_port,\n    container_port,\n    status AS \"status!: DeploymentStatus\",\n    updated_at,\n    created_at\n    ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "service_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "owner_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "host_port",
+        "type_info": "Int2"
+      },
+      {
+        "ordinal": 4,
+        "name": "container_port",
+        "type_info": "Int2"
+      },
+      {
+        "ordinal": 5,
+        "name": "status!: DeploymentStatus",
+        "type_info": {
+          "Custom": {
+            "name": "deployment_status",
+            "kind": {
+              "Enum": [
+                "pending",
+                "error",
+                "ready",
+                "running",
+                "stopped"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 7,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Int2",
+        "Int2",
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "e217025d50a1de9f363263f022574ba9525d40faa0051fb564c4c109b4a71c98"
+}
