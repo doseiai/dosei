@@ -75,13 +75,12 @@ pub async fn deploy(
         StatusCode::INTERNAL_SERVER_ERROR
       })?;
 
-    // let
     // Load env variables to be injected
     let mut plain_envs: HashMap<String, String> = HashMap::new();
     if let Some(envs) = &app.env {
       for (name, value) in envs.iter() {
         if dosei_util::secret::is_secret_env(name) {
-          let secret = env::schema::Env::get_secret(
+          let secret = env::schema::Env::get_secret_decrypted(
             name.to_string(),
             value.to_string(),
             session.user_id,

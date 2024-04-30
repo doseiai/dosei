@@ -1,5 +1,5 @@
-use crate::crypto::decrypt_value;
 use crate::crypto::schema::SigningKey;
+use crate::crypto::{decrypt_value, encrypt_value};
 use base64::engine::general_purpose;
 use base64::Engine;
 use chrono::{DateTime, Utc};
@@ -23,7 +23,7 @@ pub struct Env {
 }
 
 impl Env {
-  pub async fn save_env(&self, pool: Arc<Pool<Postgres>>) -> anyhow::Result<()> {
+  async fn save_env(&self, pool: Arc<Pool<Postgres>>) -> anyhow::Result<()> {
     sqlx::query_as!(
       Env,
       "
@@ -50,7 +50,8 @@ impl Env {
     .await?;
     Ok(())
   }
-  pub async fn get_env(
+
+  async fn get_env(
     name: String,
     value: String,
     owner_id: Uuid,
@@ -68,21 +69,31 @@ impl Env {
     Ok(env)
   }
 
-  pub async fn get_secret(
+  pub async fn save_secret_encrypted(&mut self, pool: Arc<Pool<Postgres>>) -> anyhow::Result<()> {
+    let mut signing_key = SigningKey::new()?;
+
+    let nonce_base64 = general_purpose::STANDARD.encode(*signing_key.nonce.as_ref());
+    let encrypted_value: Vec<u8> = encrypt_value(
+      self.owner_id,
+      &self.value,
+      &mut signing_key.key,
+      signing_key.nonce,
+    )?;
+    self.value = general_purpose::STANDARD.encode(encrypted_value);
+    self.key = Some(general_purpose::STANDARD.encode(signing_key.bytes));
+    self.nonce = Some(nonce_base64);
+
+    self.save_env(pool).await?;
+    Ok(())
+  }
+
+  pub async fn get_secret_decrypted(
     name: String,
     value: String,
     owner_id: Uuid,
     pool: Arc<Pool<Postgres>>,
   ) -> anyhow::Result<Env> {
-    let mut secret = sqlx::query_as!(
-      Env,
-      "SELECT * FROM env WHERE name = $1 and value = $2 and owner_id = $3::uuid",
-      name,
-      value,
-      owner_id
-    )
-    .fetch_one(&*pool)
-    .await?;
+    let mut secret = Env::get_env(name, value, owner_id, pool).await?;
 
     let decoded_key: Vec<u8> =
       general_purpose::STANDARD.decode(secret.key.clone().unwrap().as_bytes())?;
