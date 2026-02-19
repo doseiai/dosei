@@ -58,12 +58,13 @@ impl Http {
       .split_for_parts();
     api_doc.merge(private_api);
 
-    // Internal node routes (no auth, internal network only)
+    // Internal routes (no auth, internal network only)
     let internal_router = Router::new()
       .route("/internal/nodes/register", axum::routing::post(node::route::register))
       .route("/internal/nodes/heartbeat", axum::routing::post(node::route::heartbeat))
       .route("/internal/nodes", axum::routing::get(node::route::list_nodes))
-      .route("/internal/nodes/:id", axum::routing::delete(node::route::delete_node));
+      .route("/internal/nodes/:id", axum::routing::delete(node::route::delete_node))
+      .route("/internal/deploy", axum::routing::post(deployment::route::internal_deploy));
 
     let app = Router::new()
       .merge(public_router)
