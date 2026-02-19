@@ -71,10 +71,10 @@ impl Http {
       .merge(private_router)
       .merge(internal_router)
       .merge(SwaggerUi::new("/docs").url("/openapi.json", api_doc))
+      .fallback(proxy_fallback)
       .layer(CorsLayer::permissive())
       .layer(Extension(Arc::clone(shared_pool)))
-      .layer(Extension(config))
-      .fallback(proxy_fallback);
+      .layer(Extension(config));
 
     let listener = TcpListener::bind(&config.address())
       .await
