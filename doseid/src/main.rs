@@ -32,26 +32,27 @@ async fn main() -> anyhow::Result<()> {
 
   Container::check_docker_daemon_status().await;
 
-  let pg_pool = Pool::<Postgres>::connect(&config.database_url)
-    .await
-    .context("Failed to connect to Postgres")?;
-  sqlx::migrate!().run(&pg_pool).await?;
-  let shared_pool = Arc::new(pg_pool);
-
-  let cluster = DaemonClusterInit::new()
-    .await
-    .context("Cluster creation failed")?;
-  cluster
-    .init(&shared_pool)
-    .await
-    .context("Cluster initialization failed")?;
-
-  let plugin_manager = PluginManager::new(PathBuf::from("./plugins"));
-  plugin_manager.load_plugins().await?;
-
   match config.mode {
     NodeMode::Main => {
       info!("Starting doseid in MAIN mode");
+
+      let db_url = config.database_url.as_ref().expect("DATABASE_URL required for main mode");
+      let pg_pool = Pool::<Postgres>::connect(db_url)
+        .await
+        .context("Failed to connect to Postgres")?;
+      sqlx::migrate!().run(&pg_pool).await?;
+      let shared_pool = Arc::new(pg_pool);
+
+      let cluster = DaemonClusterInit::new()
+        .await
+        .context("Cluster creation failed")?;
+      cluster
+        .init(&shared_pool)
+        .await
+        .context("Cluster initialization failed")?;
+
+      let plugin_manager = PluginManager::new(PathBuf::from("./plugins"));
+      plugin_manager.load_plugins().await?;
 
       // Register self as main node.
       // Both doseid and Caddy use host networking, so localhost works.
@@ -68,6 +69,11 @@ async fn main() -> anyhow::Result<()> {
       start_stale_node_cleanup(Arc::clone(&shared_pool), move |_pool| {
         trigger_sync(Arc::clone(&caddy_pool));
       });
+
+      Job::start_server().await?;
+      Container::start_event_listener().await?;
+      Container::start_monitoring_server().await?;
+      Http::start_server(config, &shared_pool).await?;
     }
     NodeMode::Worker => {
       let main_url = config
@@ -98,13 +104,15 @@ async fn main() -> anyhow::Result<()> {
 
       // Start heartbeat task
       start_heartbeat_task(main_url.clone(), registered_node.id);
+
+      Container::start_event_listener().await?;
+      Container::start_monitoring_server().await?;
+
+      // Worker HTTP server — only serves internal endpoints (deploy, health)
+      Http::start_worker_server(config).await?;
     }
   }
 
-  Job::start_server().await?;
-  Container::start_event_listener().await?;
-  Container::start_monitoring_server().await?;
-  Http::start_server(config, &shared_pool).await?;
   Ok(())
 }
 

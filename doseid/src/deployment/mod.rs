@@ -251,7 +251,7 @@ impl Deployment {
   }
 
   /// Finds an available TCP port on the host in the range 10000-20000
-  fn find_available_host_port() -> anyhow::Result<i16> {
+  pub fn find_available_host_port() -> anyhow::Result<i16> {
     let mut rng = rand::rng();
 
     for _ in 0..1000 {

@@ -94,6 +94,34 @@ impl Http {
     info!("Gracefully stopping... (Press Ctrl+C again to force)");
     Ok(())
   }
+
+  /// Start a lightweight HTTP server for worker nodes.
+  /// Only serves health check and internal deploy endpoint (no DB needed).
+  pub async fn start_worker_server(config: &'static Config) -> anyhow::Result<()> {
+    let app = Router::new()
+      .route("/health", axum::routing::get(health::health))
+      .route("/internal/deploy", axum::routing::post(deployment::route::internal_deploy))
+      .layer(CorsLayer::permissive())
+      .layer(Extension(config));
+
+    let listener = TcpListener::bind(&config.address())
+      .await
+      .context("Failed to start worker server")?;
+    tokio::spawn(async move {
+      info!(
+        "DoseiD Worker API running on http://{} (Press Ctrl+C to quit)",
+        &config.address()
+      );
+      axum::serve(listener, app)
+        .await
+        .expect("Failed start DoseiD Worker API");
+    });
+    signal::ctrl_c()
+      .await
+      .map_err(|err| anyhow!("Unable to listen for shutdown signal: {}", err))?;
+    info!("Gracefully stopping... (Press Ctrl+C again to force)");
+    Ok(())
+  }
 }
 
 /// Fallback handler: routes unmatched requests by Host header to local containers.

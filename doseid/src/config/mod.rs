@@ -13,7 +13,7 @@ pub enum NodeMode {
 pub struct Config {
   pub host: String,
   pub port: u16,
-  pub database_url: String,
+  pub database_url: Option<String>,
   pub mode: NodeMode,
   pub main_url: Option<String>,
 }
@@ -45,7 +45,10 @@ impl Config {
     Ok(Config {
       host: "0.0.0.0".to_string(),
       port,
-      database_url: env::var("DATABASE_URL").unwrap_or(default::DATABASE_URL.to_string()),
+      database_url: match mode {
+        NodeMode::Main => Some(env::var("DATABASE_URL").unwrap_or(default::DATABASE_URL.to_string())),
+        NodeMode::Worker => None,
+      },
       mode,
       main_url,
     })

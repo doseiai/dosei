@@ -179,9 +179,9 @@ pub async fn api_deploy(
   Ok((StatusCode::OK, Json(json!({}))))
 }
 
-/// Internal deploy endpoint for worker nodes (no auth, called by main node).
+/// Internal deploy endpoint for worker nodes (no auth, no DB, called by main node).
+/// Builds the image and starts the container locally.
 pub async fn internal_deploy(
-  pg_pool: Extension<Arc<Pool<Postgres>>>,
   mut multipart: Multipart,
 ) -> Result<(StatusCode, Json<Value>), StatusCode> {
   let mut app_str = String::new();
@@ -209,17 +209,18 @@ pub async fn internal_deploy(
 
   let app = App::from_string(&app_str).map_err(|_| StatusCode::BAD_REQUEST)?;
 
-  let service = match Service::new(&app.name, Uuid::nil(), &pg_pool).await {
-    Ok(service) => service,
-    Err(_) => Service::get_by_name(app.name.clone(), &pg_pool)
-      .await
-      .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
-      .unwrap(),
+  // Worker doesn't use DB — create a temporary Deployment to build and run
+  let deployment = Deployment {
+    id: Uuid::new_v4(),
+    service_id: Uuid::new_v4(),
+    owner_id: Uuid::nil(),
+    host_port: app.port.map(|p| Deployment::find_available_host_port().unwrap_or(p)),
+    container_port: app.port,
+    last_accessed_at: None,
+    updated_at: chrono::Utc::now(),
+    created_at: chrono::Utc::now(),
+    node_id: None,
   };
-
-  let deployment = Deployment::new(service.id, service.owner_id, app.port, None, None, &pg_pool)
-    .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
   deployment
     .build(&file_data)
@@ -230,6 +231,6 @@ pub async fn internal_deploy(
     .await
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-  info!("Internal deploy completed for service: {}", app.name);
+  info!("Internal deploy completed for app: {}", app.name);
   Ok((StatusCode::OK, Json(json!({}))))
 }

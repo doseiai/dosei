@@ -138,28 +138,16 @@ impl CliClusterInit {
         )
       }
       Some(url) => {
-        // Worker mode: no Postgres volume, connects to main node's DB
-        // Extract hostname from main_url for DATABASE_URL
-        let main_host = url
-          .trim_start_matches("http://")
-          .split(':')
-          .next()
-          .unwrap_or("127.0.0.1");
-        let database_url = format!(
-          "postgres://postgres@{}/postgres",
-          main_host
-        );
+        // Worker mode: no Postgres, communicates with main node over HTTP
         format!(
           "docker run -d \
             --network host \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v {}:/var/lib/doseid \
             -e DOSEID_MAIN_URL={} \
-            -e DATABASE_URL={} \
             --name {} {}",
           REMOTE_CLUSTER_DAEMON_FOLDER,
           url,
-          database_url,
           container_name,
           docker_image
         )
