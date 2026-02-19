@@ -1,3 +1,4 @@
+use crate::caddy;
 use crate::node::Node;
 use axum::extract::Path;
 use axum::http::StatusCode;
@@ -26,6 +27,8 @@ pub async fn register(
   let node = Node::register(body.ip, port, false, &pg_pool)
     .await
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+  // Update Caddy config with the new node
+  caddy::trigger_sync(Arc::clone(&pg_pool));
   Ok((StatusCode::CREATED, Json(node)))
 }
 
@@ -55,5 +58,7 @@ pub async fn delete_node(
   Node::delete(node_id, &pg_pool)
     .await
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+  // Update Caddy config without the removed node
+  caddy::trigger_sync(Arc::clone(&pg_pool));
   Ok(StatusCode::NO_CONTENT)
 }
