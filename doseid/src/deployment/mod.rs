@@ -58,7 +58,7 @@ impl Deployment {
           created_at
         )
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING *
+       RETURNING id, service_id, owner_id, host_port, container_port, last_accessed_at, updated_at, created_at, node_id
       ",
       Uuid::new_v4(),
       service_id,
@@ -202,7 +202,7 @@ impl Deployment {
     Ok(
       sqlx::query_as!(
         Self,
-        "SELECT * FROM deployment WHERE service_id = $1",
+        "SELECT id, service_id, owner_id, host_port, container_port, last_accessed_at, updated_at, created_at, node_id FROM deployment WHERE service_id = $1",
         service_id
       )
       .fetch_all(pg_pool)

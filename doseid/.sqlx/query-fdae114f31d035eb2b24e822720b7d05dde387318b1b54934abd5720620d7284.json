@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM deployment WHERE service_id = $1",
+  "query": "SELECT id, service_id, owner_id, host_port, container_port, last_accessed_at, updated_at, created_at, node_id FROM deployment WHERE service_id = $1",
   "describe": {
     "columns": [
       {
@@ -30,17 +30,17 @@
       },
       {
         "ordinal": 5,
-        "name": "updated_at",
+        "name": "last_accessed_at",
         "type_info": "Timestamptz"
       },
       {
         "ordinal": 6,
-        "name": "created_at",
+        "name": "updated_at",
         "type_info": "Timestamptz"
       },
       {
         "ordinal": 7,
-        "name": "last_accessed_at",
+        "name": "created_at",
         "type_info": "Timestamptz"
       },
       {
@@ -60,11 +60,11 @@
       false,
       true,
       true,
-      false,
-      false,
       true,
+      false,
+      false,
       true
     ]
   },
-  "hash": "6f24b4eff769e7bc227c04a3bb2e16424bb0f75844d01ef2dce8452b2bc4a519"
+  "hash": "fdae114f31d035eb2b24e822720b7d05dde387318b1b54934abd5720620d7284"
 }
