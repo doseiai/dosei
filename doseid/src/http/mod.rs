@@ -2,21 +2,16 @@ mod health;
 mod info;
 
 use crate::config::Config;
-use crate::deployment::Deployment;
 use crate::session::Session;
 use crate::{account, auth, deployment, ingress, node, service};
 use anyhow::{anyhow, Context};
-use axum::body::Body;
-use axum::extract::Request;
-use axum::http::StatusCode;
-use axum::response::Response;
 use axum::{middleware, Extension, Router};
 use sqlx::{Pool, Postgres};
 use std::sync::Arc;
 use tokio::net::TcpListener;
 use tokio::signal;
 use tower_http::cors::CorsLayer;
-use tracing::{debug, error, info};
+use tracing::info;
 use utoipa::openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme};
 use utoipa::openapi::Components;
 use utoipa::{Modify, OpenApi};
@@ -71,7 +66,6 @@ impl Http {
       .merge(private_router)
       .merge(internal_router)
       .merge(SwaggerUi::new("/docs").url("/openapi.json", api_doc))
-      .fallback(proxy_fallback)
       .layer(CorsLayer::permissive())
       .layer(Extension(Arc::clone(shared_pool)))
       .layer(Extension(config));
@@ -121,77 +115,6 @@ impl Http {
       .map_err(|err| anyhow!("Unable to listen for shutdown signal: {}", err))?;
     info!("Gracefully stopping... (Press Ctrl+C again to force)");
     Ok(())
-  }
-}
-
-/// Fallback handler: routes unmatched requests by Host header to local containers.
-/// Caddy forwards requests with the original Host header; this handler looks up
-/// the ingress → deployment → local container port and proxies to it.
-async fn proxy_fallback(
-  pg_pool: Extension<Arc<Pool<Postgres>>>,
-  req: Request,
-) -> Result<Response, StatusCode> {
-  let host = match req.headers().get("host") {
-    Some(host_header) => host_header.to_str().unwrap_or_default().to_string(),
-    None => return Err(StatusCode::NOT_FOUND),
-  };
-  debug!("Proxy fallback for host: {}", host);
-
-  let path = req.uri().path().to_string();
-  let path_query = req
-    .uri()
-    .path_and_query()
-    .map(|v| v.as_str().to_string())
-    .unwrap_or(path.clone());
-
-  match Deployment::find_via_host(&host, &pg_pool)
-    .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
-  {
-    None => Err(StatusCode::NOT_FOUND),
-    Some(deployment) => match deployment.host_port {
-      None => Err(StatusCode::NOT_FOUND),
-      Some(host_port) => {
-        let target_url = format!("http://127.0.0.1:{}{}", host_port, path_query);
-        info!("Forwarding: {} -> {}", host, target_url);
-
-        let client = reqwest::Client::new();
-        let method = req.method().clone();
-        let headers = req.headers().clone();
-        let body_bytes = axum::body::to_bytes(req.into_body(), usize::MAX)
-          .await
-          .map_err(|_| StatusCode::BAD_REQUEST)?;
-
-        let mut upstream_req = client.request(method, &target_url);
-        for (key, value) in headers.iter() {
-          upstream_req = upstream_req.header(key, value);
-        }
-        let upstream_resp = upstream_req
-          .body(body_bytes)
-          .send()
-          .await
-          .map_err(|e| {
-            error!("Proxy request failed: {}", e);
-            StatusCode::BAD_GATEWAY
-          })?;
-
-        let status = StatusCode::from_u16(upstream_resp.status().as_u16())
-          .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
-        let resp_headers = upstream_resp.headers().clone();
-        let resp_body = upstream_resp.bytes().await.map_err(|_| StatusCode::BAD_GATEWAY)?;
-
-        let mut response = Response::builder().status(status);
-        for (key, value) in resp_headers.iter() {
-          response = response.header(key, value);
-        }
-        let response = response
-          .body(Body::from(resp_body))
-          .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-        deployment.update_last_accessed(&pg_pool);
-        Ok(response)
-      }
-    },
   }
 }
 

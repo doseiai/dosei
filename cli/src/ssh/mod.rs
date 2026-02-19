@@ -36,6 +36,7 @@ impl CliSSHBearerPayload {
         None => fs::read_to_string(SSH::get_default_ssh_key_path()?)?,
       }
     };
+    let private_key_data = SSH::normalize_openssh_pem(&private_key_data);
     let private_key = PrivateKey::from_openssh(&private_key_data)?;
     let key_fingerprint = private_key
       .public_key()
@@ -57,6 +58,25 @@ impl CliSSHBearerPayload {
 }
 
 impl SSH {
+  /// Normalize an OpenSSH PEM key to use 70-character base64 lines.
+  /// Some tools generate keys with 64-char lines, but the ssh_key crate
+  /// requires 70-char lines per OpenSSH convention.
+  fn normalize_openssh_pem(pem: &str) -> String {
+    let header = "-----BEGIN OPENSSH PRIVATE KEY-----";
+    let footer = "-----END OPENSSH PRIVATE KEY-----";
+    if !pem.contains(header) {
+      return pem.to_string();
+    }
+    let b64: String = pem
+      .lines()
+      .filter(|l| !l.starts_with("-----"))
+      .flat_map(|l| l.chars())
+      .filter(|c| !c.is_whitespace())
+      .collect();
+    let wrapped: Vec<&str> = b64.as_bytes().chunks(70).map(|c| std::str::from_utf8(c).unwrap()).collect();
+    format!("{}\n{}\n{}\n", header, wrapped.join("\n"), footer)
+  }
+
   pub fn execute_command(session: &Session, command: &str) -> anyhow::Result<(i32, String)> {
     let mut channel = session
       .channel_session()
