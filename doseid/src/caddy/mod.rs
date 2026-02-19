@@ -207,15 +207,27 @@ pub async fn push_config(config: &serde_json::Value) -> anyhow::Result<()> {
 }
 
 /// Generate config from DB and push to Caddy. Logs errors but does not propagate.
+/// Retries a few times to handle Caddy still starting up.
 pub async fn sync_config(pg_pool: &Pool<Postgres>) {
-  match generate_config(pg_pool).await {
-    Ok(config) => {
-      if let Err(e) = push_config(&config).await {
-        error!("Failed to push Caddy config: {}", e);
-      }
-    }
+  let config = match generate_config(pg_pool).await {
+    Ok(config) => config,
     Err(e) => {
       error!("Failed to generate Caddy config: {}", e);
+      return;
+    }
+  };
+
+  for attempt in 1..=5 {
+    match push_config(&config).await {
+      Ok(_) => return,
+      Err(e) => {
+        if attempt < 5 {
+          warn!("Caddy config push attempt {} failed: {}, retrying...", attempt, e);
+          tokio::time::sleep(std::time::Duration::from_secs(attempt)).await;
+        } else {
+          error!("Failed to push Caddy config after {} attempts: {}", attempt, e);
+        }
+      }
     }
   }
 }
