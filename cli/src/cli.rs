@@ -11,7 +11,7 @@ use std::io::Write;
 #[derive(Parser)]
 #[command(
   name= "dosei",
-  version = env!("CARGO_PKG_VERSION"),
+  version = concat!(env!("CARGO_PKG_VERSION"), "-", env!("GIT_SHORT_HASH")),
 )]
 pub struct Cli {
   #[command(subcommand)]
