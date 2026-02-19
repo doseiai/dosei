@@ -127,10 +127,12 @@ pub async fn generate_config(pg_pool: &Pool<Postgres>) -> anyhow::Result<serde_j
       .max_by_key(|d| d.created_at);
 
     let upstreams: Vec<serde_json::Value> = match deployment.and_then(|d| d.host_port) {
-      // App ingress: route directly to container port on each node
+      // App ingress: route directly to container port on main node
+      // (containers bind to 127.0.0.1, only reachable locally)
       Some(host_port) => {
         nodes
           .iter()
+          .filter(|n| n.is_main)
           .map(|n| json!({ "dial": format!("{}:{}", n.ip, host_port) }))
           .collect()
       }
