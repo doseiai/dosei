@@ -39,6 +39,8 @@ pub fn command(allow_invalid_domain: bool) -> anyhow::Result<()> {
 
   let key_path_or_content = if let Some(identity) = &cluster.identity {
     identity.clone()
+  } else if let Ok(key) = std::env::var("DOSEI_SSH_KEY") {
+    key
   } else {
     SSH::get_default_ssh_key_path()
       .context("Failed to get default ssh key path. Define one")?
