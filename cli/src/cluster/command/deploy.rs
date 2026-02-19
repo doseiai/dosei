@@ -122,20 +122,22 @@ pub fn command(allow_invalid_domain: bool) -> anyhow::Result<()> {
     );
   }
 
-  // Save config
+  // Save config only if cluster is not already configured
   let mut user_config = Config::load()?;
-  let current_dir = std::env::current_dir()?;
-  let dosei_dir = current_dir.join(".dosei");
-  let private_key_path = dosei_dir.join("dosei_ed25519");
-  user_config.add_cluster(
-    cluster.name.clone(),
-    ClusterConfig {
-      id: None,
-      username: String::from("dosei"),
-      ssh_key: private_key_path.to_str().map(|s| s.to_string()),
-    },
-  );
-  user_config.save()?;
+  if user_config.get_cluster(&cluster.name).is_none() {
+    let current_dir = std::env::current_dir()?;
+    let dosei_dir = current_dir.join(".dosei");
+    let private_key_path = dosei_dir.join("dosei_ed25519");
+    user_config.add_cluster(
+      cluster.name.clone(),
+      ClusterConfig {
+        id: None,
+        username: String::from("dosei"),
+        ssh_key: private_key_path.to_str().map(|s| s.to_string()),
+      },
+    );
+    user_config.save()?;
+  }
 
   Ok(())
 }
