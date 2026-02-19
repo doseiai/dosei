@@ -54,7 +54,7 @@ COPY --from=builder $RELEASE_PATH/dosei $TAGET_PATH
 
 COPY docker-entrypoint.sh /usr/local/bin/
 
-EXPOSE 80 443
+EXPOSE 8080
 STOPSIGNAL SIGINT
 
 ENTRYPOINT ["docker-entrypoint.sh"]

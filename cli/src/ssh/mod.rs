@@ -27,9 +27,14 @@ impl Deref for CliSSHBearerPayload {
 
 impl CliSSHBearerPayload {
   pub fn new(ssh_key_path: Option<PathBuf>) -> anyhow::Result<Self> {
-    let private_key_data = match ssh_key_path {
-      Some(path) => fs::read_to_string(path)?,
-      None => fs::read_to_string(SSH::get_default_ssh_key_path()?)?,
+    let private_key_data = if let Ok(key_content) = std::env::var("DOSEI_SSH_KEY") {
+      // CI/CD: use inline key from environment variable
+      key_content
+    } else {
+      match ssh_key_path {
+        Some(path) => fs::read_to_string(path)?,
+        None => fs::read_to_string(SSH::get_default_ssh_key_path()?)?,
+      }
     };
     let private_key = PrivateKey::from_openssh(&private_key_data)?;
     let key_fingerprint = private_key

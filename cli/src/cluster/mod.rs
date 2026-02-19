@@ -63,7 +63,14 @@ impl CliClusterInit {
     Ok(())
   }
 
-  pub fn run_doseid_container(&self, session: &Session) -> anyhow::Result<()> {
+  /// Run the doseid container on a remote server.
+  /// If `main_url` is None, runs in main mode (with Postgres volume).
+  /// If `main_url` is Some, runs in worker mode pointing to the main node.
+  pub fn run_doseid_container(
+    &self,
+    session: &Session,
+    main_url: Option<&str>,
+  ) -> anyhow::Result<()> {
     // First ensure ~/.dosei directory exists
     SSH::execute_command(
       session,
@@ -103,17 +110,51 @@ impl CliClusterInit {
     let image_version = env!("CARGO_PKG_VERSION");
     let docker_image = format!("doseidotio/doseid:{}", image_version);
 
-    // Run the docker container
-    let docker_command = format!(
-      "docker run -d \
-        -p 443:443 -p 80:80 \
-        -v /var/run/docker.sock:/var/run/docker.sock \
-        --network host \
-        -v {}:/var/lib/doseid \
-        -v {}:/var/lib/postgresql/17/main \
-        --name {} {}",
-      REMOTE_CLUSTER_DAEMON_FOLDER, REMOTE_CLUSTER_POSTGRES_VOLUME, container_name, docker_image
-    );
+    // Build the docker run command based on mode
+    let docker_command = match main_url {
+      None => {
+        // Main mode: runs Postgres, mounts Docker socket + data volumes
+        format!(
+          "docker run -d \
+            --network host \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v {}:/var/lib/doseid \
+            -v {}:/var/lib/postgresql/17/main \
+            --name {} {}",
+          REMOTE_CLUSTER_DAEMON_FOLDER,
+          REMOTE_CLUSTER_POSTGRES_VOLUME,
+          container_name,
+          docker_image
+        )
+      }
+      Some(url) => {
+        // Worker mode: no Postgres volume, connects to main node's DB
+        // Extract hostname from main_url for DATABASE_URL
+        let main_host = url
+          .trim_start_matches("http://")
+          .split(':')
+          .next()
+          .unwrap_or("127.0.0.1");
+        let database_url = format!(
+          "postgres://postgres@{}/postgres",
+          main_host
+        );
+        format!(
+          "docker run -d \
+            --network host \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v {}:/var/lib/doseid \
+            -e DOSEID_MAIN_URL={} \
+            -e DATABASE_URL={} \
+            --name {} {}",
+          REMOTE_CLUSTER_DAEMON_FOLDER,
+          url,
+          database_url,
+          container_name,
+          docker_image
+        )
+      }
+    };
 
     // Execute the docker run command
     let docker_run = SSH::execute_command(session, &docker_command)?;
@@ -136,37 +177,37 @@ impl CliClusterInit {
     Ok(())
   }
 
-  fn install_docker_on_remote(&self, session: &Session, username: &str) -> anyhow::Result<()> {
+  pub fn install_docker_on_remote(&self, session: &Session, username: &str) -> anyhow::Result<()> {
     println!("\n🐳 Docker Check:");
     // Check for docker binary
     let docker_exists = SSH::check_file_exists(session, "/usr/bin/docker")?
       || SSH::check_file_exists(session, "/bin/docker")?;
 
     if !docker_exists {
-      println!("❌ Docker is NOT installed on the remote server");
+      println!("Docker is NOT installed on the remote server");
 
-      println!("\n🚀 Installing Docker...");
+      println!("\nInstalling Docker...");
       if let Err(e) = self._install_docker(session, username) {
-        println!("❌ Failed to install Docker: {}", e);
+        println!("Failed to install Docker: {}", e);
         return Err(e);
       }
-      println!("✅ Docker successfully installed!");
+      println!("Docker successfully installed!");
     } else {
       // Try to get Docker version
       let (exit_code, docker_version) = SSH::execute_command(session, "docker --version")?;
 
       if exit_code == 0 && !docker_version.is_empty() {
-        println!("✅ Docker is installed on the remote server:");
-        println!("🐳 {}", docker_version.trim());
+        println!("Docker is installed on the remote server:");
+        println!("{}", docker_version.trim());
       } else {
-        println!("⚠️ Docker binary found but failed to get version information");
+        println!("Docker binary found but failed to get version information");
 
-        println!("\n🔄 Reinstalling Docker...");
+        println!("\nReinstalling Docker...");
         if let Err(e) = self._install_docker(session, username) {
-          println!("❌ Failed to reinstall Docker: {}", e);
+          println!("Failed to reinstall Docker: {}", e);
           return Err(e);
         }
-        println!("✅ Docker successfully reinstalled!");
+        println!("Docker successfully reinstalled!");
       }
     }
     Ok(())
@@ -178,7 +219,7 @@ impl CliClusterInit {
     let remove_cmd = "sudo apt-get remove -y docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc";
     let (exit_code, output) = SSH::execute_command(session, remove_cmd)?;
     if exit_code != 0 {
-      println!("⚠️ Warning during package removal: {}", output);
+      println!("Warning during package removal: {}", output);
       // Continue anyway as these might not be installed
     }
 
@@ -244,7 +285,7 @@ impl CliClusterInit {
       return Err(anyhow::anyhow!("Docker installation verification failed"));
     }
 
-    println!("🐳 Docker version: {}", docker_version.trim());
+    println!("Docker version: {}", docker_version.trim());
     Ok(())
   }
 

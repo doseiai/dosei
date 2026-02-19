@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO\n        deployment (\n          id,\n          service_id,\n          owner_id,\n          host_port,\n          container_port,\n          updated_at,\n          created_at\n        )\n       VALUES ($1, $2, $3, $4, $5, $6, $7)\n       RETURNING *\n      ",
+  "query": "INSERT INTO\n        deployment (\n          id,\n          service_id,\n          owner_id,\n          host_port,\n          container_port,\n          node_id,\n          updated_at,\n          created_at\n        )\n       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)\n       RETURNING *\n      ",
   "describe": {
     "columns": [
       {
@@ -30,18 +30,23 @@
       },
       {
         "ordinal": 5,
-        "name": "updated_at",
+        "name": "last_accessed_at",
         "type_info": "Timestamptz"
       },
       {
         "ordinal": 6,
-        "name": "created_at",
+        "name": "updated_at",
         "type_info": "Timestamptz"
       },
       {
         "ordinal": 7,
-        "name": "last_accessed_at",
+        "name": "created_at",
         "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 8,
+        "name": "node_id",
+        "type_info": "Uuid"
       }
     ],
     "parameters": {
@@ -51,6 +56,7 @@
         "Uuid",
         "Int2",
         "Int2",
+        "Uuid",
         "Timestamptz",
         "Timestamptz"
       ]
@@ -61,10 +67,11 @@
       false,
       true,
       true,
+      true,
       false,
       false,
       true
     ]
   },
-  "hash": "80cdfd6bf2aa99eaec37a90a4113cbb118b8716dfe6288d6ee3b8dacdb7523d8"
+  "hash": "ac3f48fa57b2b20bf16891af2d2ff7074b3cb0f6cdb0c52003bc7f8b69e770f6"
 }

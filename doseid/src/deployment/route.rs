@@ -1,5 +1,3 @@
-use crate::account::Account;
-use crate::certificate::Certificate;
 use crate::deployment::Deployment;
 use crate::ingress::Ingress;
 use crate::service::Service;
@@ -11,7 +9,6 @@ use dosei_schema::app::App;
 use dosei_schema::cluster::ClusterInit;
 use sqlx::{Pool, Postgres};
 use std::sync::Arc;
-use tracing::error;
 use utoipa::gen::serde_json::{json, Value};
 use uuid::Uuid;
 
@@ -117,7 +114,7 @@ pub async fn api_deploy(
       .unwrap(),
   };
 
-  let deployment = Deployment::new(service.id, service.owner_id, app.port, None, &pg_pool)
+  let deployment = Deployment::new(service.id, service.owner_id, app.port, None, None, &pg_pool)
     .await
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
@@ -133,18 +130,8 @@ pub async fn api_deploy(
   if let Some(domains) = app.domains {
     if !domains.is_empty() {
       let domain = domains.first().unwrap();
-      if let Ok(result) = Certificate::get_by_domain_name(domain.clone(), &pg_pool).await {
-        if result.is_none() && ClusterInit::validate_domain(domain) {
-          let account = Account::get_by_id(service.owner_id, &pg_pool)
-            .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-          if let Err(e) = Certificate::request(account.unwrap().id, domain).await {
-            error!("{}", e);
-          }
-          {
-            let _ = Ingress::new(domain.clone(), service.id, service.owner_id, &pg_pool).await;
-          }
-        }
+      if ClusterInit::validate_domain(domain) {
+        let _ = Ingress::new(domain.clone(), service.id, service.owner_id, &pg_pool).await;
       }
     }
   }

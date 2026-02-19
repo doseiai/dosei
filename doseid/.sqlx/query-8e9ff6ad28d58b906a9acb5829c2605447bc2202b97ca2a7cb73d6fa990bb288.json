@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM certificate WHERE expires_at < $1",
+  "query": "INSERT INTO node (id, ip, port, is_main, last_heartbeat_at, created_at)\n       VALUES ($1, $2, $3, $4, $5, $6)\n       ON CONFLICT (ip) DO UPDATE SET\n         port = EXCLUDED.port,\n         is_main = EXCLUDED.is_main,\n         last_heartbeat_at = EXCLUDED.last_heartbeat_at\n       RETURNING *",
   "describe": {
     "columns": [
       {
@@ -10,42 +10,37 @@
       },
       {
         "ordinal": 1,
-        "name": "domain_name",
+        "name": "ip",
         "type_info": "Text"
       },
       {
         "ordinal": 2,
-        "name": "certificate",
-        "type_info": "Text"
+        "name": "port",
+        "type_info": "Int2"
       },
       {
         "ordinal": 3,
-        "name": "private_key",
-        "type_info": "Text"
+        "name": "is_main",
+        "type_info": "Bool"
       },
       {
         "ordinal": 4,
-        "name": "expires_at",
+        "name": "last_heartbeat_at",
         "type_info": "Timestamptz"
       },
       {
         "ordinal": 5,
-        "name": "owner_id",
-        "type_info": "Uuid"
-      },
-      {
-        "ordinal": 6,
-        "name": "updated_at",
-        "type_info": "Timestamptz"
-      },
-      {
-        "ordinal": 7,
         "name": "created_at",
         "type_info": "Timestamptz"
       }
     ],
     "parameters": {
       "Left": [
+        "Uuid",
+        "Text",
+        "Int2",
+        "Bool",
+        "Timestamptz",
         "Timestamptz"
       ]
     },
@@ -55,10 +50,8 @@
       false,
       false,
       false,
-      false,
-      false,
       false
     ]
   },
-  "hash": "455492e3efdabc710d582e7912538d361938e89c4e9a580f9aa3d68d9d076a59"
+  "hash": "8e9ff6ad28d58b906a9acb5829c2605447bc2202b97ca2a7cb73d6fa990bb288"
 }

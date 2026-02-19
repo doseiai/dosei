@@ -1,13 +1,21 @@
 mod default;
 
 use dotenv::dotenv;
-use serde::Deserialize;
 use std::env;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, PartialEq)]
+pub enum NodeMode {
+  Main,
+  Worker,
+}
+
+#[derive(Debug)]
 pub struct Config {
   pub host: String,
+  pub port: u16,
   pub database_url: String,
+  pub mode: NodeMode,
+  pub main_url: Option<String>,
 }
 
 impl Config {
@@ -22,17 +30,32 @@ impl Config {
       .finish();
     tracing::subscriber::set_global_default(subscriber)?;
 
+    let port = env::var("DOSEID_PORT")
+      .ok()
+      .and_then(|p| p.parse().ok())
+      .unwrap_or(8080u16);
+
+    let mode = match env::var("DOSEID_MAIN_URL") {
+      Ok(_) => NodeMode::Worker,
+      Err(_) => NodeMode::Main,
+    };
+
+    let main_url = env::var("DOSEID_MAIN_URL").ok();
+
     Ok(Config {
       host: "0.0.0.0".to_string(),
+      port,
       database_url: env::var("DATABASE_URL").unwrap_or(default::DATABASE_URL.to_string()),
+      mode,
+      main_url,
     })
   }
 
   pub fn address(&self) -> String {
-    format!("{}:{}", self.host, 80)
+    format!("{}:{}", self.host, self.port)
   }
 
-  pub fn proxy_address(&self) -> String {
-    format!("{}:{}", self.host, 443)
+  pub fn is_main(&self) -> bool {
+    self.mode == NodeMode::Main
   }
 }

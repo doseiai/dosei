@@ -114,6 +114,7 @@ impl Container {
                     "Container stopped - Name: {}, Image: {}, Exit Code: {}, ID: {}",
                     name, image, exit_code, id
                   );
+
                 }
                 event_action => {
                   warn!("Unhandled container event action: {}", event_action);

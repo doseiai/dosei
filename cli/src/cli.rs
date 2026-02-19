@@ -69,6 +69,8 @@ impl Cli {
 
     let cluster_name = if let Some(name) = name {
       name
+    } else if let Ok(env_cluster) = std::env::var("DOSEI_CLUSTER") {
+      env_cluster
     } else if let Some(default_cluster_map) = config.get_default_cluster() {
       default_cluster_map.keys().next().unwrap().clone()
     } else {
@@ -80,8 +82,19 @@ impl Cli {
       input.trim().to_string()
     };
 
+    // If DOSEI_SSH_KEY is set (CI/CD), allow using a cluster not in the config
     if let Some(cluster) = config.get_cluster(&cluster_name) {
       Ok((cluster_name, cluster.clone()))
+    } else if std::env::var("DOSEI_SSH_KEY").is_ok() {
+      // In CI/CD mode: cluster isn't in local config but we have the key via env
+      Ok((
+        cluster_name,
+        ClusterConfig {
+          id: None,
+          username: String::from("dosei"),
+          ssh_key: None, // Key will come from DOSEI_SSH_KEY env var
+        },
+      ))
     } else {
       Err(anyhow!("Cluster {} not found", cluster_name))
     }

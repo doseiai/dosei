@@ -1,11 +1,8 @@
 use crate::account::Account;
-use crate::certificate::Certificate;
 use crate::deployment::Deployment;
 use crate::ingress::Ingress;
 use crate::service::Service;
-use dosei_schema::cluster::ClusterInit;
 use sqlx::{Pool, Postgres};
-use tracing::error;
 
 pub struct Dashboard {
   // The domain name where the dashboard will be running.
@@ -16,15 +13,6 @@ pub struct Dashboard {
 impl Dashboard {
   pub async fn init(&self, pg_pool: &Pool<Postgres>) -> anyhow::Result<()> {
     let default_user = Account::get_default_user(pg_pool).await?;
-
-    // Request a certificate for the domain name.
-    if let Ok(result) = Certificate::get_by_domain_name(self.name.clone(), pg_pool).await {
-      if result.is_none() && ClusterInit::validate_domain(&self.name) {
-        if let Err(e) = Certificate::request(default_user.id, &self.name).await {
-          error!("{}", e);
-        }
-      }
-    }
 
     // Create dashboard Service if not present (aka: fresh cluster)
     let service = match Service::new("dashboard", default_user.id, pg_pool).await {
@@ -47,6 +35,7 @@ impl Dashboard {
           service.owner_id,
           Some(8844),
           Some(8844),
+          None,
           pg_pool,
         )
         .await?
