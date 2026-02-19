@@ -54,8 +54,8 @@ async fn main() -> anyhow::Result<()> {
       info!("Starting doseid in MAIN mode");
 
       // Register self as main node.
-      // Use host.docker.internal so the Caddy container can reach doseid.
-      let self_ip = "host.docker.internal".to_string();
+      // Both doseid and Caddy use host networking, so localhost works.
+      let self_ip = "127.0.0.1".to_string();
       Node::register(self_ip, config.port as i16, true, &shared_pool).await?;
 
       // Start Caddy container, sync config, and watch for crashes
