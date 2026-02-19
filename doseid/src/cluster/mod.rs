@@ -106,12 +106,13 @@ impl DaemonClusterInit {
       None => Ingress::new(self.name.clone(), service.id, service.owner_id, pg_pool).await?,
     };
 
-    // TODO: Hardcoded for testing, handle other cases
-    Dashboard {
+    // Dashboard is optional — skip if image isn't available
+    let dashboard = Dashboard {
       name: self.name.clone().replace("api", "dashboard"),
+    };
+    if let Err(e) = dashboard.init(pg_pool).await {
+      tracing::warn!("Dashboard initialization skipped: {}", e);
     }
-    .init(pg_pool)
-    .await?;
     Ok(())
   }
 }
