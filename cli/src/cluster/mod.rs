@@ -106,9 +106,19 @@ impl CliClusterInit {
     let rm_command = format!("docker rm {container_name} 2>/dev/null || true");
     SSH::execute_command(session, &rm_command)?;
 
-    // Get the current package version for the docker image tag
-    let image_version = env!("CARGO_PKG_VERSION");
-    let docker_image = format!("doseidotio/doseid:{}", image_version);
+    // Allow overriding the docker image via env var (useful for testing/CI)
+    let docker_image = std::env::var("DOSEID_IMAGE").unwrap_or_else(|_| {
+      let image_version = env!("CARGO_PKG_VERSION");
+      format!("doseidotio/doseid:{}", image_version)
+    });
+
+    // Pull the image
+    println!("Pulling image {}...", docker_image);
+    let pull_cmd = format!("docker pull {}", docker_image);
+    let pull_result = SSH::execute_command(session, &pull_cmd)?;
+    if pull_result.0 != 0 {
+      return Err(anyhow!("Failed to pull image {}: {}", docker_image, pull_result.1));
+    }
 
     // Build the docker run command based on mode
     let docker_command = match main_url {

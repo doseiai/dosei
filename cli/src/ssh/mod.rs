@@ -71,6 +71,16 @@ impl SSH {
       .read_to_string(&mut output)
       .context("Failed to read command output")?;
 
+    let mut stderr = String::new();
+    channel
+      .stderr()
+      .read_to_string(&mut stderr)
+      .context("Failed to read command stderr")?;
+
+    if !stderr.is_empty() {
+      output.push_str(&stderr);
+    }
+
     channel.wait_close().context("Failed to close channel")?;
 
     let exit_status = channel.exit_status().context("Failed to get exit status")?;
