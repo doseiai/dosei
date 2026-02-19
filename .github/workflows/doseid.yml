@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - '*'
+    branches:
+      - 'feat/**'
 
 concurrency:
   group: doseid-${{ github.ref }}
@@ -67,18 +69,27 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+      - name: Set tag for release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+
+      - name: Set tag for branch
+        if: startsWith(github.ref, 'refs/heads/')
+        run: echo "VERSION=${GITHUB_REF_NAME//\//-}" >> $GITHUB_ENV
 
       - name: Create multi-arch manifest
         run: |
-          docker buildx imagetools create -t doseidotio/doseid \
+          docker buildx imagetools create -t doseidotio/doseid:${{ env.VERSION }} \
             ${{ needs.build.outputs.amd64-digest }} \
             ${{ needs.build.outputs.arm64-digest }}
-          
+
           docker buildx imagetools create -t doseidotio/doseid:${{ github.sha }} \
             ${{ needs.build.outputs.amd64-digest }} \
             ${{ needs.build.outputs.arm64-digest }}
-          
-          docker buildx imagetools create -t doseidotio/doseid:${{ env.VERSION }} \
+
+      - name: Tag as latest (releases only)
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          docker buildx imagetools create -t doseidotio/doseid \
             ${{ needs.build.outputs.amd64-digest }} \
             ${{ needs.build.outputs.arm64-digest }}
