@@ -72,17 +72,21 @@ pub fn command(allow_invalid_domain: bool) -> anyhow::Result<()> {
 
   // --- Deploy main node ---
   println!("🔐 Connecting to main node {}...", main_server_url);
-  let main_sess = connect_ssh(&main_hostname, &main_username, &key_path_or_content)?;
+  let lock_sess = connect_ssh(&main_hostname, &main_username, &key_path_or_content)?;
 
-  cluster_init.create_lock(&main_sess)?;
+  cluster_init.create_lock(&lock_sess)?;
   let _lock_guard = scopeguard::guard((), |_| {
-    if let Err(e) = cluster_init.remove_lock(&main_sess) {
+    if let Err(e) = cluster_init.remove_lock(&lock_sess) {
       eprintln!("Warning: Failed to remove lock file: {}", e);
     }
   });
 
-  cluster_init.save_to_cluster(&main_sess)?;
-  cluster_init.install_docker_on_remote(&main_sess, &main_username)?;
+  cluster_init.save_to_cluster(&lock_sess)?;
+  cluster_init.install_docker_on_remote(&lock_sess, &main_username)?;
+
+  // Reconnect SSH so docker group membership takes effect
+  println!("🔐 Reconnecting to main node {}...", main_server_url);
+  let main_sess = connect_ssh(&main_hostname, &main_username, &key_path_or_content)?;
 
   println!("\n Starting doseid (main mode) on {}", main_hostname);
   cluster_init.run_doseid_container(&main_sess, None)?;
@@ -103,6 +107,10 @@ pub fn command(allow_invalid_domain: bool) -> anyhow::Result<()> {
 
       cluster_init.save_to_cluster(&sess)?;
       cluster_init.install_docker_on_remote(&sess, &username)?;
+
+      // Reconnect SSH so docker group membership takes effect
+      println!("🔐 Reconnecting to worker node {}...", server_url);
+      let sess = connect_ssh(&hostname, &username, &key_path_or_content)?;
 
       println!("Starting doseid (worker mode) on {}", hostname);
       cluster_init.run_doseid_container(&sess, Some(&main_url))?;
