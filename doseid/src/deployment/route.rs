@@ -125,22 +125,11 @@ pub async fn api_deploy(
       })?,
   };
 
-  // Stop, remove, and delete previous deployments
   let previous_deployments = Deployment::get_by_service_id(service.id, &pg_pool)
     .await
     .unwrap_or_default();
-  for prev in &previous_deployments {
-    if let Err(e) = prev.stop().await {
-      warn!("Failed to stop previous deployment {}: {}", prev.id, e);
-    }
-    if let Err(e) = prev.remove().await {
-      warn!("Failed to remove previous deployment {}: {}", prev.id, e);
-    }
-    if let Err(e) = prev.delete(&pg_pool).await {
-      warn!("Failed to delete previous deployment record {}: {}", prev.id, e);
-    }
-  }
 
+  // Build new deployment while old one is still serving traffic
   let deployment = Deployment::new(service.id, service.owner_id, app.port, None, None, &pg_pool)
     .await
     .map_err(|e| {
@@ -165,6 +154,19 @@ pub async fn api_deploy(
       StatusCode::INTERNAL_SERVER_ERROR
     })?;
   info!("Started deployment {}", deployment.id);
+
+  // New container is up — now stop and clean up old ones
+  for prev in &previous_deployments {
+    if let Err(e) = prev.stop().await {
+      warn!("Failed to stop previous deployment {}: {}", prev.id, e);
+    }
+    if let Err(e) = prev.remove().await {
+      warn!("Failed to remove previous deployment {}: {}", prev.id, e);
+    }
+    if let Err(e) = prev.delete(&pg_pool).await {
+      warn!("Failed to delete previous deployment record {}: {}", prev.id, e);
+    }
+  }
 
   if let Some(domains) = &app.domains {
     if !domains.is_empty() {
