@@ -1,3 +1,4 @@
+use crate::deployment::Deployment;
 use crate::ingress::Ingress;
 use crate::node::Node;
 use bollard::container::{
@@ -107,6 +108,8 @@ pub async fn ensure_running() -> anyhow::Result<()> {
 }
 
 /// Generate the full Caddy JSON config from the current DB state.
+/// - App ingresses route directly to the container's host_port
+/// - Ingresses without a deployment (e.g. cluster API domain) route to the main doseid node
 pub async fn generate_config(pg_pool: &Pool<Postgres>) -> anyhow::Result<serde_json::Value> {
   let nodes = Node::list_active(pg_pool).await?;
   let ingresses = sqlx::query_as!(Ingress, "SELECT * FROM ingress")
@@ -116,11 +119,30 @@ pub async fn generate_config(pg_pool: &Pool<Postgres>) -> anyhow::Result<serde_j
   let mut routes = Vec::new();
 
   for ingress in &ingresses {
-    let upstreams: Vec<serde_json::Value> = nodes
-      .iter()
-      .filter(|n| n.is_main)
-      .map(|n| json!({ "dial": format!("{}:{}", n.ip, n.port) }))
-      .collect();
+    // Look up the latest deployment for this ingress's service
+    let deployment = Deployment::get_by_service_id(ingress.service_id, pg_pool)
+      .await
+      .unwrap_or_default()
+      .into_iter()
+      .max_by_key(|d| d.created_at);
+
+    let upstreams: Vec<serde_json::Value> = match deployment.and_then(|d| d.host_port) {
+      // App ingress: route directly to container port on each node
+      Some(host_port) => {
+        nodes
+          .iter()
+          .map(|n| json!({ "dial": format!("{}:{}", n.ip, host_port) }))
+          .collect()
+      }
+      // No deployment or no port: route to doseid (main node only)
+      None => {
+        nodes
+          .iter()
+          .filter(|n| n.is_main)
+          .map(|n| json!({ "dial": format!("{}:{}", n.ip, n.port) }))
+          .collect()
+      }
+    };
 
     if upstreams.is_empty() {
       continue;
@@ -130,13 +152,7 @@ pub async fn generate_config(pg_pool: &Pool<Postgres>) -> anyhow::Result<serde_j
       "match": [{ "host": [&ingress.host] }],
       "handle": [{
         "handler": "reverse_proxy",
-        "upstreams": upstreams,
-        "health_checks": {
-          "active": {
-            "uri": "/health",
-            "interval": "10s"
-          }
-        }
+        "upstreams": upstreams
       }]
     }));
   }
