@@ -1,4 +1,5 @@
-pub fn command(name: String, arg_value: Option<String>) -> anyhow::Result<()> {
+#[allow(dead_code)]
+pub fn command(_name: String, _arg_value: Option<String>) -> anyhow::Result<()> {
   // let mut value = String::new();
   // if dosei_util::secret::is_secret_env(&name) {
   //   value = rpassword::prompt_password("Enter the secret value: ")?;

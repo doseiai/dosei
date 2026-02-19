@@ -98,12 +98,14 @@ impl SSH {
       "Could not find SSH keys. Tried ~/.ssh/id_ed25519 and ~/.ssh/id_rsa"
     ))
   }
+  #[allow(dead_code)]
   pub fn get_public_key_from_private_key_path(
     private_key_path: &Path,
   ) -> anyhow::Result<(String, String)> {
     let private_key_data = fs::read_to_string(private_key_path)?;
     Self::get_public_key_from_private_key(private_key_data)
   }
+  #[allow(dead_code)]
   pub fn get_public_key_from_private_key(
     pem: impl AsRef<[u8]>,
   ) -> anyhow::Result<(String, String)> {

@@ -20,7 +20,7 @@ pub fn command(name: Option<String>, username: Option<String>, yes: bool) -> any
     username.trim().to_string()
   };
 
-  let ssh_key_path = if yes {
+  let _ssh_key_path = if yes {
     // If -y is provided, automatically use default SSH key or fail
     let default_path = SSH::get_default_ssh_key_path()
       .context("Failed to get default SSH key path and -y flag was specified")?
@@ -74,7 +74,7 @@ pub fn command(name: Option<String>, username: Option<String>, yes: bool) -> any
 
   let status_code = response.status();
   if status_code.is_success() {
-    let session = response.json::<SessionCredentials>()?;
+    let _session = response.json::<SessionCredentials>()?;
     println!("Login Succeeded!");
     return Ok(());
   }

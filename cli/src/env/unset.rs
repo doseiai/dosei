@@ -1,4 +1,5 @@
-pub fn command(name: String) -> anyhow::Result<()> {
+#[allow(dead_code)]
+pub fn command(_name: String) -> anyhow::Result<()> {
   // let path = ".env";
   // let file = File::open(path);
   // let mut env_vars = BTreeMap::new();
