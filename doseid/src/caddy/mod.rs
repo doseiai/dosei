@@ -118,6 +118,7 @@ pub async fn generate_config(pg_pool: &Pool<Postgres>) -> anyhow::Result<serde_j
   for ingress in &ingresses {
     let upstreams: Vec<serde_json::Value> = nodes
       .iter()
+      .filter(|n| n.is_main)
       .map(|n| json!({ "dial": format!("{}:{}", n.ip, n.port) }))
       .collect();
 
