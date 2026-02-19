@@ -161,14 +161,21 @@ impl Deployment {
 
   pub async fn stop(&self) -> anyhow::Result<()> {
     let docker = Docker::connect_with_socket_defaults()?;
-    docker.stop_container(&self.id.to_string(), None).await?;
-    Ok(())
+    match docker.stop_container(&self.id.to_string(), None).await {
+      Ok(_) => Ok(()),
+      Err(bollard::errors::Error::DockerResponseServerError { status_code: 404, .. }) => Ok(()),
+      Err(bollard::errors::Error::DockerResponseServerError { status_code: 304, .. }) => Ok(()),
+      Err(e) => Err(e.into()),
+    }
   }
 
   pub async fn remove(&self) -> anyhow::Result<()> {
     let docker = Docker::connect_with_socket_defaults()?;
-    docker.remove_container(&self.id.to_string(), None).await?;
-    Ok(())
+    match docker.remove_container(&self.id.to_string(), None).await {
+      Ok(_) => Ok(()),
+      Err(bollard::errors::Error::DockerResponseServerError { status_code: 404, .. }) => Ok(()),
+      Err(e) => Err(e.into()),
+    }
   }
 
   pub async fn get_by_service_id(

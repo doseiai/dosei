@@ -2,7 +2,6 @@ mod dashboard;
 
 use crate::account::{Account, AccountSSHKey};
 use crate::cluster::dashboard::Dashboard;
-use crate::deployment::Deployment;
 use crate::ingress::Ingress;
 use crate::service::Service;
 use dosei_schema::cluster::ClusterInit;
@@ -96,12 +95,6 @@ impl DaemonClusterInit {
       Err(_) => Service::get_by_name("dosei".to_string(), pg_pool)
         .await?
         .unwrap(),
-    };
-    if Deployment::get_by_service_id(service.id, pg_pool)
-      .await?
-      .is_empty()
-    {
-      let _ = Deployment::new(service.id, service.owner_id, Some(80), Some(80), None, pg_pool).await;
     };
 
     // Ingress insert or Update
