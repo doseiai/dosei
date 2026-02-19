@@ -45,7 +45,7 @@ impl Dashboard {
     let image_tag = format!("doseidotio/dashboard:{}", env!("CARGO_PKG_VERSION"));
     deployment.stop().await?;
     deployment.remove().await?;
-    deployment.start(Some(image_tag)).await?;
+    deployment.start(Some(image_tag), None).await?;
 
     // Ingress insert or Update
     match Ingress::get_by_service_id(service.id, pg_pool)

@@ -108,7 +108,11 @@ impl Deployment {
     Ok(logs)
   }
 
-  pub(crate) async fn start(&self, image_tag: Option<String>) -> anyhow::Result<()> {
+  pub(crate) async fn start(
+    &self,
+    image_tag: Option<String>,
+    env: Option<&HashMap<String, String>>,
+  ) -> anyhow::Result<()> {
     let docker = Docker::connect_with_socket_defaults()?;
 
     let exposed_port;
@@ -138,6 +142,10 @@ impl Deployment {
       None
     };
 
+    let env_vars: Option<Vec<String>> = env.map(|vars| {
+      vars.iter().map(|(k, v)| format!("{}={}", k, v)).collect()
+    });
+
     let options = Some(CreateContainerOptions {
       name: self.id,
       platform: None,
@@ -148,6 +156,7 @@ impl Deployment {
       image: Some(image_tag),
       exposed_ports,
       host_config,
+      env: env_vars,
       tty: Some(true),
       ..Default::default()
     };
@@ -176,6 +185,14 @@ impl Deployment {
       Err(bollard::errors::Error::DockerResponseServerError { status_code: 404, .. }) => Ok(()),
       Err(e) => Err(e.into()),
     }
+  }
+
+  pub async fn delete(&self, pg_pool: &Pool<Postgres>) -> anyhow::Result<()> {
+    sqlx::query("DELETE FROM deployment WHERE id = $1")
+      .bind(self.id)
+      .execute(pg_pool)
+      .await?;
+    Ok(())
   }
 
   pub async fn get_by_service_id(
