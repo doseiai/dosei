@@ -5,7 +5,7 @@ use bollard::container::{
   StopContainerOptions,
 };
 use bollard::image::CreateImageOptions;
-use bollard::models::{HostConfig, PortBinding, PortMap};
+use bollard::models::HostConfig;
 use bollard::Docker;
 use futures_util::StreamExt;
 use serde_json::json;
@@ -74,51 +74,20 @@ pub async fn ensure_running() -> anyhow::Result<()> {
     }
   }
 
-  // Port bindings: 80, 443 (public) and 2019 (admin, localhost only)
-  let mut port_bindings = PortMap::new();
-  port_bindings.insert(
-    "80/tcp".to_string(),
-    Some(vec![PortBinding {
-      host_ip: Some("0.0.0.0".to_string()),
-      host_port: Some("80".to_string()),
-    }]),
-  );
-  port_bindings.insert(
-    "443/tcp".to_string(),
-    Some(vec![PortBinding {
-      host_ip: Some("0.0.0.0".to_string()),
-      host_port: Some("443".to_string()),
-    }]),
-  );
-  port_bindings.insert(
-    "2019/tcp".to_string(),
-    Some(vec![PortBinding {
-      host_ip: Some("127.0.0.1".to_string()),
-      host_port: Some("2019".to_string()),
-    }]),
-  );
-
+  // Use host network so Caddy binds directly to host ports (80, 443, 2019)
+  // and doseid can reach the admin API at 127.0.0.1:2019
   let host_config = HostConfig {
-    port_bindings: Some(port_bindings),
+    network_mode: Some("host".to_string()),
     restart_policy: Some(bollard::models::RestartPolicy {
       name: Some(bollard::models::RestartPolicyNameEnum::UNLESS_STOPPED),
       maximum_retry_count: None,
     }),
-    // Use host network's DNS so Caddy can resolve upstream IPs
-    extra_hosts: Some(vec!["host.docker.internal:host-gateway".to_string()]),
     ..Default::default()
   };
 
-  let mut exposed_ports = HashMap::new();
-  exposed_ports.insert("80/tcp", HashMap::new());
-  exposed_ports.insert("443/tcp", HashMap::new());
-  exposed_ports.insert("2019/tcp", HashMap::new());
-
   let config = bollard::container::Config {
     image: Some(CADDY_IMAGE),
-    exposed_ports: Some(exposed_ports),
     host_config: Some(host_config),
-    // Start Caddy with the JSON config adapter and empty initial config
     cmd: Some(vec!["caddy", "run", "--resume"]),
     ..Default::default()
   };
