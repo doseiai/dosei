@@ -112,6 +112,11 @@ impl CliClusterInit {
       format!("doseidotio/doseid:{}", image_version)
     });
 
+    // Optional: forward DASHBOARD_IMAGE into the container
+    let dashboard_image_env = std::env::var("DASHBOARD_IMAGE")
+      .map(|img| format!("-e DASHBOARD_IMAGE={} ", img))
+      .unwrap_or_default();
+
     // Pull the image
     println!("Pulling image {}...", docker_image);
     let pull_cmd = format!("docker pull {}", docker_image);
