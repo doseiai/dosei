@@ -42,7 +42,8 @@ impl Dashboard {
       }
     };
 
-    let image_tag = format!("doseidotio/dashboard:{}", env!("CARGO_PKG_VERSION"));
+    let image_tag = std::env::var("DASHBOARD_IMAGE")
+      .unwrap_or_else(|_| format!("doseidotio/dashboard:{}", env!("CARGO_PKG_VERSION")));
     deployment.stop().await?;
     deployment.remove().await?;
     deployment.start(Some(image_tag), None).await?;
