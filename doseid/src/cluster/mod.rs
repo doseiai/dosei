@@ -108,7 +108,7 @@ impl DaemonClusterInit {
 
     // Dashboard is optional — skip if image isn't available
     let dashboard = Dashboard {
-      name: self.name.clone().replace("api", "dashboard"),
+      name: format!("dashboard.{}", self.name),
     };
     if let Err(e) = dashboard.init(pg_pool).await {
       tracing::warn!("Dashboard initialization skipped: {}", e);

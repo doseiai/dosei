@@ -2,6 +2,9 @@ use crate::account::Account;
 use crate::deployment::Deployment;
 use crate::ingress::Ingress;
 use crate::service::Service;
+use bollard::Docker;
+use bollard::image::CreateImageOptions;
+use futures_util::StreamExt;
 use sqlx::{Pool, Postgres};
 
 pub struct Dashboard {
@@ -44,6 +47,21 @@ impl Dashboard {
 
     let image_tag = std::env::var("DASHBOARD_IMAGE")
       .unwrap_or_else(|_| format!("doseidotio/dashboard:{}", env!("CARGO_PKG_VERSION")));
+
+    // Pull the image from Docker Hub
+    let docker = Docker::connect_with_socket_defaults()?;
+    let mut pull_stream = docker.create_image(
+      Some(CreateImageOptions {
+        from_image: image_tag.clone(),
+        ..Default::default()
+      }),
+      None,
+      None,
+    );
+    while let Some(result) = pull_stream.next().await {
+      result?;
+    }
+
     deployment.stop().await?;
     deployment.remove().await?;
     deployment.start(Some(image_tag), None).await?;

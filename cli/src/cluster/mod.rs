@@ -135,9 +135,10 @@ impl CliClusterInit {
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v {}:/var/lib/doseid \
             -v {}:/var/lib/postgresql/17/main \
-            --name {} {}",
+            {}--name {} {}",
           REMOTE_CLUSTER_DAEMON_FOLDER,
           REMOTE_CLUSTER_POSTGRES_VOLUME,
+          dashboard_image_env,
           container_name,
           docker_image
         )
@@ -150,9 +151,10 @@ impl CliClusterInit {
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v {}:/var/lib/doseid \
             -e DOSEID_MAIN_URL={} \
-            --name {} {}",
+            {}--name {} {}",
           REMOTE_CLUSTER_DAEMON_FOLDER,
           url,
+          dashboard_image_env,
           container_name,
           docker_image
         )
