@@ -42,6 +42,11 @@
         "ordinal": 7,
         "name": "last_accessed_at",
         "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 8,
+        "name": "node_id",
+        "type_info": "Uuid"
       }
     ],
     "parameters": {
@@ -57,6 +62,7 @@
       true,
       false,
       false,
+      true,
       true
     ]
   },

@@ -77,6 +77,7 @@ impl Config {
     }
   }
 
+  #[allow(dead_code)]
   pub fn remove_cluster(&mut self, name: &str) -> Option<ClusterConfig> {
     if let Some(clusters) = &mut self.clusters {
       clusters.remove(name)
@@ -108,6 +109,7 @@ impl Config {
     self.clusters.clone().unwrap_or_default()
   }
 
+  #[allow(dead_code)]
   pub fn update_cluster(&mut self, name: &str, config: ClusterConfig) -> Option<ClusterConfig> {
     if let Some(clusters) = &mut self.clusters {
       if clusters.contains_key(name) {

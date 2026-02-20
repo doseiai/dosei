@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM certificate WHERE owner_id = $1",
+  "query": "SELECT id, service_id, owner_id, host_port, container_port, last_accessed_at, updated_at, created_at, node_id FROM deployment WHERE service_id = $1",
   "describe": {
     "columns": [
       {
@@ -10,28 +10,28 @@
       },
       {
         "ordinal": 1,
-        "name": "domain_name",
-        "type_info": "Text"
+        "name": "service_id",
+        "type_info": "Uuid"
       },
       {
         "ordinal": 2,
-        "name": "certificate",
-        "type_info": "Text"
+        "name": "owner_id",
+        "type_info": "Uuid"
       },
       {
         "ordinal": 3,
-        "name": "private_key",
-        "type_info": "Text"
+        "name": "host_port",
+        "type_info": "Int2"
       },
       {
         "ordinal": 4,
-        "name": "expires_at",
-        "type_info": "Timestamptz"
+        "name": "container_port",
+        "type_info": "Int2"
       },
       {
         "ordinal": 5,
-        "name": "owner_id",
-        "type_info": "Uuid"
+        "name": "last_accessed_at",
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 6,
@@ -42,6 +42,11 @@
         "ordinal": 7,
         "name": "created_at",
         "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 8,
+        "name": "node_id",
+        "type_info": "Uuid"
       }
     ],
     "parameters": {
@@ -53,12 +58,13 @@
       false,
       false,
       false,
+      true,
+      true,
+      true,
       false,
       false,
-      false,
-      false,
-      false
+      true
     ]
   },
-  "hash": "c415702e39125d6fea49f48b80bd376a53a03a09aae58fa7c6389da8547822dd"
+  "hash": "fdae114f31d035eb2b24e822720b7d05dde387318b1b54934abd5720620d7284"
 }

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM certificate WHERE domain_name = $1",
+  "query": "SELECT * FROM node ORDER BY created_at ASC",
   "describe": {
     "columns": [
       {
@@ -10,48 +10,34 @@
       },
       {
         "ordinal": 1,
-        "name": "domain_name",
+        "name": "ip",
         "type_info": "Text"
       },
       {
         "ordinal": 2,
-        "name": "certificate",
-        "type_info": "Text"
+        "name": "port",
+        "type_info": "Int2"
       },
       {
         "ordinal": 3,
-        "name": "private_key",
-        "type_info": "Text"
+        "name": "is_main",
+        "type_info": "Bool"
       },
       {
         "ordinal": 4,
-        "name": "expires_at",
+        "name": "last_heartbeat_at",
         "type_info": "Timestamptz"
       },
       {
         "ordinal": 5,
-        "name": "owner_id",
-        "type_info": "Uuid"
-      },
-      {
-        "ordinal": 6,
-        "name": "updated_at",
-        "type_info": "Timestamptz"
-      },
-      {
-        "ordinal": 7,
         "name": "created_at",
         "type_info": "Timestamptz"
       }
     ],
     "parameters": {
-      "Left": [
-        "Text"
-      ]
+      "Left": []
     },
     "nullable": [
-      false,
-      false,
       false,
       false,
       false,
@@ -60,5 +46,5 @@
       false
     ]
   },
-  "hash": "2fabb536787b2f967071af550bfe9d7c7fe418823af40091471225f708fae9c4"
+  "hash": "918d3ad56af6f6a6fe1314f28977c09521017ceccbb180a2e71554f062200d8c"
 }

@@ -5,9 +5,8 @@ services:
       context: .
       dockerfile: devcontainer.Dockerfile
     ports:
-      - "80:80"
-      - "443:443"
-      - "2222:22"  # SSH port
+      - "8080:8080"  # doseid API
+      - "2222:22"    # SSH port
     volumes:
       - dosei-cargo-data:/root/.cargo
       - dosei-rustup-data:/root/.rustup
@@ -20,23 +19,21 @@ services:
       - ~/.dosei/doseid/cluster-init.json:/var/lib/doseid/cluster-init.json
     environment:
       - SHELL=/bin/bash
+      - DATABASE_URL=postgres://postgres@dosei-postgres:5432/postgres
     command: /bin/sh -c "service ssh start && tail -f /dev/null"  # Start SSH and keep container running
   postgres:
     container_name: dosei-postgres
     image: postgres:16
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
-      - /var/run/postgresql:/var/run/postgresql
     environment:
       POSTGRES_HOST_AUTH_METHOD: trust
-      POSTGRES_HOST: "/var/run/postgresql"
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - '5432:5432'
     command: >
       -c log_connections=on
       -c log_disconnections=on
-      -c unix_socket_directories=/var/run/postgresql
 
 volumes:
   dosei-cargo-data:

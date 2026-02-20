@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM deployment WHERE service_id = $1",
+  "query": "SELECT * FROM ingress",
   "describe": {
     "columns": [
       {
@@ -20,13 +20,13 @@
       },
       {
         "ordinal": 3,
-        "name": "host_port",
-        "type_info": "Int2"
+        "name": "host",
+        "type_info": "Text"
       },
       {
         "ordinal": 4,
-        "name": "container_port",
-        "type_info": "Int2"
+        "name": "path",
+        "type_info": "Text"
       },
       {
         "ordinal": 5,
@@ -37,28 +37,20 @@
         "ordinal": 6,
         "name": "created_at",
         "type_info": "Timestamptz"
-      },
-      {
-        "ordinal": 7,
-        "name": "last_accessed_at",
-        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
-      "Left": [
-        "Uuid"
-      ]
+      "Left": []
     },
     "nullable": [
       false,
       false,
       false,
-      true,
+      false,
       true,
       false,
-      false,
-      true
+      false
     ]
   },
-  "hash": "6f24b4eff769e7bc227c04a3bb2e16424bb0f75844d01ef2dce8452b2bc4a519"
+  "hash": "17ea85696f2361da019ee5b263a35e49e2de615c6a61d542736a263608e28c13"
 }

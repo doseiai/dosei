@@ -27,6 +27,7 @@ pub struct Deployment {
   pub last_accessed_at: Option<DateTime<Utc>>,
   pub updated_at: DateTime<Utc>,
   pub created_at: DateTime<Utc>,
+  pub node_id: Option<Uuid>,
 }
 
 impl Deployment {
@@ -35,6 +36,7 @@ impl Deployment {
     owner_id: Uuid,
     container_port: Option<i16>,
     host_port: Option<i16>,
+    node_id: Option<Uuid>,
     pg_pool: &Pool<Postgres>,
   ) -> anyhow::Result<Self> {
     let host_port = match (container_port, host_port) {
@@ -51,17 +53,19 @@ impl Deployment {
           owner_id,
           host_port,
           container_port,
+          node_id,
           updated_at,
           created_at
         )
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING *
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id, service_id, owner_id, host_port, container_port, last_accessed_at, updated_at, created_at, node_id
       ",
       Uuid::new_v4(),
       service_id,
       owner_id,
       host_port,
       container_port,
+      node_id,
       Utc::now(),
       Utc::now(),
     )
@@ -104,7 +108,11 @@ impl Deployment {
     Ok(logs)
   }
 
-  pub(crate) async fn start(&self, image_tag: Option<String>) -> anyhow::Result<()> {
+  pub(crate) async fn start(
+    &self,
+    image_tag: Option<String>,
+    env: Option<&HashMap<String, String>>,
+  ) -> anyhow::Result<()> {
     let docker = Docker::connect_with_socket_defaults()?;
 
     let exposed_port;
@@ -119,7 +127,6 @@ impl Deployment {
 
     let host_config = if let Some(host_port) = self.host_port {
       let mut port_map = PortMap::new();
-      // TODO: make this cleaner unwrap, move to exposed port check or something
       port_map.insert(
         format!("{}/tcp", &self.container_port.unwrap()),
         Some(vec![PortBinding {
@@ -135,23 +142,21 @@ impl Deployment {
       None
     };
 
+    let env_vars: Option<Vec<String>> = env.map(|vars| {
+      vars.iter().map(|(k, v)| format!("{}={}", k, v)).collect()
+    });
+
     let options = Some(CreateContainerOptions {
       name: self.id,
       platform: None,
     });
 
-    // let env_vec: Vec<String> = env
-    //   .into_iter()
-    //   .map(|(key, value)| format!("{}={}", key, value))
-    //   .collect();
-
-    // let env_refs: Vec<&str> = env_vec.iter().map(AsRef::as_ref).collect();
     let image_tag = image_tag.unwrap_or(self.image_tag());
     let config = bollard::container::Config {
       image: Some(image_tag),
       exposed_ports,
       host_config,
-      // env: Some(env_refs),
+      env: env_vars,
       tty: Some(true),
       ..Default::default()
     };
@@ -165,13 +170,28 @@ impl Deployment {
 
   pub async fn stop(&self) -> anyhow::Result<()> {
     let docker = Docker::connect_with_socket_defaults()?;
-    docker.stop_container(&self.id.to_string(), None).await?;
-    Ok(())
+    match docker.stop_container(&self.id.to_string(), None).await {
+      Ok(_) => Ok(()),
+      Err(bollard::errors::Error::DockerResponseServerError { status_code: 404, .. }) => Ok(()),
+      Err(bollard::errors::Error::DockerResponseServerError { status_code: 304, .. }) => Ok(()),
+      Err(e) => Err(e.into()),
+    }
   }
 
   pub async fn remove(&self) -> anyhow::Result<()> {
     let docker = Docker::connect_with_socket_defaults()?;
-    docker.remove_container(&self.id.to_string(), None).await?;
+    match docker.remove_container(&self.id.to_string(), None).await {
+      Ok(_) => Ok(()),
+      Err(bollard::errors::Error::DockerResponseServerError { status_code: 404, .. }) => Ok(()),
+      Err(e) => Err(e.into()),
+    }
+  }
+
+  pub async fn delete(&self, pg_pool: &Pool<Postgres>) -> anyhow::Result<()> {
+    sqlx::query("DELETE FROM deployment WHERE id = $1")
+      .bind(self.id)
+      .execute(pg_pool)
+      .await?;
     Ok(())
   }
 
@@ -182,7 +202,7 @@ impl Deployment {
     Ok(
       sqlx::query_as!(
         Self,
-        "SELECT * FROM deployment WHERE service_id = $1",
+        "SELECT id, service_id, owner_id, host_port, container_port, last_accessed_at, updated_at, created_at, node_id FROM deployment WHERE service_id = $1",
         service_id
       )
       .fetch_all(pg_pool)
@@ -248,20 +268,7 @@ impl Deployment {
   }
 
   /// Finds an available TCP port on the host in the range 10000-20000
-  ///
-  /// Randomly tries ports in the specified range until finding one that can be bound to.
-  /// Makes up to 1000 attempts to find an available port before giving up.
-  ///
-  /// # Returns
-  /// - `Ok(port)`: The available port number as an i16
-  /// - `Err`: An error if no available port could be found after 1000 attempts
-  ///
-  /// # Example
-  /// ```
-  /// let port = Deployment::find_available_host_port()?;
-  /// println!("Found available port: {}", port);
-  /// ```
-  fn find_available_host_port() -> anyhow::Result<i16> {
+  pub fn find_available_host_port() -> anyhow::Result<i16> {
     let mut rng = rand::rng();
 
     for _ in 0..1000 {

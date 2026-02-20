@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM node WHERE last_heartbeat_at < $1 AND is_main = false",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c4f15ccfd23532c679943085629e91392a505c3e9147b18b6a2189b1dc21f60c"
+}

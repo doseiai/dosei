@@ -44,24 +44,43 @@ pub fn command(cluster_name: Option<String>, allow_dirty: bool) -> anyhow::Resul
   };
   body = body.text("hash", hash);
   body = body.text("app", serde_json::to_string(&app)?);
-  print!("{}", serde_json::to_string_pretty(&app)?);
-  let response = ApiClient::default()?
-    .post(deploy_url)
-    .multipart(body)
+  println!("{}", serde_json::to_string_pretty(&app)?);
+  println!("⚙️  Deploying...");
+  let client = reqwest::blocking::Client::builder()
+    .redirect(reqwest::redirect::Policy::none())
     .timeout(Duration::from_secs(3600))
+    .build()?;
+
+  let mut response = client
+    .post(&deploy_url)
+    .multipart(body)
     .bearer_auth(ApiClient::bearer_ssh_token(
       cluster.1.ssh_key.clone().map(PathBuf::from),
     )?)
     .send()?;
 
-  let status_code = response.status();
-  if status_code.is_success() {
-    println!("⚙️  Deploying...");
-    let response_text = response.text()?;
-    println!("{}", response_text);
-    return Ok(());
+  // Follow one redirect if needed (Caddy HTTP→HTTPS)
+  if response.status().is_redirection() {
+    if let Some(location) = response.headers().get("location") {
+      let redirect_url = location.to_str()?;
+      eprintln!("Following redirect to: {}", redirect_url);
+      response = client
+        .post(redirect_url)
+        .timeout(Duration::from_secs(3600))
+        .bearer_auth(ApiClient::bearer_ssh_token(
+          cluster.1.ssh_key.clone().map(PathBuf::from),
+        )?)
+        .send()?;
+    }
   }
-  response.error_for_status()?;
+
+  let status_code = response.status();
+  let response_text = response.text()?;
+  if status_code.is_success() {
+    println!("{}", response_text);
+  } else {
+    anyhow::bail!("Deploy failed ({}): {}", status_code, response_text);
+  }
   Ok(())
 }
 

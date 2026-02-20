@@ -1,14 +1,20 @@
-use crate::cli::Cli;
-use crate::config::{ClusterConfig, Config, SessionCredentials};
+use crate::config::{ApiClient, ClusterConfig, Config, SessionCredentials};
 use crate::ssh::SSH;
 use anyhow::{anyhow, Context};
-use reqwest::blocking::Client;
-use serde_json::json;
 use std::io;
 use std::io::Write;
+use std::path::PathBuf;
 
 pub fn command(name: Option<String>, username: Option<String>, yes: bool) -> anyhow::Result<()> {
-  let cluster = Cli::get_default_cluster_or_ask(name)?;
+  let cluster_name = if let Some(name) = name {
+    name
+  } else {
+    let mut input = String::new();
+    print!("Enter the cluster name: ");
+    io::stdout().flush()?;
+    io::stdin().read_line(&mut input)?;
+    input.trim().to_string()
+  };
 
   let username = if let Some(username) = username {
     username.to_string()
@@ -21,7 +27,6 @@ pub fn command(name: Option<String>, username: Option<String>, yes: bool) -> any
   };
 
   let ssh_key_path = if yes {
-    // If -y is provided, automatically use default SSH key or fail
     let default_path = SSH::get_default_ssh_key_path()
       .context("Failed to get default SSH key path and -y flag was specified")?
       .to_string_lossy()
@@ -30,7 +35,6 @@ pub fn command(name: Option<String>, username: Option<String>, yes: bool) -> any
     println!("Using default SSH key: {}", default_path);
     default_path
   } else {
-    // Original interactive flow
     let default_ssh_key_path = SSH::get_default_ssh_key_path()
       .context("Failed to get default ssh key path. Define one")?
       .to_string_lossy()
@@ -59,22 +63,29 @@ pub fn command(name: Option<String>, username: Option<String>, yes: bool) -> any
 
   let mut user_config = Config::load()?;
   user_config.add_cluster(
-    cluster.0.clone(),
+    cluster_name.clone(),
     ClusterConfig {
       id: None,
       username: username.clone(),
-      ssh_key: None,
+      ssh_key: Some(ssh_key_path.clone()),
     },
   );
   user_config.save()?;
 
-  let login_url = format!("{}/auth/login", cluster.0);
-  let body = json!({ "username": username });
-  let response = Client::new().post(login_url).json(&body).send()?;
+  let login_url = if cluster_name.starts_with("http://") || cluster_name.starts_with("https://") {
+    format!("{}/auth/login/ssh", cluster_name)
+  } else {
+    format!("https://{}/auth/login/ssh", cluster_name)
+  };
+
+  let response = ApiClient::default()?
+    .post(login_url)
+    .bearer_auth(ApiClient::bearer_ssh_token(Some(PathBuf::from(&ssh_key_path)))?)
+    .send()?;
 
   let status_code = response.status();
   if status_code.is_success() {
-    let session = response.json::<SessionCredentials>()?;
+    let _session = response.json::<SessionCredentials>()?;
     println!("Login Succeeded!");
     return Ok(());
   }

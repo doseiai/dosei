@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc:*)",
+      "Bash(SQLX_OFFLINE=true cargo install:*)"
+    ]
+  }
+}

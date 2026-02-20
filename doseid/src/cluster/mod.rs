@@ -1,14 +1,11 @@
 mod dashboard;
 
 use crate::account::{Account, AccountSSHKey};
-use crate::certificate::Certificate;
 use crate::cluster::dashboard::Dashboard;
-use crate::deployment::Deployment;
 use crate::ingress::Ingress;
 use crate::service::Service;
 use dosei_schema::cluster::ClusterInit;
 use once_cell::sync::Lazy;
-use rustls::crypto::ring::default_provider;
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
 use std::ops::Deref;
@@ -16,7 +13,6 @@ use std::path::Path;
 use std::sync::Arc;
 use tokio::fs;
 use tokio::sync::Mutex;
-use tracing::error;
 use utoipa::gen::serde_json;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -93,29 +89,12 @@ impl DaemonClusterInit {
         }
       }
     }
-    let provider = default_provider();
-    provider
-      .install_default()
-      .expect("Failed to install default crypto provider");
 
-    if let Ok(result) = Certificate::get_by_domain_name(self.name.clone(), pg_pool).await {
-      if result.is_none() && ClusterInit::validate_domain(&self.name) {
-        if let Err(e) = Certificate::request(default_user.id, &self.name).await {
-          error!("{}", e);
-        }
-      }
-    }
     let service = match Service::new("dosei", default_user.id, pg_pool).await {
       Ok(service) => service,
       Err(_) => Service::get_by_name("dosei".to_string(), pg_pool)
         .await?
         .unwrap(),
-    };
-    if Deployment::get_by_service_id(service.id, pg_pool)
-      .await?
-      .is_empty()
-    {
-      let _ = Deployment::new(service.id, service.owner_id, Some(80), Some(80), pg_pool).await;
     };
 
     // Ingress insert or Update
@@ -127,12 +106,13 @@ impl DaemonClusterInit {
       None => Ingress::new(self.name.clone(), service.id, service.owner_id, pg_pool).await?,
     };
 
-    // TODO: Hardcoded for testing, handle other cases
-    Dashboard {
-      name: self.name.clone().replace("api", "dashboard"),
+    // Dashboard is optional — skip if image isn't available
+    let dashboard = Dashboard {
+      name: format!("dashboard.{}", self.name),
+    };
+    if let Err(e) = dashboard.init(pg_pool).await {
+      tracing::warn!("Dashboard initialization skipped: {}", e);
     }
-    .init(pg_pool)
-    .await?;
     Ok(())
   }
 }
